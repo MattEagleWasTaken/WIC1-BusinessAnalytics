@@ -328,6 +328,7 @@ class StudentPage(QWidget):
         self.data = {
             'first_name': self.first_name_input.text(),
             'last_name': self.last_name_input.text(),
+            'name': f"{self.first_name_input.text()} {self.last_name_input.text()}",
             'birth_date': self.birth_date_input.text(),
             'matriculation_no': self.matriculation_no_input.text()
         }
