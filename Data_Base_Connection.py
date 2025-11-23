@@ -39,25 +39,23 @@ def database_missing(conn: psycopg2.extensions.connection, db_name: str) -> bool
         cur.close()
 
 
-def create_database(conn: psycopg2.extensions.connection, db_name: str) -> None:
-    """
-    Create a new PostgreSQL database with the given name.
-
-    Important:
-        - Connection must be made to a different database (commonly 'postgres').
-        - CREATE DATABASE cannot be run inside a transaction block.
-        - Autocommit is required for database creation.
-    """
-    conn.autocommit = True
+def create_database(db_name, config):
+    # connect to the default postgres database
+    conn = psycopg2.connect(
+        dbname="postgres",
+        user=config["username"],
+        password=config["password"],
+        host=config["host"],
+        port=config["port"]
+    )
+    conn.autocommit = True  # enable autocommit to run CREATE DATABASE
     cur = conn.cursor()
     try:
-        # CREATE DATABASE cannot use parameter substitution, so safely quote
-        cur.execute(f'CREATE DATABASE "{db_name}";')
+        cur.execute(f"CREATE DATABASE {db_name}")
         print(f"Database '{db_name}' created successfully.")
-    except psycopg2.Error as e:
-        print(f"Error creating database '{db_name}': {e.pgerror if e.pgerror else e}")
     finally:
         cur.close()
+        conn.close()
 
 
 def main() -> None:
@@ -97,7 +95,8 @@ def main() -> None:
         db_missing = database_missing(conn, db_name)
         if db_missing == True:
             print(f"Database '{db_name}' does not exist. Creating now...")
-            create_database(conn, db_name)
+            conn.close()  # close the old connection first
+            create_database(db_name, config)  # pass config, not conn
         else:
             print(f"Database '{db_name}' already exists. No creation required.")
     finally:
