@@ -128,28 +128,24 @@ def create_tables(config):
         conn.close()
 
 
-def main() -> None:
+def prepare_database(config_path: str = "user_login_config.json"):
     """
-    Main program flow:
-        1. Load PostgreSQL login configuration from a JSON file.
-        2. Connect to the administrative 'postgres' database.
-        3. Check if the target database exists.
-        4. If it is missing, create it, including the data tables.
-        5. Close connections properly.
+    This is the only function the GUI needs to call.
+    It will:
+        1. Load config
+        2. Connect to postgres server
+        3. Check if the target database exists
+        4. Create database + tables if missing
     """
-
-    # Load login configuration (username, password, host, port, database)
-    config = load_config()
-
-    # Name of the database we want to use/create
+    config = load_config(config_path)
     db_name = config["database"]
 
-    # Print loaded config, but hide password for security
-    print("Loaded configuration (password hidden):")
+    # Print config without password for security
     safe_config = {k: v for k, v in config.items() if k != "password"}
+    print("Loaded configuration (password hidden):")
     print(safe_config)
 
-    # Connect to the administrative 'postgres' database
+    # Connect to postgres admin DB
     try:
         conn = psycopg2.connect(
             dbname="postgres",
@@ -160,33 +156,19 @@ def main() -> None:
         )
         print("Connected to PostgreSQL server (database 'postgres').")
     except psycopg2.OperationalError as e:
-        # Catch errors if connection fails (wrong credentials, server not running)
         print("Failed to connect to PostgreSQL server. Check your credentials and server status.")
         print("Detailed error:", e)
-        return  # Exit main if we can't connect
+        return
 
     try:
-        # Check if the target database exists
-        db_missing = database_missing(conn, db_name)
-
-        # Explicit boolean comparison for readability
-        if db_missing == True:
+        if database_missing(conn, db_name) == True:
             print(f"Database '{db_name}' does not exist. Creating now...")
-            # Close the current connection before creating the database
-            conn.close()
-            # Call function to create the new database
+            conn.close()  # close old connection before creating DB
             create_database(db_name, config)
-
-            # Now create tables inside the new database
             create_tables(config)
         else:
             print(f"Database '{db_name}' already exists. No creation required.")
     finally:
-        # Ensure the administrative connection is always closed
         conn.close()
         print("Connection to server closed.")
-
-
-if __name__ == "__main__":
-    main()
 
