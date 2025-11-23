@@ -64,13 +64,77 @@ def create_database(db_name, config):
         conn.close()
 
 
+def create_tables(config):
+    """
+    Create the 'student', 'exam', and 'grade' tables in the target database.
+    Includes primary keys, foreign keys, and sequences as per your schema.
+
+    Args:
+        config (dict): PostgreSQL login configuration including 'database'.
+    """
+    # Connect to the target database where tables should be created
+    conn = psycopg2.connect(
+        dbname=config["database"],
+        user=config["username"],
+        password=config["password"],
+        host=config["host"],
+        port=config["port"]
+    )
+    conn.autocommit = True  # Each CREATE TABLE statement is executed immediately
+    cur = conn.cursor()
+
+    try:
+        # Create student table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.student (
+                matriculation_number VARCHAR(20) PRIMARY KEY,
+                first_name VARCHAR(50) NOT NULL,
+                last_name VARCHAR(50) NOT NULL,
+                date_of_birth DATE NOT NULL
+            );
+        """)
+
+        # Create exam table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.exam (
+                pnr VARCHAR(20) PRIMARY KEY,
+                title VARCHAR(100) NOT NULL,
+                semester VARCHAR(20),
+                degree_program VARCHAR(100)
+            );
+        """)
+
+        # Create grade table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.grade (
+                id SERIAL PRIMARY KEY,
+                matriculation_number VARCHAR(20) NOT NULL,
+                pnr VARCHAR(20) NOT NULL,
+                grade NUMERIC(3,1),
+                grade_date DATE DEFAULT CURRENT_DATE NOT NULL,
+                CONSTRAINT grade_grade_check CHECK (grade >= 1.0 AND grade <= 6.0),
+                CONSTRAINT grade_student_fkey FOREIGN KEY (matriculation_number)
+                    REFERENCES public.student(matriculation_number)
+                    ON DELETE CASCADE,
+                CONSTRAINT grade_exam_fkey FOREIGN KEY (pnr)
+                    REFERENCES public.exam(pnr)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        print("Tables 'student', 'exam', and 'grade' created successfully.")
+    finally:
+        cur.close()
+        conn.close()
+
+
 def main() -> None:
     """
     Main program flow:
         1. Load PostgreSQL login configuration from a JSON file.
         2. Connect to the administrative 'postgres' database.
         3. Check if the target database exists.
-        4. If missing, create it.
+        4. If it is missing, create it, including the data tables.
         5. Close connections properly.
     """
 
@@ -112,6 +176,9 @@ def main() -> None:
             conn.close()
             # Call function to create the new database
             create_database(db_name, config)
+
+            # Now create tables inside the new database
+            create_tables(config)
         else:
             print(f"Database '{db_name}' already exists. No creation required.")
     finally:
