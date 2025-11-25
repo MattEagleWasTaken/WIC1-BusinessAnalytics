@@ -26,7 +26,7 @@ def database_missing(conn: psycopg2.extensions.connection, db_name: str) -> bool
 
     Returns True if the database is missing, False if it exists.
     """
-    cur = conn.cursor()
+    cur = conn.cursor() # Create a cursor to execute SQL commands
     try:
         # Execute a query to see if the database exists
         cur.execute("SELECT 1 FROM pg_database WHERE datname = %s;", (db_name,))
