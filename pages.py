@@ -229,10 +229,7 @@ class GradePage(BasePage):
 
 
 class StudentPage(BasePage):
-    # Signal um Daten an Hauptfenster zu senden
-    data_changed = Signal(dict)
-    status_message = Signal(str, int)
-    
+   
     def __init__(self):
         super().__init__("Student Entry")
         self.setup_ui()
@@ -285,13 +282,38 @@ class StudentPage(BasePage):
             self.status_message.emit("Please enter a matriculation number", 2000)
             return
 
-        self.data = {
-            'first_name': self.first_name_input.text(),
-            'last_name': self.last_name_input.text(),
-            # 'name': f"{self.first_name_input.text()} {self.last_name_input.text()}",
-            'birth_date': self.birth_date_input.text(),
-            'matriculation_no': self.matriculation_no_input.text()
-        }
+        query = """
+            INSERT INTO students (first_name, last_name, birth_date, matriculation_no)
+            VALUES (%s, %s, %s, %s)
+        """
+        params = (
+            self.first_name_input.text(),
+            self.last_name_input.text(),
+            self.birth_date_input.date().toString("yyyy-MM-dd"),
+            self.matriculation_no_input.text()
+        )
+        
+        # Worker-Thread starten
+        self.db_worker = DatabaseWorker(query, params)
+        self.db_worker.finished.connect(self.on_save_finished)
+        self.db_worker.start()
+        
+        self.status_message.emit("Saving...", 0)
+    
+    def on_save_finished(self, success, message):
+        if success:
+            self.status_message.emit(message, 2000)
+            self.data_changed.emit({
+                'first_name': self.first_name_input.text(),
+                'last_name': self.last_name_input.text(),
+                #'name': f"{self.first_name_input.text()} {self.last_name_input.text()}",
+                'birth_date': self.birth_date_input.text(),
+                'matriculation_no': self.matriculation_no_input.text()
+            })
+            self.clear_form()
+        else:
+            self.status_message.emit(message, 5000)
+        
         # Signal aussenden
         self.data_changed.emit(self.data)
         self.status_message.emit("Student Data saved succesfully!", 2000)
