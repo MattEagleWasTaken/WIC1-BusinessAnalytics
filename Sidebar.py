@@ -1,3 +1,9 @@
+"""
+ALLGEMEINE TODOS:
+[] Kommentare aufräumen
+[] Signal/Slot Logik für data.changed überdenken
+"""
+
 import os
 from pages import ExamPage, GradePage, HomePage, StatsPage, StudentPage
 from PySide6.QtCore import QSize, Qt, QDate, Signal, Slot
