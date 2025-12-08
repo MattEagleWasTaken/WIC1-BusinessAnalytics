@@ -1,4 +1,3 @@
-# --------------------------- SERVER LOGIC -------------------------------------
 server <- function(input, output, session) {  # start server
   
   library(DBI)         # DB interface
@@ -24,7 +23,6 @@ server <- function(input, output, session) {  # start server
     "SELECT matriculation_number, first_name, last_name FROM student"
   ) # end dbGetQuery
   
-  
   # ------------------- Sorting for Dropdowns -------------------
   
   # Matriculation numbers sorted ascending
@@ -37,79 +35,75 @@ server <- function(input, output, session) {  # start server
     students_sorted_name$last_name
   ) # end paste
   
-  # Create dropdown choices with an initial placeholder
+  # Dropdown choices with placeholder
   name_choices <- c("- not selected -", students_sorted_name$full_name)
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
   
-  
-  # ---------------- Dynamic Tab Header Logic ----------------
-  # (If used elsewhere)
-  students <- students[order(students$last_name, students$first_name), ]  # end reorder
-  
-  
   # ---------------- Dynamic Student Filters ----------------
-  output$one_student_filters <- renderUI({  # start renderUI
+  output$one_student_filters <- renderUI({
     
-    if (input$student_toggle == "One Student") {  # start if
-      tagList(
+    if (input$student_toggle == "One Student") {
+      # Flex container für Dropdowns + Button
+      div(
+        style = "display: flex; align-items: center; gap: 10px;",  # horizontal alignment
+        
         # Full name dropdown
-        selectInput(
-          "name_select",
-          "Full Name:",
-          choices = name_choices,
-          selected = "- not selected -"
-        ),  # end selectInput name_select
+        div(
+          selectInput(
+            "name_select",
+            "Full Name:",
+            choices = name_choices,
+            selected = "- not selected -"
+          ),
+          style = "margin:0;"  # remove extra margins
+        ),
         
         # Matriculation number dropdown
-        selectInput(
-          "matnr_select",
-          "Matrikelnummer:",
-          choices = matr_choices,
-          selected = "- not selected -"
-        ),   # end selectInput matnr_select
+        div(
+          selectInput(
+            "matnr_select",
+            "Matrikelnummer:",
+            choices = matr_choices,
+            selected = "- not selected -"
+          ),
+          style = "margin:0;"
+        ),
         
         # Reset button
-        actionButton(
-          "reset_filters",
-          "Reset Selection",
-          style = "
-          background-color:#4da3ff;
-          color:white;
-          border-radius:45px;
-          text-align:center;
+        div(
+          actionButton(
+            "reset_filters",
+            "Reset Selection",
+            style = "
+            background-color:#4da3ff;
+            color:white;
+            border-radius:45px;
+            text-align:center;
+            height: 40px;
+            position: relative;  
+            top: 5px;            
           "
-        )  # end actionButton
+          ),
+          style = "margin:0;"   
+        ),
         
-        
-      ) # end tagList
-    } # end if
+      ) # end flex div
+      
+    }
     
   }) # end renderUI one_student_filters
   
   # ---------------- Reset Both Dropdowns ----------------
-  observeEvent(input$reset_filters, {   # start observeEvent
+  observeEvent(input$reset_filters, {
     
-    updateSelectInput(
-      session,
-      "name_select",
-      selected = "- not selected -"
-    ) # end updateSelectInput name_select
-    
-    updateSelectInput(
-      session,
-      "matnr_select",
-      selected = "- not selected -"
-    ) # end updateSelectInput matnr_select
+    updateSelectInput(session, "name_select", selected = "- not selected -")
+    updateSelectInput(session, "matnr_select", selected = "- not selected -")
     
   }) # end observeEvent reset_filters
   
-  
- 
-  
-  
-  # ---------------- Disconnect DB when session ends ----------------
-  session$onSessionEnded(function() {  # start onSessionEnded
+  # ---------------- Disconnect DB on session end ----------------
+  session$onSessionEnded(function() {
     dbDisconnect(con)
-  }) # end onSessionEnded
+  })
   
 } # end server

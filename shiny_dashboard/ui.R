@@ -4,73 +4,84 @@ library(shiny)
 # Load Shiny Dashboard package (provides dashboard layout and components)
 library(shinydashboard)
 
-
 # ------------------------ CUSTOM CSS ------------------------------------------
 customCSS <- "
 /* Logo in top header right */
 .top-header-logo {
   height: 40px;
-  position: absolute;   /* absolute positioning in navbar */
-  right: 10px;          /* distance from right edge */
-  top: 8px;             /* vertical alignment */
+  position: absolute;  
+  right: 10px;          
+  top: 8px;             
 }
 
 /* Tab header text, centered */
 .tab-header {
-  text-align: center;    /* center horizontally */
+  text-align: center;
   font-weight: bold;
   font-size: 18px;
-  margin-bottom: 10px;   /* spacing below header */
+  margin-bottom: 10px;
 }
 
-/* Inline layout for student filters */
-.student-filters-row .form-group {
-  display: inline-block;
-  vertical-align: top;
-  margin-left: 15px;
-  margin-right: 20px;
-  }
+/* Flex container for filters */
+.student-filters-row {
+  display: flex;
+  align-items: center;  /* vertical center for all elements */
+  gap: 20px;
+}
 
-/* Rounded corners for selectInput dropdowns */
+/* Make selected text in dropdown vertically centered */
 .selectize-input {
-  border-radius: 45px !important;   /* sichtbare Box */
+  display: flex !important;          /* use flexbox for content */
+  align-items: center !important;    /* vertically center text */
+  border-radius: 45px !important;   /* keep rounded corners */
+  height: 40px;                      /* optional: fix height */
+  padding-left: 10px;                /* optional: padding */
 }
 
+/* Rounded corners for dropdown list */
 .selectize-dropdown {
-  border-radius: 10px !important;   /* aufgeklappte Liste */
+  border-radius: 10px !important;
+}
+
+/* Reset button styling */
+.reset-btn {
+  background-color: #4da3ff;
+  color: white;
+  border-radius: 10px;
+  height: 40px;          /* gleiche Höhe wie Dropdowns */
+  padding: 0 15px;       /* horizontal padding */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 "
-
 
 # ---- UI ----------------------------------------------------------------------
 ui <- dashboardPage(
   
   # ---------------- TOP HEADER -----------------------------------------------
   dashboardHeader(
-    title = "HS-Dashboard",    # Fixed title, left-aligned by default
+    title = "HS-Dashboard",
     
-    # Logo placed in navbar, outside the title container
     tags$li(class = "dropdown",
             tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
-    ) # end tags$li
-  ) # end dashboardHeader
-  ,
+    )
+  ),
   
   # ---------------- SIDEBAR ---------------------------------------------------
   dashboardSidebar(
     sidebarMenu(
-      id = "tabs",    # track selected tab
+      id = "tabs",
       menuItem("Student-Information", tabName = "studentinfo", icon = icon("dashboard")),
       menuItem("Module-Information", tabName = "moduleinfo", icon = icon("th"))
-    ) # end sidebarMenu
-  ) # end dashboardSidebar
-  ,
+    )
+  ),
   
   # ---------------- BODY ------------------------------------------------------
   dashboardBody(
     
     # Include custom CSS
-    tags$head(tags$style(HTML(customCSS))), # end tags$head
+    tags$head(tags$style(HTML(customCSS))),
     
     # Tab-specific dynamic header
     uiOutput("tabHeader"),
@@ -81,27 +92,29 @@ ui <- dashboardPage(
       tabItem(tabName = "studentinfo",
               # Row for dynamic student filters
               fluidRow(
-                class = "student-filters-row",  #
-                # Use flex container to align toggle and dropdowns in one row
-                div(style = "display: flex; align-items: center; gap: 20px;",
-                    # Toggle: All Students / One Student
-                    div(
-                      radioButtons("student_toggle", "Select Student:",
-                                   choices = c("All Students", "One Student"),
-                                   inline = TRUE)
-                    ), # end div toggle
-                    
-                    # Dropdowns, only show if One Student selected
-                    uiOutput("one_student_filters")
-                ) # end flex div
-              ) # end fluidRow
-      ) # end tabItem studentinfo
-      ,
+                class = "student-filters-row",
+                
+                # Toggle + dropdowns + reset button
+                div(
+                  style = "display: flex; align-items: center; gap: 20px;",
+                  
+                  # Toggle: All / One Student
+                  div(
+                    radioButtons("student_toggle", "Select Student:",
+                                 choices = c("All Students", "One Student"),
+                                 inline = TRUE)
+                  ),
+                  
+                  # Dropdowns & Reset button
+                  uiOutput("one_student_filters")
+                )
+              )
+      ),
       
-      # --- Tab 2: Module Information -------------------------------------------------------------------
+      # --- Tab 2: Module Information -------------------------------------------------------
       tabItem(tabName = "moduleinfo",
               h2("Module Information content")
-      ) # end tabItem moduleinfo
-    ) # end tabItems
-  ) # end dashboardBody
-) # end dashboardPage
+      )
+    )
+  )
+)
