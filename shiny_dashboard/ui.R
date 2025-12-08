@@ -86,6 +86,20 @@ customCSS <- "
   margin-top: -6px;         /* shift text up to align with dropdowns */
 }
 
+/* h4 is the label of the card */
+.gpa-card h4 {
+  margin: 0;
+  font-weight: normal;
+}
+
+/* h2 is the content showing the student's average grade */
+.gpa-card h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+
 "
 
 # ---- UI ----------------------------------------------------------------------
@@ -152,6 +166,30 @@ ui <- dashboardPage(
                     "reset_filters",
                     "Reset Selection",
                     class = "reset-btn"
+                  )
+                )
+              ),
+              
+              #-----------------------------------------------------------------------------------
+              # GPA Card UI (placed below the student filters)
+              fluidRow(
+                column(
+                  width = 3,   # adjust width as needed
+                  div(
+                    id = "gpa_card",  # ID for dynamic updating
+                    class = "gpa-card",
+                    style = "
+                    background-color: #f0f4ff;   /* light blue background */
+                    border-radius: 15px;
+                    height: 100px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    margin-bottom: 20px;
+                    ",
+                    h4("Overall GPA"),
+                    h2(textOutput("student_gpa", inline = TRUE))  # dynamic GPA value
                   )
                 )
               )

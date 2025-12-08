@@ -121,6 +121,37 @@ server <- function(input, output, session) {
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
   })
   
+  
+  # ---------------- Average Grade One student ----------------
+  # Calculate GPA for selected student
+  output$student_gpa <- renderText({
+    req(input$student_toggle == "One Student")  # only when One Student is selected
+    
+    # Ensure a selection exists
+    selected_matr <- input$matnr_select
+    selected_name <- input$name_select
+    
+    if (!is.null(selected_matr) && selected_matr != "- not selected -") {
+      student_row <- students[students$matriculation_number == selected_matr, ]
+    } else if (!is.null(selected_name) && selected_name != "- not selected -") {
+      student_row <- students[students$first_name %in% strsplit(selected_name, " ")[[1]][1] &
+                                students$last_name %in% strsplit(selected_name, " ")[[1]][2], ]
+    } else {
+      return("-")  # no selection
+    }
+    
+    # Example: Compute GPA as mean of all grades of this student
+    student_grades <- dbGetQuery(con, paste0(
+      "SELECT grade FROM grade WHERE matriculation_number = '", student_row$matriculation_number, "'"
+    ))
+    
+    if (nrow(student_grades) == 0) return("-")  # no grades
+    
+    round(mean(student_grades$grade, na.rm = TRUE), 2)
+  })
+  
+  
+  
   # ---------------- Disconnect DB on session end ----------------
   session$onSessionEnded(function() {
     dbDisconnect(con)
