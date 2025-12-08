@@ -57,14 +57,17 @@ server <- function(input, output, session) {
           # Show static text if matriculation number is selected
           div(
             style = "
-              border: 1px solid #ccc;
-              border-radius: 45px;
-              height: 40px;                 /* same height as dropdowns */
-              padding: 0 10px;
-              display: flex;
-              align-items: center;          /* vertical center */
-              background-color: white;
-              min-width: 200px;             /* adjust width to match dropdown */
+            border: 1px solid #ccc;
+            border-radius: 45px;
+            height: 40px;                 /* same height as dropdowns */
+            padding: 0 10px;
+            display: flex;
+            align-items: center;          /* vertical center */
+            justify-content: flex-start;  /* optional: left align text */
+            background-color: white;
+            min-width: 300px;             /* match dropdown width */
+            position: relative;
+            top: 5px;
             ",
             {
               student_row <- students_sorted_name[students_sorted_name$matriculation_number == input$matnr_select, ]
@@ -78,7 +81,7 @@ server <- function(input, output, session) {
           # Show dropdown if no name selected
           selectInput(
             "matnr_select",
-            "Matrikelnummer:",
+            "Matriculation Number:",
             choices = matr_choices,
             selected = input$matnr_select %||% "- not selected -"
           )
@@ -86,14 +89,17 @@ server <- function(input, output, session) {
           # Show static text if name is selected
           div(
             style = "
-              border: 1px solid #ccc;
-              border-radius: 45px;
-              height: 40px;                 /* same height as dropdowns */
-              padding: 0 10px;
-              display: flex;
-              align-items: center;          /* vertical center */
-              background-color: white;
-              min-width: 150px;             /* adjust width to match dropdown */
+            border: 1px solid #ccc;
+            border-radius: 45px;
+            height: 40px;                 /* same height as dropdowns */
+            padding: 0 10px;
+            display: flex;
+            align-items: center;          /* vertical center */
+            justify-content: flex-start;  /* optional: left align text */
+            background-color: white;
+            min-width: 300px;             /* match dropdown width */
+            position: relative;
+            top: 5px;
             ",
             {
               student_row <- students_sorted_name[students_sorted_name$full_name == input$name_select, ]
