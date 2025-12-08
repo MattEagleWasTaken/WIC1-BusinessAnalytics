@@ -4,38 +4,41 @@ library(shiny)
 # Load Shiny Dashboard package (provides dashboard layout and components)
 library(shinydashboard)
 
+# Load shinyjs for dynamic show/hide of UI elements
+library(shinyjs)
+
 # ------------------------ CUSTOM CSS ------------------------------------------
 customCSS <- "
 /* Logo in top header right */
 .top-header-logo {
   height: 40px;
-  position: absolute;  
-  right: 10px;          
-  top: 8px;             
+  position: absolute;   /* absolute positioning in navbar */
+  right: 10px;          /* distance from right edge */
+  top: 8px;             /* vertical alignment */
 }
 
 /* Tab header text, centered */
 .tab-header {
-  text-align: center;
+  text-align: center;    /* horizontal centering */
   font-weight: bold;
   font-size: 18px;
-  margin-bottom: 10px;
+  margin-bottom: 10px;   /* spacing below header */
 }
 
-/* Flex container for filters */
+/* Flex container for student filters row */
 .student-filters-row {
   display: flex;
-  align-items: center;  /* vertical center for all elements */
+  align-items: center;  /* vertical centering for all elements */
   gap: 20px;
 }
 
-/* Make selected text in dropdown vertically centered */
+/* Make selected text in selectInput vertically centered */
 .selectize-input {
-  display: flex !important;          /* use flexbox for content */
-  align-items: center !important;    /* vertically center text */
-  border-radius: 45px !important;   /* keep rounded corners */
-  height: 40px;                      /* optional: fix height */
-  padding-left: 10px;                /* optional: padding */
+  display: flex !important;          
+  align-items: center !important;    
+  border-radius: 45px !important;   /* rounded corners */
+  height: 40px;                      /* fixed height for uniformity */
+  padding-left: 10px;                /* left padding for text */
 }
 
 /* Rounded corners for dropdown list */
@@ -45,11 +48,11 @@ customCSS <- "
 
 /* Reset button styling */
 .reset-btn {
-  background-color: #4da3ff;
-  color: white;
-  border-radius: 10px;
-  height: 40px;          /* gleiche Höhe wie Dropdowns */
-  padding: 0 15px;       /* horizontal padding */
+  background-color: #4da3ff;  /* light blue */
+  color: white;               /* text color */
+  border-radius: 45px;        /* rounded corners */
+  height: 40px;               /* same height as dropdowns */
+  padding: 0 15px;            /* horizontal padding */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,6 +66,7 @@ ui <- dashboardPage(
   dashboardHeader(
     title = "HS-Dashboard",
     
+    # Logo placed in top right of header
     tags$li(class = "dropdown",
             tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
     )
@@ -71,7 +75,7 @@ ui <- dashboardPage(
   # ---------------- SIDEBAR ---------------------------------------------------
   dashboardSidebar(
     sidebarMenu(
-      id = "tabs",
+      id = "tabs",  # track which tab is selected
       menuItem("Student-Information", tabName = "studentinfo", icon = icon("dashboard")),
       menuItem("Module-Information", tabName = "moduleinfo", icon = icon("th"))
     )
@@ -83,38 +87,51 @@ ui <- dashboardPage(
     # Include custom CSS
     tags$head(tags$style(HTML(customCSS))),
     
-    # Tab-specific dynamic header
+    # Enable shinyjs for dynamic show/hide
+    useShinyjs(),
+    
+    # Dynamic tab header
     uiOutput("tabHeader"),
     
     # Tab contents
     tabItems(
-      # --- Tab 1: Student Information -------------------------------------------------------
+      
+      # --- Tab 1: Student Information ------------------------------------------
       tabItem(tabName = "studentinfo",
-              # Row for dynamic student filters
               fluidRow(
                 class = "student-filters-row",
                 
-                # Toggle + dropdowns + reset button
+                # Flex container for toggle + dropdowns + reset button
                 div(
                   style = "display: flex; align-items: center; gap: 20px;",
                   
-                  # Toggle: All / One Student
+                  # Toggle: All Students / One Student
                   div(
-                    radioButtons("student_toggle", "Select Student:",
-                                 choices = c("All Students", "One Student"),
-                                 inline = TRUE)
+                    radioButtons(
+                      "student_toggle",
+                      "Select Student:",
+                      choices = c("All Students", "One Student"),
+                      inline = TRUE
+                    )
                   ),
                   
-                  # Dropdowns & Reset button
-                  uiOutput("one_student_filters")
+                  # Dropdowns (rendered dynamically when toggle is 'One Student')
+                  uiOutput("one_student_filters"),
+                  
+                  # Reset Button (always in DOM, visibility controlled by shinyjs)
+                  actionButton(
+                    "reset_filters",
+                    "Reset Selection",
+                    class = "reset-btn"
+                  )
                 )
               )
       ),
       
-      # --- Tab 2: Module Information -------------------------------------------------------
+      # --- Tab 2: Module Information -------------------------------------------
       tabItem(tabName = "moduleinfo",
               h2("Module Information content")
       )
-    )
-  )
-)
+    ) # end TabItems
+  ) # end Body
+) # end UI

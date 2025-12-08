@@ -1,13 +1,14 @@
-server <- function(input, output, session) {  # start server
+server <- function(input, output, session) {
   
-  library(DBI)         # DB interface
-  library(RPostgres)   # PostgreSQL connector
-  library(jsonlite)    # read JSON files
+  library(DBI)
+  library(RPostgres)
+  library(jsonlite)
+  library(shinyjs)  # for show/hide functionality
   
-  # ---------------- Read DB Credentials from JSON -------------------------
-  db_config <- fromJSON("../user_login_config.json")  # relative path above Shiny app
+  # ---------------- Read DB Credentials ----------------
+  db_config <- fromJSON("../user_login_config.json")
   
-  # ---------------- Connect to PostgreSQL DB ----------------
+  # ---------------- Connect to PostgreSQL ----------------
   con <- dbConnect(
     RPostgres::Postgres(),
     dbname   = db_config$database,
@@ -15,25 +16,18 @@ server <- function(input, output, session) {  # start server
     port     = db_config$port,
     user     = db_config$username,
     password = db_config$password
-  ) # end dbConnect
+  )
   
   # ---------------- Load Student Data ----------------
   students <- dbGetQuery(
     con,
     "SELECT matriculation_number, first_name, last_name FROM student"
-  ) # end dbGetQuery
+  )
   
   # ------------------- Sorting for Dropdowns -------------------
-  
-  # Matriculation numbers sorted ascending
-  students_sorted_matr <- students[order(students$matriculation_number), ] # end order
-  
-  # Names sorted alphabetically by last name, then first name
-  students_sorted_name <- students[order(students$last_name, students$first_name), ] # end order
-  students_sorted_name$full_name <- paste(
-    students_sorted_name$first_name,
-    students_sorted_name$last_name
-  ) # end paste
+  students_sorted_matr <- students[order(students$matriculation_number), ]
+  students_sorted_name <- students[order(students$last_name, students$first_name), ]
+  students_sorted_name$full_name <- paste(students_sorted_name$first_name, students_sorted_name$last_name)
   
   # Dropdown choices with placeholder
   name_choices <- c("- not selected -", students_sorted_name$full_name)
@@ -41,69 +35,58 @@ server <- function(input, output, session) {  # start server
   
   # ---------------- Dynamic Student Filters ----------------
   output$one_student_filters <- renderUI({
-    
     if (input$student_toggle == "One Student") {
-      # Flex container für Dropdowns + Button
       div(
-        style = "display: flex; align-items: center; gap: 10px;",  # horizontal alignment
+        style = "display: flex; align-items: center; gap: 10px;",
         
         # Full name dropdown
-        div(
-          selectInput(
-            "name_select",
-            "Full Name:",
-            choices = name_choices,
-            selected = "- not selected -"
-          ),
-          style = "margin:0;"  # remove extra margins
+        selectInput(
+          "name_select",
+          "Full Name:",
+          choices = name_choices,
+          selected = "- not selected -"
         ),
         
         # Matriculation number dropdown
-        div(
-          selectInput(
-            "matnr_select",
-            "Matrikelnummer:",
-            choices = matr_choices,
-            selected = "- not selected -"
-          ),
-          style = "margin:0;"
+        selectInput(
+          "matnr_select",
+          "Matrikelnummer:",
+          choices = matr_choices,
+          selected = "- not selected -"
         ),
         
-        # Reset button
-        div(
-          actionButton(
-            "reset_filters",
-            "Reset Selection",
-            style = "
-            background-color:#4da3ff;
-            color:white;
-            border-radius:45px;
-            text-align:center;
-            height: 40px;
-            position: relative;  
-            top: 5px;            
+        # Reset button (always in UI, visibility controlled via shinyjs)
+        actionButton(
+          "reset_filters",
+          "Reset Selection",
+          class = "reset-btn",
+          style = "
+          position: relative;
+          top: 5px;   /* positive Werte verschieben nach unten */
           "
-          ),
-          style = "margin:0;"   
-        ),
-        
-      ) # end flex div
-      
+        )
+      )
     }
-    
-  }) # end renderUI one_student_filters
+  })
+  
+  # ---------------- Show/Hide Reset Button ----------------
+  observe({
+    if (!is.null(input$name_select) && input$name_select != "- not selected -" ||
+        !is.null(input$matnr_select) && input$matnr_select != "- not selected -") {
+      shinyjs::show("reset_filters")
+    } else {
+      shinyjs::hide("reset_filters")
+    }
+  })
   
   # ---------------- Reset Both Dropdowns ----------------
   observeEvent(input$reset_filters, {
-    
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
-    
-  }) # end observeEvent reset_filters
+  })
   
   # ---------------- Disconnect DB on session end ----------------
   session$onSessionEnded(function() {
     dbDisconnect(con)
   })
-  
-} # end server
+}
