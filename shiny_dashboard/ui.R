@@ -9,91 +9,105 @@ library(shinyjs)
 
 # ------------------------ CUSTOM CSS ------------------------------------------
 customCSS <- "
-/* Logo in top header right */
-.top-header-logo {
-  height: 40px;
-  position: absolute;   /* absolute positioning in navbar */
-  right: 10px;          /* distance from right edge */
-  top: 8px;             /* vertical alignment */
+
+/* ------------------------ GENERAL LAYOUT ------------------------------------*/ 
+/* Logo position in the top header */ 
+.top-header-logo { 
+height: 40px; 
+position: absolute; 
+right: 10px; 
+top: 8px; 
+} 
+
+/* Tab header text */ 
+.tab-header { 
+text-align: center; 
+font-weight: bold; 
+font-size: 18px; 
+margin-bottom: 10px; 
 }
 
-/* Tab header text, centered */
-.tab-header {
-  text-align: center;    /* horizontal centering */
-  font-weight: bold;
-  font-size: 18px;
-  margin-bottom: 10px;   /* spacing below header */
-}
 
-/* Flex container for student filters row */
+/* 1. Filter row → all filter blocks are placed side by side */
 .student-filters-row {
   display: flex;
-  align-items: center;  /* vertical centering for all elements */
-  gap: 20px;
+  align-items: flex-start;     /* align all elements to the top of the container */
+  gap: 25px;                    /* horizontal spacing between filter blocks */
+  padding-top: 10px;            /* small padding from top of row */
 }
 
-/* Make selected text in selectInput vertically centered */
-.selectize-input {
-  display: flex !important;          
-  align-items: center !important;    
-  border-radius: 45px !important;   /* rounded corners */
-  height: 40px;                      /* fixed height for uniformity */
-  padding-left: 10px;                /* left padding for text */
-}
-
-/* Rounded corners for dropdown list */
-.selectize-dropdown {
-  border-radius: 10px !important;
-}
-
-/* Reset button styling */
-.reset-btn {
-  background-color: #4da3ff;  /* light blue */
-  color: white;               /* text color */
-  border-radius: 45px;        /* rounded corners */
-  height: 40px;               /* same height as dropdowns */
-  padding: 0 15px;            /* horizontal padding */
+/* 2. Each filter block stacks its contents vertically */
+.filter-block {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;       /* stack label above input */
+  width: 220px;                 /* fixed width for all filter elements */
 }
 
-.static-text-container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;  /* vertical centering */
-}
-
+/* 3. Unified label style for all filters */
+.filter-label,
+.control-label,
 .static-text-label {
-  font-weight: bold;
-  margin: 0;          /* remove default margin */
-  padding: 0;
-  line-height: 1;
-  margin-bottom: 2px;  /* adjust spacing between label and text */
-  position: relative;
-  top: -12px;
+  font-weight: bold;            /* bold text for all labels */
+  height: 22px;                 /* fixed height to align all labels */
+  line-height: 22px;            /* ensures vertical centering of label text */
+  margin: 0 0 6px 0;            /* small spacing below label before input */
+  padding: 0;                   /* remove any default padding */
 }
 
+/* 4. Dropdown Input (Selectize) */
+.selectize-input {
+  height: 40px !important;      /* fixed height for uniformity */
+  border-radius: 45px !important;  /* rounded corners */
+  padding-left: 10px !important;   /* spacing between text and left border */
+  display: flex !important;         
+  align-items: center !important;   /* vertically center text inside input */
+}
+
+/* 5. Dropdown list (the menu that opens) */
+.selectize-dropdown {
+  border-radius: 10px !important;  /* rounded corners for dropdown menu */
+}
+
+/* 6. Static text field (read-only, same height as dropdown) */
 .static-text-input {
-  border: 1px solid #ccc;
-  border-radius: 45px;
-  height: 40px;
-  padding: 0 10px;
-  display: flex;
-  align-items: center;      /* vertical center text */
-  background-color: white;
-  min-width: 300px;
-  margin-top: -6px;         /* shift text up to align with dropdowns */
+  height: 40px;                 /* same height as dropdown */
+  width: 300px;
+  border-radius: 45px;          /* rounded corners */
+  border: 1px solid #ccc;       /* border style */
+  padding: 0 10px;              /* left/right padding inside the field */
+  display: flex;                
+  align-items: center;          /* vertical center text */
+  background: white;            /* white background */
 }
 
-/* h4 is the label of the card */
-.gpa-card h4 {
+/* 7. Radio Buttons → align properly with inputs */
+.shiny-options-group {
+  margin-top: 6px;              /* same vertical offset as dropdowns for alignment */
+}
+
+/* 8. Reset Button */
+.reset-btn {
+  background-color: #4da3ff;    /* light blue button background */
+  color: white;                 /* text color */
+  border-radius: 45px;          /* rounded corners to match inputs */
+  height: 40px;                 /* same height as dropdowns */
+  display: flex;
+  align-items: center;          /* vertical center text inside button */
+  justify-content: center;      /* horizontal center */
+  border: none;                 /* remove default border */
+  padding: 0 20px;              /* horizontal padding inside button */
+  margin-top: 6px;              /* align vertically with inputs */
+}
+
+
+/* ------------------------ GPA CARD ------------------------------------------ */
+
+.gpa-card h4 {       /* small title */
   margin: 0;
   font-weight: normal;
 }
 
-/* h2 is the content showing the student's average grade */
-.gpa-card h2 {
+.gpa-card h2 {       /* numeric GPA value */
   margin: 0;
   font-size: 28px;
   font-weight: bold;

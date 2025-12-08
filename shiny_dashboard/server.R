@@ -3,12 +3,11 @@ server <- function(input, output, session) {
   library(DBI)
   library(RPostgres)
   library(jsonlite)
-  library(shinyjs)  # for show/hide functionality
+  library(shinyjs)
   
-  # ---------------- Read DB Credentials ----------------
+  # ---------------- Load DB Credentials ----------------
   db_config <- fromJSON("../user_login_config.json")
   
-  # ---------------- Connect to PostgreSQL ----------------
   con <- dbConnect(
     RPostgres::Postgres(),
     dbname   = db_config$database,
@@ -19,141 +18,144 @@ server <- function(input, output, session) {
   )
   
   # ---------------- Load Student Data ----------------
-  students <- dbGetQuery(
-    con,
-    "SELECT matriculation_number, first_name, last_name FROM student"
-  )
+  students <- dbGetQuery(con, "
+    SELECT matriculation_number, first_name, last_name FROM student
+  ")
   
-  # ------------------- Sorting for Dropdowns -------------------
   students_sorted_matr <- students[order(students$matriculation_number), ]
   students_sorted_name <- students[order(students$last_name, students$first_name), ]
-  students_sorted_name$full_name <- paste(students_sorted_name$first_name, students_sorted_name$last_name)
+  students_sorted_name$full_name <- paste(students_sorted_name$first_name,
+                                          students_sorted_name$last_name)
   
-  # Dropdown choices with placeholder
   name_choices <- c("- not selected -", students_sorted_name$full_name)
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
   
-  # ---------------- Dynamic Student Filters ----------------
+  
+  # ============================================================================
+  # Dynamic Input Row (for "One Student")
+  # ============================================================================
   output$one_student_filters <- renderUI({
-    if (input$student_toggle == "One Student") {
+    
+    req(input$student_toggle == "One Student")
+    
+    name_selected <- !is.null(input$name_select) && input$name_select != "- not selected -"
+    matr_selected <- !is.null(input$matnr_select) && input$matnr_select != "- not selected -"
+    
+    div(
+      style = "display: flex; align-items: flex-start; gap: 20px;",
       
-      # Determine which dropdowns are selected
-      name_selected <- !is.null(input$name_select) && input$name_select != "- not selected -"
-      matr_selected <- !is.null(input$matnr_select) && input$matnr_select != "- not selected -"
-      
-      div(
-        style = "display: flex; align-items: center; gap: 10px;",  # horizontal alignment
-        
-        # ---------------- Full Name Input / Text ----------------
-        if (!matr_selected) {
-          # Show dropdown if no matriculation number selected
-          selectInput(
-            "name_select",
-            "Full Name:",
-            choices = name_choices,
-            selected = input$name_select %||% "- not selected -"
-          )
-        } else {
-          # Show static text if matriculation number is selected
-          # label display
-          div(
-            class = "static-text-container",
-            tags$label("Full Name:", class = "static-text-label"),
-            div(
-              class = "static-text-input",
-            {
-              student_row <- students_sorted_name[students_sorted_name$matriculation_number == input$matnr_select, ]
-              paste(student_row$first_name, student_row$last_name)
-            }
-          )
-          )
-        },
-        
-        # ---------------- Matriculation Number Input / Text ----------------
-        if (!name_selected) {
-          # Show dropdown if no name selected
-          selectInput(
-            "matnr_select",
-            "Matriculation Number:",
-            choices = matr_choices,
-            selected = input$matnr_select %||% "- not selected -"
-          )
-        } else {
-          # Show static text if name is selected
-          # label display
-          div(
-            class = "static-text-container",
-            tags$label("Matriculation Number:", class = "static-text-label"),
-            div(
-              class = "static-text-input",
-            {
-              student_row <- students_sorted_name[students_sorted_name$full_name == input$name_select, ]
-              student_row$matriculation_number
-            }
-          )
-          )
-        },
-        
-        # Reset button (always in UI, visibility controlled via shinyjs)
-        actionButton(
-          "reset_filters",
-          "Reset Selection",
-          class = "reset-btn",
-          style = "position: relative; top: 5px;"
+      # ---------------- Student Name ----------------
+      if (!matr_selected) {
+        selectInput(
+          "name_select",
+          label = tags$label("Student Name:", class = "unified-label"),
+          choices = name_choices,
+          selected = input$name_select %||% "- not selected -"
         )
+      } else {
+        div(
+          class = "static-text-container",
+          tags$label("Student Name:", class = "unified-label"),
+          div(
+            class = "static-text-input",
+            {
+              row <- students_sorted_name[
+                students_sorted_name$matriculation_number == input$matnr_select, ]
+              paste(row$first_name, row$last_name)
+            }
+          )
+        )
+      },
+      
+      # ---------------- Matriculation Number ----------------
+      if (!name_selected) {
+        selectInput(
+          "matnr_select",
+          label = tags$label("Matriculation Number:", class = "unified-label"),
+          choices = matr_choices,
+          selected = input$matnr_select %||% "- not selected -"
+        )
+      } else {
+        div(
+          class = "static-text-container",
+          tags$label("Matriculation Number:", class = "unified-label"),
+          div(
+            class = "static-text-input",
+            {
+              row <- students_sorted_name[
+                students_sorted_name$full_name == input$name_select, ]
+              row$matriculation_number
+            }
+          )
+        )
+      },
+      
+      # ---------------- Reset Button ----------------
+      actionButton(
+        "reset_filters",
+        "Reset Selection",
+        class = "reset-btn",
+        style = "margin-top: 10px;"
       )
-    }
+    )
   })
   
-  # ---------------- Show/Hide Reset Button ----------------
+  
+  # ============================================================================
+  # Show / Hide Reset Button
+  # ============================================================================
   observe({
-    if (!is.null(input$name_select) && input$name_select != "- not selected -" ||
-        !is.null(input$matnr_select) && input$matnr_select != "- not selected -") {
+    if (
+      (!is.null(input$name_select) && input$name_select != "- not selected -") ||
+      (!is.null(input$matnr_select) && input$matnr_select != "- not selected -")
+    ) {
       shinyjs::show("reset_filters")
     } else {
       shinyjs::hide("reset_filters")
     }
   })
   
-  # ---------------- Reset Both Dropdowns ----------------
+  
+  # ============================================================================
+  # Reset all dropdowns
+  # ============================================================================
   observeEvent(input$reset_filters, {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
   })
   
   
-  # ---------------- Average Grade One student ----------------
-  # Calculate GPA for selected student
+  # ============================================================================
+  # Compute GPA for selected student
+  # ============================================================================
   output$student_gpa <- renderText({
-    req(input$student_toggle == "One Student")  # only when One Student is selected
+    req(input$student_toggle == "One Student")
     
-    # Ensure a selection exists
     selected_matr <- input$matnr_select
     selected_name <- input$name_select
     
+    # Resolve matriculation number
     if (!is.null(selected_matr) && selected_matr != "- not selected -") {
-      student_row <- students[students$matriculation_number == selected_matr, ]
+      matr <- selected_matr
     } else if (!is.null(selected_name) && selected_name != "- not selected -") {
-      student_row <- students[students$first_name %in% strsplit(selected_name, " ")[[1]][1] &
-                                students$last_name %in% strsplit(selected_name, " ")[[1]][2], ]
+      row <- students_sorted_name[students_sorted_name$full_name == selected_name, ]
+      matr <- row$matriculation_number
     } else {
-      return("-")  # no selection
+      return("-")
     }
     
-    # Example: Compute GPA as mean of all grades of this student
-    student_grades <- dbGetQuery(con, paste0(
-      "SELECT grade FROM grade WHERE matriculation_number = '", student_row$matriculation_number, "'"
-    ))
+    # Load grades
+    student_grades <- dbGetQuery(
+      con,
+      paste0("SELECT grade FROM grade WHERE matriculation_number = '", matr, "'")
+    )
     
-    if (nrow(student_grades) == 0) return("-")  # no grades
+    if (nrow(student_grades) == 0) return("-")
     
     round(mean(student_grades$grade, na.rm = TRUE), 2)
   })
   
   
-  
-  # ---------------- Disconnect DB on session end ----------------
-  session$onSessionEnded(function() {
-    dbDisconnect(con)
-  })
+  # Disconnect when session ends
+  session$onSessionEnded(function() dbDisconnect(con))
 }
