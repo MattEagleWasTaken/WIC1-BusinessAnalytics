@@ -22,16 +22,17 @@ server <- function(input, output, session) {
   # Render the dropdowns only when "One Student" is selected
   output$one_student_filters <- renderUI({
     if(input$student_toggle == "One Student") {
-      tagList(
-        # Matriculation Number dropdown
-        selectInput("matric_number", "Matriculation Number:",
-                    choices = students$matriculation_number),
-        
-        # Full Name dropdown
-        selectInput("student_name", "Full Name:",
-                    choices = students$full_name)
-      ) # end tagList
+      
+      # Flex container again to align two dropdowns side by side
+      div(style = "display: flex; align-items: center; gap: 20px;",
+          selectInput("matric_number", "Matriculation Number:",
+                      choices = students$matriculation_number),
+          selectInput("student_name", "Full Name:",
+                      choices = students$full_name)
+      ) # end div flex
     } # end if
-  }) # end renderUI one_student_filters
-} # end server
+  }) # end renderUI
+
+  
+  } # end server
 

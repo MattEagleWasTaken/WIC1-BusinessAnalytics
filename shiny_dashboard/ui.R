@@ -69,23 +69,26 @@ ui <- dashboardPage(
     tabItems(
       # --- Tab 1: Student Information -------------------------------------------------------
       tabItem(tabName = "studentinfo",
-              
               # Row for dynamic student filters
               fluidRow(
-                div(class = "student-filters-row",
-                    # Toggle: All Students / One Student
-                    radioButtons("student_toggle", "Select Student:",
-                                 choices = c("All Students", "One Student"),
-                                 inline = TRUE),
+                # Use flex container to align toggle and dropdowns in one row
+                div(style = "display: flex; align-items: center; gap: 20px;",
                     
-                    # Placeholder for dynamic dropdowns
+                    # Toggle: All Students / One Student
+                    div(
+                      radioButtons("student_toggle", "Select Student:",
+                                   choices = c("All Students", "One Student"),
+                                   inline = TRUE)
+                    ), # end div toggle
+                    
+                    # Dropdowns, only show if One Student selected
                     uiOutput("one_student_filters")
-                ) # end div.student-filters-row
+                ) # end flex div
               ) # end fluidRow
       ) # end tabItem studentinfo
       ,
       
-      # --- Tab 2: Module Information ---
+      # --- Tab 2: Module Information -------------------------------------------------------------------
       tabItem(tabName = "moduleinfo",
               h2("Module Information content")
       ) # end tabItem moduleinfo
