@@ -30,6 +30,15 @@ customCSS <- "
   margin-left: 15px;
   margin-right: 20px;
   }
+
+/* Rounded corners for selectInput dropdowns */
+.selectize-input {
+  border-radius: 45px !important;   /* sichtbare Box */
+}
+
+.selectize-dropdown {
+  border-radius: 10px !important;   /* aufgeklappte Liste */
+}
 "
 
 
@@ -72,7 +81,7 @@ ui <- dashboardPage(
       tabItem(tabName = "studentinfo",
               # Row for dynamic student filters
               fluidRow(
-                class = "student-filters-row",  # <- neue Klasse
+                class = "student-filters-row",  #
                 # Use flex container to align toggle and dropdowns in one row
                 div(style = "display: flex; align-items: center; gap: 20px;",
                     # Toggle: All Students / One Student
