@@ -31,8 +31,9 @@ margin-bottom: 10px;
 /* 1. Filter row → all filter blocks are placed side by side */
 .student-filters-row {
   display: flex;
-  align-items: flex-start;     /* align all elements to the top of the container */
-  gap: 25px;                    /* horizontal spacing between filter blocks */
+  align-items: center;     /* CENTER instead of FLEX-START */
+  gap: 25px;
+  height: 100px;
   padding-top: 10px;            /* small padding from top of row */
 }
 
