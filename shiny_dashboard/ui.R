@@ -58,20 +58,32 @@ customCSS <- "
   justify-content: center;
 }
 
-/* Static text box to replace dropdowns */
+.static-text-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* vertical centering */
+}
+
+.static-text-label {
+  font-weight: bold;
+  margin: 0;          /* remove default margin */
+  padding: 0;
+  line-height: 1;
+  margin-bottom: 2px;  /* adjust spacing between label and text */
+  position: relative;
+  top: -12px;
+}
+
 .static-text-input {
   border: 1px solid #ccc;
-            border-radius: 45px;
-            height: 40px;                 /* same height as dropdowns */
-            padding: 0 10px;
-            display: flex;
-            align-items: center;          /* vertical center */
-            justify-content: flex-start;  /* optional: left align text */
-            background-color: white;
-            min-width: 300px;             /* match dropdown width */
-            position: relative;
-            top: 5px;
-            
+  border-radius: 45px;
+  height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;      /* vertical center text */
+  background-color: white;
+  min-width: 300px;
+  margin-top: -6px;         /* shift text up to align with dropdowns */
 }
 
 "

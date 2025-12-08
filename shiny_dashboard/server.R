@@ -55,12 +55,17 @@ server <- function(input, output, session) {
           )
         } else {
           # Show static text if matriculation number is selected
+          # label display
           div(
-            class = "static-text-input",
+            class = "static-text-container",
+            tags$label("Full Name:", class = "static-text-label"),
+            div(
+              class = "static-text-input",
             {
               student_row <- students_sorted_name[students_sorted_name$matriculation_number == input$matnr_select, ]
               paste(student_row$first_name, student_row$last_name)
             }
+          )
           )
         },
         
@@ -75,12 +80,17 @@ server <- function(input, output, session) {
           )
         } else {
           # Show static text if name is selected
+          # label display
           div(
-            class = "static-text-input",
+            class = "static-text-container",
+            tags$label("Matriculation Number:", class = "static-text-label"),
+            div(
+              class = "static-text-input",
             {
               student_row <- students_sorted_name[students_sorted_name$full_name == input$name_select, ]
               student_row$matriculation_number
             }
+          )
           )
         },
         
