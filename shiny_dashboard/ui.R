@@ -27,8 +27,9 @@ customCSS <- "
 .student-filters-row .form-group {
   display: inline-block;
   vertical-align: top;
+  margin-left: 15px;
   margin-right: 20px;
-}
+  }
 "
 
 
@@ -71,9 +72,9 @@ ui <- dashboardPage(
       tabItem(tabName = "studentinfo",
               # Row for dynamic student filters
               fluidRow(
+                class = "student-filters-row",  # <- neue Klasse
                 # Use flex container to align toggle and dropdowns in one row
                 div(style = "display: flex; align-items: center; gap: 20px;",
-                    
                     # Toggle: All Students / One Student
                     div(
                       radioButtons("student_toggle", "Select Student:",
