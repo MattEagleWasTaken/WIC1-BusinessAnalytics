@@ -22,6 +22,13 @@ customCSS <- "
   font-size: 18px;
   margin-bottom: 10px;   /* spacing below header */
 }
+
+/* Inline layout for student filters */
+.student-filters-row .form-group {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 20px;
+}
 "
 
 
@@ -35,8 +42,9 @@ ui <- dashboardPage(
     # Logo placed in navbar, outside the title container
     tags$li(class = "dropdown",
             tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
-    )
-  ),
+    ) # end tags$li
+  ) # end dashboardHeader
+  ,
   
   # ---------------- SIDEBAR ---------------------------------------------------
   dashboardSidebar(
@@ -44,38 +52,43 @@ ui <- dashboardPage(
       id = "tabs",    # track selected tab
       menuItem("Student-Information", tabName = "studentinfo", icon = icon("dashboard")),
       menuItem("Module-Information", tabName = "moduleinfo", icon = icon("th"))
-    )
-  ),
+    ) # end sidebarMenu
+  ) # end dashboardSidebar
+  ,
   
   # ---------------- BODY ------------------------------------------------------
   dashboardBody(
     
     # Include custom CSS
-    tags$head(tags$style(HTML(customCSS))),
+    tags$head(tags$style(HTML(customCSS))), # end tags$head
     
     # Tab-specific dynamic header
     uiOutput("tabHeader"),
     
     # Tab contents
     tabItems(
-      # --- Tab 1: Student Information ---
+      # --- Tab 1: Student Information -------------------------------------------------------
       tabItem(tabName = "studentinfo",
+              
+              # Row for dynamic student filters
               fluidRow(
-                # Box containing a plot output
-                box(plotOutput("plot1", height = 250)),
-                
-                # Box containing user controls
-                box(
-                  title = "Controls",
-                  sliderInput("slider", "Number of observations:", 1, 100, 50)
-                )
-              )
-      ),
+                div(class = "student-filters-row",
+                    # Toggle: All Students / One Student
+                    radioButtons("student_toggle", "Select Student:",
+                                 choices = c("All Students", "One Student"),
+                                 inline = TRUE),
+                    
+                    # Placeholder for dynamic dropdowns
+                    uiOutput("one_student_filters")
+                ) # end div.student-filters-row
+              ) # end fluidRow
+      ) # end tabItem studentinfo
+      ,
       
       # --- Tab 2: Module Information ---
       tabItem(tabName = "moduleinfo",
               h2("Module Information content")
-      )
-    )
-  )
-)
+      ) # end tabItem moduleinfo
+    ) # end tabItems
+  ) # end dashboardBody
+) # end dashboardPage

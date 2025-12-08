@@ -1,6 +1,7 @@
 # --------------------------- SERVER LOGIC -------------------------------------
 server <- function(input, output, session) {
   
+  # ---------------- Dynamic Tab Header ----------------
   # Update tab header text dynamically based on selected tab
   output$tabHeader <- renderUI({
     currentTab <- switch(input$tabs,
@@ -8,10 +9,29 @@ server <- function(input, output, session) {
                          "moduleinfo" = "Module Information",
                          "")
     tags$div(currentTab, class = "tab-header")
-  })
+  }) # end renderUI tabHeader
   
-  # Example reactive plot
-  output$plot1 <- renderPlot({
-    hist(rnorm(500)[1:input$slider])
-  })
-}
+  # ---------------- Dummy Student Filter ----------------
+  # Dummy student data (can later come from PostgreSQL)
+  students <- data.frame(
+    matriculation_number = c("00001", "00002", "00003"),
+    full_name = c("Max Müller", "Anna Schmidt", "Lukas Weber"),
+    stringsAsFactors = FALSE
+  ) # end students data.frame
+  
+  # Render the dropdowns only when "One Student" is selected
+  output$one_student_filters <- renderUI({
+    if(input$student_toggle == "One Student") {
+      tagList(
+        # Matriculation Number dropdown
+        selectInput("matric_number", "Matriculation Number:",
+                    choices = students$matriculation_number),
+        
+        # Full Name dropdown
+        selectInput("student_name", "Full Name:",
+                    choices = students$full_name)
+      ) # end tagList
+    } # end if
+  }) # end renderUI one_student_filters
+} # end server
+
