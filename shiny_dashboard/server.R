@@ -19,30 +19,32 @@ server <- function(input, output, session) {  # start server
   ) # end dbConnect
   
   # ---------------- Load Student Data ----------------
-  students <- dbGetQuery(con, "
-    SELECT matriculation_number, first_name, last_name
-    FROM student
-    ORDER BY matriculation_number ASC
-  ") # end dbGetQuery
+  # ------------------- Get student table -------------------
+  students <- dbGetQuery(con, "SELECT matriculation_number, first_name, last_name FROM student") # end dbGetQuery
+  
+  # ------------------- Sort for dropdowns -------------------
+  # Matriculation number dropdown sorted ascending
+  students_sorted_matr <- students[order(students$matriculation_number), ] # end order
+  
+  # Full Name dropdown sorted alphabetically by last name (then first name)
+  students_sorted_name <- students[order(students$last_name, students$first_name), ] # end order
+  students_sorted_name$full_name <- paste(students_sorted_name$first_name, students_sorted_name$last_name) # end paste
   
   # ---------------- Dynamic Tab Header ----------------
-  output$tabHeader <- renderUI({
-    currentTab <- switch(input$tabs,
-                         "studentinfo" = "Student-Information",
-                         "moduleinfo" = "Module Information",
-                         "")
-    tags$div(currentTab, class = "tab-header")
-  }) # end renderUI tabHeader
+  # Sort names alphabetically by last name
+  students <- students[order(students$last_name, students$first_name), ]  # sort by last name, then first name
   
   # ---------------- Dynamic Student Filters ----------------
   output$one_student_filters <- renderUI({
     if(input$student_toggle == "One Student") {
       tagList(
-        selectInput("matnr_select", "Matrikelnummer:",
-                    choices = students$matriculation_number),
         selectInput("name_select", "Full Name:",
-                    choices = paste(students$first_name, students$last_name))
-      ) # end tagList
+                    choices = students_sorted_name$full_name),
+        
+        selectInput("matnr_select", "Matrikelnummer:",
+                    choices = students_sorted_matr$matriculation_number)
+        
+              ) # end tagList
     } # end if
   }) # end renderUI one_student_filters
   
