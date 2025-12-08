@@ -6,93 +6,75 @@ library(shinydashboard)
 
 
 # ------------------------ CUSTOM CSS ------------------------------------------
-# Styling to keep the logo fixed on the right side of the top header
 customCSS <- "
-.navbar-custom-menu > .dropdown {
-  float: right !important;        /* Forces the image to stay on the right */
+/* Logo in top header right */
+.top-header-logo {
+  height: 40px;
+  position: absolute;   /* absolute positioning in navbar */
+  right: 10px;          /* distance from right edge */
+  top: 8px;             /* vertical alignment */
 }
 
-.navbar-custom-menu img {
-  height: 40px !important;        /* Scales logo height */
-  margin-top: 8px !important;     /* Vertical alignment */
-  margin-right: 15px !important;  /* Distance from right screen border */
+/* Tab header text, centered */
+.tab-header {
+  text-align: center;    /* center horizontally */
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 10px;   /* spacing below header */
 }
 "
 
 
 # ---- UI ----------------------------------------------------------------------
-# Create the overall dashboard page structure
 ui <- dashboardPage(
   
-  
-# ---- HEADER ------------------------------------------------------------------
-dashboardHeader(
-  title = "HS Aalen Dashboard",    # Title aligned left by default
-  
-  # Add custom image to the right side inside the navbar menu area
-  tags$li(
-    class = "dropdown",
-    tags$img(src = "HS_Aalen_Icon.png")   # Logo must be in /www folder
-  )
-),
-
-
-# ---- SIDEBAR -----------------------------------------------------------------
- # Left sidebar navigation area
-  dashboardSidebar(
+  # ---------------- TOP HEADER -----------------------------------------------
+  dashboardHeader(
+    title = "HS-Dashboard",    # Fixed title, left-aligned by default
     
-    # Creates a collapsible menu inside the sidebar
+    # Logo placed in navbar, outside the title container
+    tags$li(class = "dropdown",
+            tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
+    )
+  ),
+  
+  # ---------------- SIDEBAR ---------------------------------------------------
+  dashboardSidebar(
     sidebarMenu(
-      
-      # Navigation tab 1
+      id = "tabs",    # track selected tab
       menuItem("Student-Information", tabName = "studentinfo", icon = icon("dashboard")),
-      
-      # Navigation tab 2
       menuItem("Module-Information", tabName = "moduleinfo", icon = icon("th"))
     )
   ),
-
   
-# ---- BODY --------------------------------------------------------------------
-  # Main content area of the dashboard
+  # ---------------- BODY ------------------------------------------------------
   dashboardBody(
     
-    # HS Aalen Icon
+    # Include custom CSS
     tags$head(tags$style(HTML(customCSS))),
     
-    # Wraps multiple tab pages (one for each menuItem)
+    # Tab-specific dynamic header
+    uiOutput("tabHeader"),
+    
+    # Tab contents
     tabItems(
-      
-      # --- First tab: Student-Info ---
-      # Links this content to the menu item "studentinfo"
+      # --- Tab 1: Student Information ---
       tabItem(tabName = "studentinfo",
-              
-              # Creates a responsive horizontal layout row
               fluidRow(
-                
                 # Box containing a plot output
                 box(plotOutput("plot1", height = 250)),
                 
                 # Box containing user controls
                 box(
-                  
-                  # Title for the box
                   title = "Controls",
-                  
-                  # Slider that lets users choose a number
-                  sliderInput("slider",
-                              "Number of observations:",
-                              1, 100, 50)  # Range: 1–100, default value: 50
+                  sliderInput("slider", "Number of observations:", 1, 100, 50)
                 )
               )
       ),
       
-      # --- Second tab: Module-Info ---
-      # Links this content to the menu item "moduleinfo"
+      # --- Tab 2: Module Information ---
       tabItem(tabName = "moduleinfo",
-              
-              # Simple header text for the tab
-              h2("Widgets tab content")
+              h2("Module Information content")
       )
     )
   )

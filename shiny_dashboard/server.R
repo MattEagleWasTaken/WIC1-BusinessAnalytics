@@ -1,22 +1,17 @@
-# Define the server logic for the Shiny app
-server <- function(input, output) {
+# --------------------------- SERVER LOGIC -------------------------------------
+server <- function(input, output, session) {
   
-  # Set a fixed seed for the random number generator
-  # This ensures that the random numbers are the same every time the app runs
-  set.seed(122)
+  # Update tab header text dynamically based on selected tab
+  output$tabHeader <- renderUI({
+    currentTab <- switch(input$tabs,
+                         "studentinfo" = "Student-Information",
+                         "moduleinfo" = "Module Information",
+                         "")
+    tags$div(currentTab, class = "tab-header")
+  })
   
-  # Generate 500 random numbers from a standard normal distribution
-  histdata <- rnorm(500)
-  
-  # Create a reactive plot output called "plot1"
-  # This is linked to the plotOutput("plot1") in the UI
+  # Example reactive plot
   output$plot1 <- renderPlot({
-    
-    # Select only the first 'n' numbers from histdata,
-    # where 'n' is defined by the slider input in the UI
-    data <- histdata[seq_len(input$slider)]
-    
-    # Draw a histogram of the selected data
-    hist(data)
+    hist(rnorm(500)[1:input$slider])
   })
 }
