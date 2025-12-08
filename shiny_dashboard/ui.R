@@ -57,6 +57,23 @@ customCSS <- "
   align-items: center;
   justify-content: center;
 }
+
+/* Static text box to replace dropdowns */
+.static-text-input {
+  border: 1px solid #ccc;
+            border-radius: 45px;
+            height: 40px;                 /* same height as dropdowns */
+            padding: 0 10px;
+            display: flex;
+            align-items: center;          /* vertical center */
+            justify-content: flex-start;  /* optional: left align text */
+            background-color: white;
+            min-width: 300px;             /* match dropdown width */
+            position: relative;
+            top: 5px;
+            
+}
+
 "
 
 # ---- UI ----------------------------------------------------------------------
