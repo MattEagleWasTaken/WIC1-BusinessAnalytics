@@ -4,8 +4,11 @@ server <- function(input, output, session) {
   library(RPostgres)
   library(jsonlite)
   library(shinyjs)
+  # ggplot2 → used for creating the grade visualization plot
+  library(ggplot2)
   
-  # ---------------- Load DB Credentials ----------------
+  
+# ---------------- Load DB Credentials ----------------
   db_config <- fromJSON("../user_login_config.json")
   
   con <- dbConnect(
@@ -17,7 +20,7 @@ server <- function(input, output, session) {
     password = db_config$password
   )
   
-  # ---------------- Load Student Data ----------------
+# ---------------- Load Student Data ----------------
   students <- dbGetQuery(con, "
     SELECT matriculation_number, first_name, last_name FROM student
   ")
@@ -31,9 +34,9 @@ server <- function(input, output, session) {
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
   
   
-  # ============================================================================
-  # Dynamic Input Row (for "One Student")
-  # ============================================================================
+# ============================================================================
+# Dynamic Input Row (for "One Student")
+# ============================================================================
   output$one_student_filters <- renderUI({
     
     req(input$student_toggle == "One Student")
@@ -105,9 +108,9 @@ server <- function(input, output, session) {
   })
   
   
-  # ============================================================================
-  # Show / Hide Reset Button
-  # ============================================================================
+# ============================================================================
+# Show / Hide Reset Button
+# ============================================================================
   observe({
     if (
       (!is.null(input$name_select) && input$name_select != "- not selected -") ||
@@ -120,18 +123,18 @@ server <- function(input, output, session) {
   })
   
   
-  # ============================================================================
-  # Reset all dropdowns
-  # ============================================================================
+# ============================================================================
+# Reset all dropdowns
+# ============================================================================
   observeEvent(input$reset_filters, {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
   })
   
   
-  # ============================================================================
-  # Compute GPA for selected student
-  # ============================================================================
+# ============================================================================
+# All Grades for selected student
+# ============================================================================
   output$student_gpa <- renderText({
     req(input$student_toggle == "One Student")
     
@@ -148,16 +151,25 @@ server <- function(input, output, session) {
       return("-")
     }
     
-    # Load grades
+    # Load grades + exam titles
     student_grades <- dbGetQuery(
       con,
-      paste0("SELECT grade FROM grade WHERE matriculation_number = '", matr, "'")
+      paste0("
+      SELECT g.grade, g.grade_date, e.title AS exam_title
+      FROM grade g
+      JOIN exam e ON g.pnr = e.pnr
+      WHERE g.matriculation_number = '", matr, "'
+    ")
     )
     
+    # Average Grade Calculation stays unchanged
     if (nrow(student_grades) == 0) return("-")
     
     round(mean(student_grades$grade, na.rm = TRUE), 2)
   })
+  
+  
+    
   
   
   # Disconnect when session ends

@@ -7,6 +7,10 @@ library(shinydashboard)
 # Load shinyjs for dynamic show/hide of UI elements
 library(shinyjs)
 
+# ggplot2 → used for creating the grade visualization plot
+library(ggplot2)
+
+
 # ------------------------ CUSTOM CSS ------------------------------------------
 customCSS <- "
 
@@ -97,9 +101,6 @@ margin-bottom: 10px;
   padding: 0 20px;              /* horizontal padding inside button */
   margin-top: 6px;              /* align vertically with inputs */
 }
-
-
-
 
 
 "
@@ -206,18 +207,19 @@ ui <- dashboardPage(
                       font-weight: bold;
                     "
                     ),
-                    
-                    h2(
-                      textOutput('student_gpa', inline = TRUE),
-                      style = "
-                      margin: 0;
-                      font-size: 32px;            /* bigger value text */
+                    h2( textOutput('student_gpa', inline = TRUE),
+                      style = 
+                      " margin: 0; 
+                      font-size: 32px; /* bigger value text */ 
                       "
-                    )
-                  )
-                )
-              )
-      ),
+                      )
+                    
+                    ) # end div
+                    ) # end div
+                  ) # end fluid row
+                  ), # end tab Item 1
+                
+              
       
       # --- Tab 2: Module Information -------------------------------------------
       tabItem(tabName = "moduleinfo",
