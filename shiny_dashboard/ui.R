@@ -181,14 +181,26 @@ ui <- dashboardPage(
                   align-items: flex-start;   /* top alignment */
                   gap: 20px;                 
                   width: 100%;
+                  height: calc(100vh - 200px);  /* full viewport minus Header/Filter height */
                   margin-top: 10px;          /* spacing below filter row */
                   ",
                   
-                  # Grades Plot (left side, flexible width)
+                  # container within plot student grades
                   div(
-                    style = "flex: 1;",
-                    plotOutput("grades_plot", height = "500px")
-                  ),
+                    style = "
+                    flex: 1;
+                    background-color: white;         /* white background */
+                    border-radius: 15px;             /* rounded corners */
+                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);  /* soft shadow */
+                    padding: 20px;                   /* inner spacing */
+                    height: calc(100vh - 200px);
+                    margin-left: 15px;               /* left margin */
+                    
+                    ",
+                    
+                    # Plot inside this container
+                    plotOutput("grades_plot", height = "100%", width = "100%")
+                    ),
                   
                   # GPA Card (right side)
                   div(
@@ -203,7 +215,7 @@ ui <- dashboardPage(
                     justify-content: center;
                     align-items: center;
                     box-shadow: 0px 0px 10px rgba(0,0,0,0.15);
-                    margin-right: 10px;        /* spacing from right edge */
+                    margin-right: 15px;        /* spacing from right edge */
                     ",
                     
                     h3(
