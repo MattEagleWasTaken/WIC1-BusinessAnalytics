@@ -41,7 +41,7 @@ margin-bottom: 10px;
 
 
 
-/* 4. Dropdown Input (Selectize) */
+/* 4. Dropdown Input Menue (Selectize) */
 .selectize-input {
   height: 40px !important;      /* fixed height for uniformity */
   border-radius: 45px !important;  /* rounded corners */
@@ -55,7 +55,7 @@ margin-bottom: 10px;
   border-radius: 10px !important;  /* rounded corners for dropdown menu */
 }
 
-/* 6. Static text field (read-only, same height as dropdown) */
+/* 6. Static text field Menue (read-only, same height as dropdown) */
 .static-text-input {
   height: 40px;                 /* same height as dropdown */
   width: 300px;
@@ -100,8 +100,7 @@ ui <- dashboardPage(
     title = "HS-Dashboard",
     
     # Logo placed in top right of header
-    tags$li(class = "dropdown",
-            tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
+    tags$li(class = "dropdown",tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
     )
   ),
   
