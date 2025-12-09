@@ -135,6 +135,10 @@ server <- function(input, output, session) {
 # ============================================================================
 # All Grades for selected student
 # ============================================================================
+  # Platz zum Speichern der Plotdaten
+  student_grades_for_plot <- reactiveVal(NULL)
+  
+  
   output$student_gpa <- renderText({
     req(input$student_toggle == "One Student")
     
@@ -162,6 +166,9 @@ server <- function(input, output, session) {
     ")
     )
     
+    # Speichere die Daten für den Plot
+    student_grades_for_plot(student_grades)
+    
     # Average Grade Calculation stays unchanged
     if (nrow(student_grades) == 0) return("-")
     
@@ -169,10 +176,63 @@ server <- function(input, output, session) {
     
   })
   
-  
+  # ============================================================================
+  # Grades horizontal bar plot
+  # ============================================================================
+  output$grades_plot <- renderPlot({
+    df <- student_grades_for_plot()
+    if (is.null(df) || nrow(df) == 0) return(NULL)
     
+    # Assign colors based on grade ranges
+    df$color <- cut(
+      df$grade,
+      breaks = c(0, 2.7, 4.0, 6),
+      labels = c("green", "orange", "red"),
+      include.lowest = TRUE
+    )
+    
+    ggplot(df, aes(x = grade, y = reorder(exam_title, grade), fill = color)) +
+      # Draw horizontal bars
+      geom_col(width = 0.6, color = "black") +
+      # Add grade label inside each bar, aligned to the left end
+      geom_text(aes(label = grade), 
+                hjust = 1.1,   
+                color = "black",
+                size = 4,
+                fontface = "bold") +
+      # X-axis from grade 1 (left) to 6 (right)
+      scale_x_continuous(
+        breaks = 1:6,
+        labels = 1:6,
+        expand = c(0,0),
+        limits = c(0,6)   
+      ) +
+      # Use softer colors for grade ranges
+      scale_fill_manual(
+        values = c(
+          "green"  = "#88c999",
+          "orange" = "#f3b173",
+          "red"    = "#e16b6b"
+        )
+      ) +
+      # Labels and title
+      labs(x = "Grade", y = "Exam", title = "Student Grades Overview") +
+      # Minimal theme with custom styling
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.background  = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white"),
+        axis.text.y      = element_text(face = "bold"),
+        axis.text.x      = element_text(face = "bold")
+      )
+  })
   
   
-  # Disconnect when session ends
+  
+  
+  
+  
+  
+  # Disconnect when session ends---------------------------------------------------------
   session$onSessionEnded(function() dbDisconnect(con))
 }

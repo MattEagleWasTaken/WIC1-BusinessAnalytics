@@ -217,8 +217,17 @@ ui <- dashboardPage(
                       )
                     
                     ) # end div
-                    ) # end div
-                  ) # end fluid row
+                    ), # end div
+                
+                
+                # Grades Plot
+                div(
+                  style = "flex:1;",  # nimmt den restlichen Platz ein
+                  plotOutput("grades_plot", height = "250px")
+                )
+              
+                
+                ) # end fluid row
                   ), # end tab Item 1
                 
               
