@@ -173,21 +173,28 @@ ui <- dashboardPage(
               ),
               
               #-----------------------------------------------------------------------------------
-              # GPA Card UI (placed below the student filters)
+              # GPA Card UI and Grade Plot (placed below the student filters)
               fluidRow(
                 div(
                   style = "
-                  width: 100%;
                   display: flex;
-                  justify-content: flex-end;     /* push card to the RIGHT */
-                  padding-right: 20px;
-                  margin-top: 10px;              /* slight spacing below filter row */
+                  align-items: flex-start;   /* top alignment */
+                  gap: 20px;                 
+                  width: 100%;
+                  margin-top: 10px;          /* spacing below filter row */
                   ",
                   
+                  # Grades Plot (left side, flexible width)
+                  div(
+                    style = "flex: 1;",
+                    plotOutput("grades_plot", height = "500px")
+                  ),
+                  
+                  # GPA Card (right side)
                   div(
                     id = 'gpa_card',
                     style = "
-                    background-color: white;      /* white background */
+                    background-color: white;
                     border-radius: 15px;
                     width: 180px;
                     height: 160px;
@@ -195,38 +202,29 @@ ui <- dashboardPage(
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    box-shadow: 0px 0px 10px rgba(0,0,0,0.15);   /* soft shadow */
-                  ",
+                    box-shadow: 0px 0px 10px rgba(0,0,0,0.15);
+                    margin-right: 10px;        /* spacing from right edge */
+                    ",
                     
                     h3(
                       'Average Grade',
                       style = "
-                      margin: 0;
-                      margin-bottom: 10px;
-                      font-size: 20px;            /* larger headline */
-                      font-weight: bold;
+                    margin: 0;
+                    margin-bottom: 10px;
+                    font-size: 20px;
+                    font-weight: bold;
                     "
                     ),
                     
-                    
-                    h2( textOutput('student_gpa', inline = TRUE),
-                      style = 
-                      " margin: 0; 
-                      font-size: 32px; /* bigger value text */ 
-                      "
-                      )
-                    
-                    ) # end div
-                    ), # end div
-                
-                
-                # Grades Plot
-                div(
-                  style = "flex:1;",  # nimmt den restlichen Platz ein
-                  plotOutput("grades_plot", height = "250px")
+                    h2(
+                      textOutput('student_gpa', inline = TRUE),
+                      style = "
+                      margin: 0;
+                      font-size: 32px;
+                    "
+                    )
+                  )
                 )
-              
-                
                 ) # end fluid row
                   ), # end tab Item 1
                 
