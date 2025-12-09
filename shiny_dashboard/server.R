@@ -166,6 +166,7 @@ server <- function(input, output, session) {
     if (nrow(student_grades) == 0) return("-")
     
     round(mean(student_grades$grade, na.rm = TRUE), 2)
+    
   })
   
   

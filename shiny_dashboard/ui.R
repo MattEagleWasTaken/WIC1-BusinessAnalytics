@@ -207,6 +207,8 @@ ui <- dashboardPage(
                       font-weight: bold;
                     "
                     ),
+                    
+                    
                     h2( textOutput('student_gpa', inline = TRUE),
                       style = 
                       " margin: 0; 
