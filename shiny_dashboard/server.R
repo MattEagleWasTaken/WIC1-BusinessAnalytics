@@ -183,49 +183,46 @@ server <- function(input, output, session) {
     df <- student_grades_for_plot()
     if (is.null(df) || nrow(df) == 0) return(NULL)
     
-    # Assign colors based on grade ranges
-    df$color <- cut(
-      df$grade,
-      breaks = c(0, 2.7, 4.0, 6),
-      labels = c("green", "orange", "red"),
-      include.lowest = TRUE
-    )
+    # Assign colors based on grade ranges (4 levels)
+    df$color <- with(df, ifelse(grade <= 1.7, "#3c8d40",   # dark green
+                                ifelse(grade <= 2.7, "#88c999",   # light green
+                                       ifelse(grade <= 4.0, "#f3b173",   # orange
+                                              "#e16b6b"))))            # red
     
-    ggplot(df, aes(x = grade, y = reorder(exam_title, grade), fill = color)) +
-      # Draw horizontal bars
-      geom_col(width = 0.6, color = "black") +
-      # Add grade label inside each bar, aligned to the left end
-      geom_text(aes(label = grade), 
-                hjust = 1.1,   
+    # Order exams: best grade (lowest value) on top
+    df$exam_title <- factor(df$exam_title, levels = rev(df$exam_title[order(df$grade)]))
+    
+    ggplot(df, aes(x = grade, y = exam_title, fill = color)) +
+      geom_col(width = 0.6, color = "black", show.legend = FALSE) +
+      # Add grade labels inside the bars
+      geom_text(aes(label = grade),
+                position = position_stack(vjust = 0.5),
                 color = "black",
-                size = 4,
+                size = 5,
                 fontface = "bold") +
-      # X-axis from grade 1 (left) to 6 (right)
+      # X-axis from 1 (left) to 6 (right) with breaks
       scale_x_continuous(
         breaks = 1:6,
         labels = 1:6,
-        expand = c(0,0),
-        limits = c(0,6)   
+        expand = expansion(mult = c(0.02, 0.05))
       ) +
-      # Use softer colors for grade ranges
-      scale_fill_manual(
-        values = c(
-          "green"  = "#88c999",
-          "orange" = "#f3b173",
-          "red"    = "#e16b6b"
-        )
-      ) +
-      # Labels and title
+      scale_fill_identity() +  # Use actual hex colors
       labs(x = "Grade", y = "Exam", title = "Student Grades Overview") +
-      # Minimal theme with custom styling
       theme_minimal(base_size = 14) +
       theme(
-        plot.background  = element_rect(fill = "white", color = NA),
-        panel.background = element_rect(fill = "white"),
-        axis.text.y      = element_text(face = "bold"),
-        axis.text.x      = element_text(face = "bold")
+        plot.background  = element_rect(fill = "white", color = NA, size = 0),
+        panel.background = element_rect(fill = "white", color = "grey90", size = 1),
+        panel.grid.major = element_line(color = "grey90"),
+        panel.grid.minor = element_blank(),
+        plot.title       = element_text(face = "bold", hjust = 0.5, size = 18),
+        axis.text        = element_text(face = "bold", color = "black"),
+        axis.title       = element_text(face = "bold", size = 14)
       )
   })
+  
+  
+  
+  
   
   
   
