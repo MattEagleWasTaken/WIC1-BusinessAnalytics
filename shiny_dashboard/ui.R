@@ -39,13 +39,7 @@ margin-bottom: 10px;
   
 }
 
-/* 2. Each filter block stacks its contents vertically */
-.filter-block {
-  display: flex;
-  flex-direction: column;       /* stack label above input */
-  width: 220px;                 /* fixed width for all filter elements */
-  
-}
+
 
 /* 4. Dropdown Input (Selectize) */
 .selectize-input {
