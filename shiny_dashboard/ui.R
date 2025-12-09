@@ -27,22 +27,31 @@ font-size: 18px;
 margin-bottom: 10px; 
 }
 
+/* Remove default padding/margin from Shiny dashboard body */
+.content {
+  padding-top: 0 !important;
+}
+
+.row {
+  margin-top: 0 !important;
+}
 
 /* 1. Filter row → all filter blocks are placed side by side */
-.student-filters-row {
+.filter-row {
+  background-color: white;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;     /* CENTER instead of FLEX-START */
   gap: 25px;
   height: 120px;
-  padding-top: 0px;         
-  margin-top: 0px;
+  margin-top: 0 !important;
+  padding-top: 0 !important
   
 }
 
-
-
 /* 4. Dropdown Input Menue (Selectize) */
 .selectize-input {
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
   height: 40px !important;      /* fixed height for uniformity */
   border-radius: 45px !important;  /* rounded corners */
   padding-left: 10px !important;   /* spacing between text and left border */
@@ -52,11 +61,13 @@ margin-bottom: 10px;
 
 /* 5. Dropdown list (the menu that opens) */
 .selectize-dropdown {
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
   border-radius: 10px !important;  /* rounded corners for dropdown menu */
 }
 
 /* 6. Static text field Menue (read-only, same height as dropdown) */
 .static-text-input {
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
   height: 40px;                 /* same height as dropdown */
   width: 300px;
   border-radius: 45px;          /* rounded corners */
@@ -74,6 +85,7 @@ margin-bottom: 10px;
 
 /* 8. Reset Button */
 .reset-btn {
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
   background-color: #4da3ff;    /* light blue button background */
   color: white;                 /* text color */
   border-radius: 45px;          /* rounded corners to match inputs */
@@ -131,7 +143,7 @@ ui <- dashboardPage(
       # --- Tab 1: Student Information ------------------------------------------
       tabItem(tabName = "studentinfo",
               fluidRow(
-                class = "student-filters-row",
+                class = "filter-row",
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
@@ -162,24 +174,46 @@ ui <- dashboardPage(
               #-----------------------------------------------------------------------------------
               # GPA Card UI (placed below the student filters)
               fluidRow(
-                column(
-                  width = 3,   # adjust width as needed
+                div(
+                  style = "
+                  width: 100%;
+                  display: flex;
+                  justify-content: flex-end;     /* push card to the RIGHT */
+                  padding-right: 20px;
+                  margin-top: 10px;              /* slight spacing below filter row */
+                  ",
+                  
                   div(
-                    id = "gpa_card",  # ID for dynamic updating
-                    class = "gpa-card",
+                    id = 'gpa_card',
                     style = "
-                    background-color: #f0f4ff;   /* light blue background */
+                    background-color: white;      /* white background */
                     border-radius: 15px;
-                    width: 150px;
-                    height: 150px;
+                    width: 180px;
+                    height: 160px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    margin-bottom: 20px;
-                    ",
-                    h4("Overall GPA"),
-                    h2(textOutput("student_gpa", inline = TRUE))  # dynamic GPA value
+                    box-shadow: 0px 0px 10px rgba(0,0,0,0.15);   /* soft shadow */
+                  ",
+                    
+                    h3(
+                      'Average Grade',
+                      style = "
+                      margin: 0;
+                      margin-bottom: 10px;
+                      font-size: 20px;            /* larger headline */
+                      font-weight: bold;
+                    "
+                    ),
+                    
+                    h2(
+                      textOutput('student_gpa', inline = TRUE),
+                      style = "
+                      margin: 0;
+                      font-size: 32px;            /* bigger value text */
+                      "
+                    )
                   )
                 )
               )

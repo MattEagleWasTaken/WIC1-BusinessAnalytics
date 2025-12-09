@@ -59,7 +59,7 @@ server <- function(input, output, session) {
           tags$label("Student Name:", style = "margin-top: 5px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px;",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
             {
               row <- students_sorted_name[
                 students_sorted_name$matriculation_number == input$matnr_select, ]
@@ -81,10 +81,10 @@ server <- function(input, output, session) {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Matriculation Number:", style = "margin-top: 5px;"),
+          tags$label("Matriculation Number:", style = "margin-top: 5px"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px;",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
             {
               row <- students_sorted_name[
                 students_sorted_name$full_name == input$name_select, ]
@@ -99,7 +99,7 @@ server <- function(input, output, session) {
         "reset_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px;"
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);"
       )
     )
   })
