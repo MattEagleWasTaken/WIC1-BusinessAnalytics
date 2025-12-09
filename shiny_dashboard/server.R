@@ -51,7 +51,7 @@ server <- function(input, output, session) {
       if (!matr_selected) {
         selectInput(
           "name_select",
-          label = tags$label("Student Name:",style = "margin-top: 5px;"),
+          label = tags$label("Student Name:",style = "margin-top: 6px;"),
           choices = name_choices,
           selected = input$name_select %||% "- not selected -"
         )
@@ -59,7 +59,7 @@ server <- function(input, output, session) {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Student Name:", style = "margin-top: 5px;"),
+          tags$label("Student Name:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
@@ -76,7 +76,7 @@ server <- function(input, output, session) {
       if (!name_selected) {
         selectInput(
           "matnr_select",
-          label = tags$label("Matriculation Number:", style = "margin-top: 5px;"),
+          label = tags$label("Matriculation Number:", style = "margin-top: 6px;"),
           choices = matr_choices,
           selected = input$matnr_select %||% "- not selected -"
         )
@@ -84,7 +84,7 @@ server <- function(input, output, session) {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Matriculation Number:", style = "margin-top: 5px"),
+          tags$label("Matriculation Number:", style = "margin-top: 6px"),
           div(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
@@ -129,13 +129,17 @@ server <- function(input, output, session) {
   observeEvent(input$reset_filters, {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
-  })
+  
+    # Set plot data to NULL → plot becomes empty
+    student_grades_for_plot(NULL)
+    
+    })
   
   
 # ============================================================================
 # All Grades for selected student
 # ============================================================================
-  # Platz zum Speichern der Plotdaten
+  # empty variable for student plot
   student_grades_for_plot <- reactiveVal(NULL)
   
   
@@ -166,7 +170,7 @@ server <- function(input, output, session) {
     ")
     )
     
-    # Speichere die Daten für den Plot
+    # saves grades for student plot
     student_grades_for_plot(student_grades)
     
     # Average Grade Calculation stays unchanged
@@ -216,7 +220,9 @@ server <- function(input, output, session) {
         panel.grid.minor = element_blank(),
         plot.title       = element_text(face = "bold", hjust = 0.5, size = 18),
         axis.text        = element_text(face = "bold", color = "black"),
-        axis.title       = element_text(face = "bold", size = 14)
+        axis.title       = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(face = "plain", color = "black", size = 14),  
+        axis.text.y = element_text(face = "plain", color = "black", size = 14)
       )
   })
   
