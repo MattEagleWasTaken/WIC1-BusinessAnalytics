@@ -199,7 +199,8 @@ ui <- dashboardPage(
                     style = "
                     background-color: #f0f4ff;   /* light blue background */
                     border-radius: 15px;
-                    height: 100px;
+                    width: 150px;
+                    height: 150px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
