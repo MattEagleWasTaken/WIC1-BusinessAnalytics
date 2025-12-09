@@ -48,7 +48,7 @@ server <- function(input, output, session) {
       if (!matr_selected) {
         selectInput(
           "name_select",
-          label = tags$label("Student Name:",style = "margin-top: 5px;"),
+          label = tags$label("Student Name:", class = "unified-label"),
           choices = name_choices,
           selected = input$name_select %||% "- not selected -"
         )
@@ -56,10 +56,10 @@ server <- function(input, output, session) {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Student Name:", style = "margin-top: 5px;"),
+          tags$label("Student Name:", class = "unified-label",style = "margin-top: 1px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px;",
+            style = "margin-top: 2px;",
             {
               row <- students_sorted_name[
                 students_sorted_name$matriculation_number == input$matnr_select, ]
@@ -73,7 +73,7 @@ server <- function(input, output, session) {
       if (!name_selected) {
         selectInput(
           "matnr_select",
-          label = tags$label("Matriculation Number:", style = "margin-top: 5px;"),
+          label = tags$label("Matriculation Number:", class = "unified-label"),
           choices = matr_choices,
           selected = input$matnr_select %||% "- not selected -"
         )
@@ -81,10 +81,10 @@ server <- function(input, output, session) {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Matriculation Number:", style = "margin-top: 5px;"),
+          tags$label("Matriculation Number:", class = "unified-label",style = "margin-top: 1px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px;",
+            style = "margin-top: 2px;",
             {
               row <- students_sorted_name[
                 students_sorted_name$full_name == input$name_select, ]
@@ -99,7 +99,7 @@ server <- function(input, output, session) {
         "reset_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px;"
+        style = "margin-top:27px;"
       )
     )
   })

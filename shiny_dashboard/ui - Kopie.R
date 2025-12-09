@@ -47,6 +47,17 @@ margin-bottom: 10px;
   
 }
 
+/* 3. Unified label style for all filters */
+.filter-label,
+.control-label,
+.static-text-label {
+  font-weight: bold;            /* bold text for all labels */
+  height: 22px;                 /* fixed height to align all labels */
+  line-height: 22px;            /* ensures vertical centering of label text */
+  margin: 0 0 6px 0;            /* small spacing below label before input */
+  padding: 0;                   /* remove any default padding */
+}
+
 /* 4. Dropdown Input (Selectize) */
 .selectize-input {
   height: 40px !important;      /* fixed height for uniformity */
@@ -93,7 +104,18 @@ margin-bottom: 10px;
 }
 
 
+/* ------------------------ GPA CARD ------------------------------------------ */
 
+.gpa-card h4 {       /* small title */
+  margin: 0;
+  font-weight: normal;
+}
+
+.gpa-card h2 {       /* numeric GPA value */
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+}
 
 
 "
