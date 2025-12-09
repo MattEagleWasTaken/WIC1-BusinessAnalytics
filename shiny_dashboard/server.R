@@ -42,7 +42,7 @@ server <- function(input, output, session) {
     matr_selected <- !is.null(input$matnr_select) && input$matnr_select != "- not selected -"
     
     div(
-      style = "display: flex; align-items: flex-start; gap: 20px;",
+      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
       
       # ---------------- Student Name ----------------
       if (!matr_selected) {
@@ -55,9 +55,11 @@ server <- function(input, output, session) {
       } else {
         div(
           class = "static-text-container",
-          tags$label("Student Name:", class = "unified-label"),
+          style = "margin-top: 0px;",
+          tags$label("Student Name:", class = "unified-label",style = "margin-top: 1px;"),
           div(
             class = "static-text-input",
+            style = "margin-top: 2px;",
             {
               row <- students_sorted_name[
                 students_sorted_name$matriculation_number == input$matnr_select, ]
@@ -78,9 +80,11 @@ server <- function(input, output, session) {
       } else {
         div(
           class = "static-text-container",
-          tags$label("Matriculation Number:", class = "unified-label"),
+          style = "margin-top: 0px;",
+          tags$label("Matriculation Number:", class = "unified-label",style = "margin-top: 1px;"),
           div(
             class = "static-text-input",
+            style = "margin-top: 2px;",
             {
               row <- students_sorted_name[
                 students_sorted_name$full_name == input$name_select, ]
@@ -95,7 +99,7 @@ server <- function(input, output, session) {
         "reset_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top: 10px;"
+        style = "margin-top:27px;"
       )
     )
   })

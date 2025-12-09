@@ -33,8 +33,10 @@ margin-bottom: 10px;
   display: flex;
   align-items: center;     /* CENTER instead of FLEX-START */
   gap: 25px;
-  height: 100px;
-  padding-top: 10px;            /* small padding from top of row */
+  height: 120px;
+  padding-top: 0px;         
+  margin-top: 0px;
+  
 }
 
 /* 2. Each filter block stacks its contents vertically */
@@ -42,6 +44,7 @@ margin-bottom: 10px;
   display: flex;
   flex-direction: column;       /* stack label above input */
   width: 220px;                 /* fixed width for all filter elements */
+  
 }
 
 /* 3. Unified label style for all filters */
@@ -83,7 +86,7 @@ margin-bottom: 10px;
 
 /* 7. Radio Buttons → align properly with inputs */
 .shiny-options-group {
-  margin-top: 6px;              /* same vertical offset as dropdowns for alignment */
+  margin-top: 5px;              /* same vertical offset as dropdowns for alignment */
 }
 
 /* 8. Reset Button */
@@ -161,7 +164,7 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px;",
+                  style = "display: flex; align-items: center; gap: 20px;height:100px",
                   
                   # Toggle: All Students / One Student
                   div(
