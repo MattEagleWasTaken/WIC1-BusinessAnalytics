@@ -218,15 +218,7 @@ ui <- dashboardPage(
                     margin-right: 15px;        /* spacing from right edge */
                     ",
                     
-                    h3(
-                      'Average Grade',
-                      style = "
-                    margin: 0;
-                    margin-bottom: 10px;
-                    font-size: 20px;
-                    font-weight: bold;
-                    "
-                    ),
+                    uiOutput("gpa_title"),
                     
                     h2(
                       textOutput('student_gpa', inline = TRUE),

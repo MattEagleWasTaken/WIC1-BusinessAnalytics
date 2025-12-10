@@ -97,7 +97,7 @@ server <- function(input, output, session) {
         )
       },
       
-      # ---------------- Reset Button ----------------
+# ---------------- Reset Button -----------------------------------------------------
       actionButton(
         "reset_filters",
         "Reset Selection",
@@ -135,15 +135,44 @@ server <- function(input, output, session) {
     
     })
   
+# ============================================================================
+# All Average Grades of all Students
+# ============================================================================
+all_student_averages <- dbGetQuery(
+  con,
+"
+SELECT 
+    g.matriculation_number,
+    AVG(g.grade) AS student_avg
+  FROM grade g
+  GROUP BY g.matriculation_number
+  "
+)  
+
+# Mean of all Student averages  
+overall_average <- mean(all_student_averages$student_avg, na.rm = TRUE)  
   
+    
 # ============================================================================
 # All Grades for selected student
 # ============================================================================
-  # empty variable for student plot
-  student_grades_for_plot <- reactiveVal(NULL)
+# empty variable for student plot
+student_grades_for_plot <- reactiveVal(NULL)
   
   
   output$student_gpa <- renderText({
+    
+# ---------------- If All Students Mode ------------------------------------------------
+    if (input$student_toggle == "All Students") {
+      
+      if (is.null(all_student_averages) || nrow(all_student_averages) == 0)
+        return("-")
+      
+      return(round(overall_average, 2))
+    }    
+    
+    
+# ---------------- One Student Mode ---------------------------------------------------    
     req(input$student_toggle == "One Student")
     
     selected_matr <- input$matnr_select
@@ -179,6 +208,30 @@ server <- function(input, output, session) {
     round(mean(student_grades$grade, na.rm = TRUE), 2)
     
   })
+  
+  #----- Dynamic Average Grade Text Outout-------------------------------------- 
+  output$gpa_title <- renderUI({
+    title <- if (input$student_toggle == "All Students") {
+      "Overall Average Grade"
+    } else {
+      "Average Grade"
+    }
+    
+    h3(
+      title,
+      style = "
+      margin: 0;
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    "
+    )
+  })
+  
+  
+  
+  
   
   # ============================================================================
   # Grades horizontal bar plot
