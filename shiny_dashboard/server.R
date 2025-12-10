@@ -130,7 +130,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
   
-    # Set plot data to NULL → plot becomes empty
+    # Set bar plot data to NULL → plot becomes empty
     student_grades_for_plot(NULL)
     
     })
@@ -209,10 +209,10 @@ student_grades_for_plot <- reactiveVal(NULL)
     
   })
   
-  #----- Dynamic Average Grade Text Outout-------------------------------------- 
+  #----- Dynamic Average Grade Text Output-------------------------------------- 
   output$gpa_title <- renderUI({
     title <- if (input$student_toggle == "All Students") {
-      "Overall Average Grade"
+      HTML("Overall<br>Average Grade")
     } else {
       "Average Grade"
     }
@@ -228,9 +228,6 @@ student_grades_for_plot <- reactiveVal(NULL)
     "
     )
   })
-  
-  
-  
   
   
   # ============================================================================
@@ -279,9 +276,44 @@ student_grades_for_plot <- reactiveVal(NULL)
       )
   })
   
+ 
+  # ============================================================================
+  # pie plot Average for all Students
+  # ============================================================================ 
+  output$pie_plot <- renderPlot({
+    
+    df <- all_student_averages
+    
+    df$cluster <- cut(
+      df$student_avg,
+      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      labels = c("Very Good", "Good", "Average", "Poor"),
+      include.lowest = TRUE
+    )
+    
+    df_clustered <- aggregate(matriculation_number ~ cluster, data = df, FUN = length)
+    names(df_clustered)[2] <- "count"
+    
+    ggplot(df_clustered, aes(x = "", y = count, fill = cluster)) +
+      geom_bar(stat = "identity", width = 1) +
+      coord_polar("y") +
+      theme_void() +
+      theme(legend.position = "right")
+  })
   
   
-  
+# ============================================================================
+# switch between pie plot all students, or bar plot one student 
+# ============================================================================  
+  observe({
+    if (input$student_toggle == "One Student") {
+      shinyjs::show("bar_container")
+      shinyjs::hide("pie_container")
+    } else {
+      shinyjs::hide("bar_container")
+      shinyjs::show("pie_container")
+    }
+  })
   
   
   

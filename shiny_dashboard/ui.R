@@ -185,8 +185,9 @@ ui <- dashboardPage(
                   margin-top: 10px;          /* spacing below filter row */
                   ",
                   
-                  # container within plot student grades
+                  # ==== BARPLOT CONTAINER ====
                   div(
+                    id = "bar_container",
                     style = "
                     flex: 1;
                     background-color: white;         /* white background */
@@ -198,9 +199,28 @@ ui <- dashboardPage(
                     
                     ",
                     
-                    # Plot inside this container
+                    # Plot inside this container 
                     plotOutput("grades_plot", height = "100%", width = "100%")
                     ),
+                  
+                  # ==== PIEPLOT CONTAINER ====
+                  div(
+                    id = "pie_container",
+                    style = "
+                    flex: 1;
+                    background-color: white;         /* white background */
+                    border-radius: 15px;             /* rounded corners */
+                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);  /* soft shadow */
+                    padding: 20px;                   /* inner spacing */
+                    height: calc(100vh - 200px);
+                    margin-left: 15px;               /* left margin */
+                    
+                    ",
+                    
+                    # Plot inside this container 
+                    plotOutput("pie_plot", height = "100px", width = "100px")
+                  ),
+                    
                   
                   # GPA Card (right side)
                   div(
