@@ -316,11 +316,7 @@ student_grades_for_plot <- reactiveVal(NULL)
   })
   
   
-  
-  
-  
-  
-  
+ 
   # Disconnect when session ends---------------------------------------------------------
   session$onSessionEnded(function() dbDisconnect(con))
 }
