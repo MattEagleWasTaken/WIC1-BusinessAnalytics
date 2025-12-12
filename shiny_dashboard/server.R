@@ -363,51 +363,69 @@ student_grades_for_plot <- reactiveVal(NULL)
 # ============================================================================
   output$boxplot_avg <- renderPlot({
     
-    # Only show when 'All Students' is selected
+    # Only show plot when 'All Students' is selected
     req(input$student_toggle == "All Students")
     
     df <- all_student_averages
     
-    # Compute overall average and standard deviation
+    # Compute overall mean, median, and standard deviation
     overall_mean <- mean(df$student_avg, na.rm = TRUE)
+    overall_median <- median(df$student_avg, na.rm = TRUE)
     overall_sd   <- sd(df$student_avg, na.rm = TRUE)
     
-    ggplot(df, aes(x = "", y = student_avg)) +
-      geom_boxplot(fill = "lightblue", color = "black", width = 0.5) +
+    ggplot(df, aes(x = 1, y = student_avg)) +
       
-      # Add mean as a single red point using annotate
-      annotate("point", x = 1, y = overall_mean, color = "red", size = 4, shape = 18) +
+      # Draw boxplot with default whiskers (T-end caps)
+      geom_boxplot(
+        width = 0.5,
+        fill = "lightblue",
+        color = "black",
+        outlier.shape = 16,
+        outlier.size = 2
+      ) +
       
-      # Add mean label
+      # Draw mean as a horizontal line inside the box width
+      geom_segment(
+        aes(x = 0.75, xend = 1.25, y = overall_mean, yend = overall_mean),
+        color = "blue",
+        size = 1
+      ) +
+      
+      # Add mean label to the right of the box
       annotate(
         "text",
-        x = 1,
-        y = overall_mean,
+        x = 0.5,             # position right of box
+        y = overall_mean,     
         label = paste0("Mean: ", round(overall_mean, 2)),
-        vjust = -1.5,
-        color = "red",
+        hjust = 0,            # left-aligned
+        vjust = 0.5,          # vertically centered on line
+        color = "blue",
         size = 5,
         fontface = "bold"
       ) +
       
+      # Boxplot title and subtitle
       labs(
         y = "Average Grade",
         x = NULL,
         title = "Distribution of Average Grades\nAcross All Students",
         subtitle = paste0(
-          "Median: ", round(median(df$student_avg, na.rm = TRUE), 2),
+          "Median: ", round(overall_median, 2),
           "\nSD: ", round(overall_sd, 2)
         )
       ) +
+      
+      # Theme settings
       theme_minimal(base_size = 14) +
       theme(
         plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(size = 14, face = "bold", hjust = 0.5),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
+        plot.subtitle = element_text(size = 14, face = "plain", hjust = 0.5),
+        axis.text.x = element_blank(),    # hide x-axis labels
+        axis.ticks.x = element_blank(),   # hide x-axis ticks
         axis.text.y = element_text(face = "bold", size = 12, color = "black")  # bold y-axis labels
       )
-})
+  })
+  
   
   
 # Disconnect when session ends---------------------------------------------------------
