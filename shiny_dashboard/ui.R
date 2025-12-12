@@ -179,10 +179,10 @@ ui <- dashboardPage(
                   style = "
                   display: flex;
                   align-items: flex-start;   /* top alignment */
-                  gap: 20px;                 
+                  gap: 30px;                 
                   width: 100%;
                   height: calc(100vh - 200px);  /* full viewport minus Header/Filter height */
-                  margin-top: 10px;          /* spacing below filter row */
+                  margin-top: 15px;          /* spacing below filter row */
                   ",
                   
                   # ==== BARPLOT CONTAINER ====
@@ -222,32 +222,58 @@ ui <- dashboardPage(
                   ),
                     
                   
-                  # GPA Card (right side)
+                  # ==== RIGHT CONTAINER WITH STACKED CARDS ====
                   div(
-                    id = 'gpa_card',
+                    id = "right_container",
                     style = "
-                    background-color: white;
-                    border-radius: 15px;
-                    width: 180px;
-                    height: 160px;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    box-shadow: 0px 0px 10px rgba(0,0,0,0.15);
-                    margin-right: 15px;        /* spacing from right edge */
+                    width: 25%;
+                    display: flex; 
+                    flex-direction: column;   /* stack cards vertically */
+                    gap: 20px;                /* spacing between cards */
+                    margin-right: 15px;       /* distance to screen edge */
+                    height: calc(100vh - 200px); /* full container height */
                     ",
                     
-                    uiOutput("gpa_title"),
-                    
-                    h2(
-                      textOutput('student_gpa', inline = TRUE),
+                    # Upper Card (GPA)
+                    div(
+                      id = 'gpa_card',
                       style = "
-                      margin: 0;
-                      font-size: 32px;
-                    "
+                      background-color: white;
+                      border-radius: 15px;
+                      height: 160px;           /* fixed height */
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                      box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+                      ",
+                      uiOutput("gpa_title"),
+                      h2(
+                        textOutput('student_gpa', inline = TRUE),
+                        style = "
+                        margin: 0;
+                        font-size: 32px;
+                        "
+                      )
+                    ),
+                    
+                    # Lower Card (Placeholder)
+                    div(
+                      id = 'placeholder_card',
+                      style = "
+                      background-color: white;
+                      border-radius: 15px;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: center;
+                      align-items: center;
+                      box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+                      flex: 1;                 /* take all remaining space */
+                      ",
+                      h3("Placeholder", style = "color: gray;")
                     )
                   )
+                  
                 )
                 ) # end fluid row
                   ), # end tab Item 1
