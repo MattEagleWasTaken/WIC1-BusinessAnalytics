@@ -341,6 +341,8 @@ student_grades_for_plot <- reactiveVal(NULL)
       )
   })
   
+
+  
   
 # ============================================================================
 # switch between pie plot all students, or bar plot one student 
@@ -356,7 +358,58 @@ student_grades_for_plot <- reactiveVal(NULL)
   })
   
   
- 
-  # Disconnect when session ends---------------------------------------------------------
-  session$onSessionEnded(function() dbDisconnect(con))
+# ============================================================================
+# BOX PLOT – Distribution of all students' average grades
+# ============================================================================
+  output$boxplot_avg <- renderPlot({
+    
+    # Only show when 'All Students' is selected
+    req(input$student_toggle == "All Students")
+    
+    df <- all_student_averages
+    
+    # Compute overall average and standard deviation
+    overall_mean <- mean(df$student_avg, na.rm = TRUE)
+    overall_sd   <- sd(df$student_avg, na.rm = TRUE)
+    
+    ggplot(df, aes(x = "", y = student_avg)) +
+      geom_boxplot(fill = "lightblue", color = "black", width = 0.5) +
+      
+      # Add mean as a single red point using annotate
+      annotate("point", x = 1, y = overall_mean, color = "red", size = 4, shape = 18) +
+      
+      # Add mean label
+      annotate(
+        "text",
+        x = 1,
+        y = overall_mean,
+        label = paste0("Mean: ", round(overall_mean, 2)),
+        vjust = -1.5,
+        color = "red",
+        size = 5,
+        fontface = "bold"
+      ) +
+      
+      labs(
+        y = "Average Grade",
+        x = NULL,
+        title = "Distribution of Average Grades\nAcross All Students",
+        subtitle = paste0(
+          "Median: ", round(median(df$student_avg, na.rm = TRUE), 2),
+          "\nSD: ", round(overall_sd, 2)
+        )
+      ) +
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, face = "bold", hjust = 0.5),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.y = element_text(face = "bold", size = 12, color = "black")  # bold y-axis labels
+      )
+})
+  
+  
+# Disconnect when session ends---------------------------------------------------------
+session$onSessionEnded(function() dbDisconnect(con))
 }

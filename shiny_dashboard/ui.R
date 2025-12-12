@@ -257,9 +257,9 @@ ui <- dashboardPage(
                       )
                     ),
                     
-                    # Lower Card (Placeholder)
+                    # Lower Card (Boxplot)
                     div(
-                      id = 'placeholder_card',
+                      id = 'boxplot_card',
                       style = "
                       background-color: white;
                       border-radius: 15px;
@@ -269,12 +269,15 @@ ui <- dashboardPage(
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                       flex: 1;                 /* take all remaining space */
+                      padding: 15px;
                       ",
-                      h3("Placeholder", style = "color: gray;")
+                      
+                      # Render the boxplot output
+                      plotOutput("boxplot_avg", height = "100%", width = "100%")
                     )
-                  )
                   
-                )
+                ) # end right container
+                ) # end outer container around plot container and right container
                 ) # end fluid row
                   ), # end tab Item 1
                 
