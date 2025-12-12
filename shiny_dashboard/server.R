@@ -278,12 +278,13 @@ student_grades_for_plot <- reactiveVal(NULL)
   
  
   # ============================================================================
-  # pie plot Average for all Students
-  # ============================================================================ 
+  # PIE PLOT – Performance distribution of all students
+  # ============================================================================
   output$pie_plot <- renderPlot({
     
     df <- all_student_averages
     
+    # Create grade clusters
     df$cluster <- cut(
       df$student_avg,
       breaks = c(0, 1.5, 2.5, 3.5, 4.1),
@@ -291,15 +292,59 @@ student_grades_for_plot <- reactiveVal(NULL)
       include.lowest = TRUE
     )
     
+    # Count number of students per cluster
     df_clustered <- aggregate(matriculation_number ~ cluster, data = df, FUN = length)
     names(df_clustered)[2] <- "count"
     
+    # Calculate percentages
+    df_clustered$percent <- round(df_clustered$count / sum(df_clustered$count) * 100, 1)
+    
+    # Build combined slice label: "XX% (YY)"
+    df_clustered$label <- paste0(df_clustered$percent, "% (", df_clustered$count, ")")
+    
     ggplot(df_clustered, aes(x = "", y = count, fill = cluster)) +
-      geom_bar(stat = "identity", width = 1) +
+      geom_bar(stat = "identity", width = 1, color = "black") +  
+      
+      # Add labels inside the pie slices
+      geom_text(
+        aes(label = label),
+        position = position_stack(vjust = 0.5),
+        size = 8
+      ) +
+      
+      # Convert bar plot to pie chart
       coord_polar("y") +
+      
+      # Set manual colors for clusters
+      scale_fill_manual(
+        values = c(
+          "Very Good" = "#3c8d40",   # dark green
+          "Good"      = "#88c999",   # green
+          "Average"   = "#f3b173",   # orange
+          "Poor"      = "#e16b6b"    # red
+        )
+      ) +
+      
+      # Title and legend labels
+      labs(
+        title = "Overall Performance Overview\nAverage Grade Distribution Across Students",
+        fill  = "Grade Cluster"
+      ) +
+      
       theme_void() +
-      theme(legend.position = "right")
+      theme(
+        plot.title = element_text(
+          size = 20,
+          face = "bold",
+          hjust = 0.5,
+          margin = margin(t = 0, r = 0, b = 20, l = 0)
+        ),
+        legend.title = element_text(size = 16),
+        legend.text  = element_text(size = 14),
+        legend.position = "right"
+      )
   })
+  
   
   
 # ============================================================================

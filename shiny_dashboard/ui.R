@@ -218,7 +218,7 @@ ui <- dashboardPage(
                     ",
                     
                     # Plot inside this container 
-                    plotOutput("pie_plot", height = "100px", width = "100px")
+                    plotOutput("pie_plot", height = "100%", width = "100%")
                   ),
                     
                   
