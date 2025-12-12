@@ -276,19 +276,25 @@ student_grades_for_plot <- reactiveVal(NULL)
       )
   })
   
- 
   # ============================================================================
   # PIE PLOT – Performance distribution of all students
   # ============================================================================
+  total_students <- nrow(all_student_averages)
+  
   output$pie_plot <- renderPlot({
     
     df <- all_student_averages
     
-    # Create grade clusters
+    # Create grade clusters with ranges in labels
     df$cluster <- cut(
       df$student_avg,
       breaks = c(0, 1.5, 2.5, 3.5, 4.1),
-      labels = c("Very Good", "Good", "Average", "Poor"),
+      labels = c(
+        "Very Good (≤1.5)",
+        "Good (1.6–2.5)",
+        "Average (2.6–3.5)",
+        "Poor (3.6–4.0)"
+      ),
       include.lowest = TRUE
     )
     
@@ -302,49 +308,38 @@ student_grades_for_plot <- reactiveVal(NULL)
     # Build combined slice label: "XX% (YY)"
     df_clustered$label <- paste0(df_clustered$percent, "% (", df_clustered$count, ")")
     
+    # Pie chart
     ggplot(df_clustered, aes(x = "", y = count, fill = cluster)) +
       geom_bar(stat = "identity", width = 1, color = "black") +  
-      
-      # Add labels inside the pie slices
       geom_text(
         aes(label = label),
         position = position_stack(vjust = 0.5),
-        size = 8
+        size = 8,
+        fontface = "bold"
       ) +
-      
-      # Convert bar plot to pie chart
       coord_polar("y") +
-      
-      # Set manual colors for clusters
       scale_fill_manual(
         values = c(
-          "Very Good" = "#3c8d40",   # dark green
-          "Good"      = "#88c999",   # green
-          "Average"   = "#f3b173",   # orange
-          "Poor"      = "#e16b6b"    # red
+          "Very Good (≤1.5)" = "#3c8d40",
+          "Good (1.6–2.5)"   = "#88c999",
+          "Average (2.6–3.5)"= "#f3b173",
+          "Poor (3.6–4.0)"    = "#e16b6b"
         )
       ) +
-      
-      # Title and legend labels
       labs(
-        title = "Overall Performance Overview\nAverage Grade Distribution Across Students",
+        title = "Overall Performance Overview",
+        subtitle = paste("Total number of students:", total_students),
         fill  = "Grade Cluster"
       ) +
-      
       theme_void() +
       theme(
-        plot.title = element_text(
-          size = 20,
-          face = "bold",
-          hjust = 0.5,
-          margin = margin(t = 0, r = 0, b = 20, l = 0)
-        ),
-        legend.title = element_text(size = 16),
-        legend.text  = element_text(size = 14),
+        plot.title    = element_text(size = 20, face = "bold", hjust = 0.5, margin = margin(b = 5)),
+        plot.subtitle = element_text(size = 16, face = "bold", hjust = 0.5, margin = margin(b = 10)),
+        legend.title  = element_text(size = 16),
+        legend.text   = element_text(size = 14),
         legend.position = "right"
       )
   })
-  
   
   
 # ============================================================================
