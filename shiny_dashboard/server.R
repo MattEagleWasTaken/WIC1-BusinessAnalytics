@@ -62,7 +62,7 @@ server <- function(input, output, session) {
           tags$label("Student Name:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- students_sorted_name[
                 students_sorted_name$matriculation_number == input$matnr_select, ]
@@ -87,7 +87,7 @@ server <- function(input, output, session) {
           tags$label("Matriculation Number:", style = "margin-top: 6px"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- students_sorted_name[
                 students_sorted_name$full_name == input$name_select, ]
@@ -102,7 +102,7 @@ server <- function(input, output, session) {
         "reset_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);"
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )
     )
   })
@@ -235,9 +235,9 @@ output$student_gpa <- renderText({
   })
   
   
-  # ============================================================================
-  # Grades horizontal bar plot
-  # ============================================================================
+# ============================================================================
+# Grades horizontal bar plot
+# ============================================================================
   output$grades_plot <- renderPlot({
     df <- student_grades_for_plot()
     if (is.null(df) || nrow(df) == 0) return(NULL)
@@ -345,9 +345,6 @@ output$student_gpa <- renderText({
         legend.position = "right"
       )
   })
-  
-
-  
   
 # ============================================================================
 # switch between pie plot all students, or bar plot one student 
@@ -479,7 +476,113 @@ output$student_gpa <- renderText({
     
   })
   
+ 
+# ---------------- Load Exam Data -----------------------------------------------------------------
+  exams <- dbGetQuery(con, "
+  SELECT pnr, title FROM exam
+")
   
+  exams_sorted_pnr <- exams[order(exams$pnr), ]
+  exams_sorted_title <- exams[order(exams$title), ]
+  
+  title_choices <- c("- not selected -", exams_sorted_title$title)
+  pnr_choices   <- c("- not selected -", exams_sorted_pnr$pnr)
+  
+# ============================================================================
+# Dynamic Input Row (for "One Exam")
+# ============================================================================
+  output$one_exam_filters <- renderUI({
+    
+    req(input$exam_toggle == "One Exam")
+    
+    title_selected <- !is.null(input$exam_title_select) && input$exam_title_select != "- not selected -"
+    pnr_selected   <- !is.null(input$exam_pnr_select) && input$exam_pnr_select != "- not selected -"
+    
+    div(
+      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      
+      # ---------------- Exam Title ----------------
+      if (!pnr_selected) {
+        selectInput(
+          "exam_title_select",
+          label = tags$label("Exam Title:", style = "margin-top: 6px;"),
+          choices = title_choices,
+          selected = input$exam_title_select %||% "- not selected -"
+        )
+      } else {
+        div(
+          class = "static-text-container",
+          style = "margin-top: 0px;",
+          tags$label("Exam Title:", style = "margin-top: 6px;"),
+          div(
+            class = "static-text-input",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            {
+              row <- exams_sorted_title[exams_sorted_title$title == input$exam_title_select, ]
+              row$title
+            }
+          )
+        )
+      },
+      
+# ---------------- Exam Number (PNR) ----------------
+      if (!title_selected) {
+        selectInput(
+          "exam_pnr_select",
+          label = tags$label("Exam Number:", style = "margin-top: 6px;"),
+          choices = pnr_choices,
+          selected = input$exam_pnr_select %||% "- not selected -"
+        )
+      } else {
+        div(
+          class = "static-text-container",
+          style = "margin-top: 0px;",
+          tags$label("Exam Number:", style = "margin-top: 6px;"),
+          div(
+            class = "static-text-input",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            {
+              row <- exams_sorted_pnr[exams_sorted_pnr$pnr == input$exam_pnr_select, ]
+              row$pnr
+            }
+          )
+        )
+      },
+      
+# ---------------- Reset Button ----------------
+      actionButton(
+        "reset_exam_filters",
+        "Reset Selection",
+        class = "reset-btn",
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);"
+      )
+    )
+  })
+  
+# ============================================================================
+# Show / Hide Exam Reset Button
+# ============================================================================
+  observe({
+    if (
+      (!is.null(input$exam_title_select) && input$exam_title_select != "- not selected -") ||
+      (!is.null(input$exam_pnr_select) && input$exam_pnr_select != "- not selected -")
+    ) {
+      shinyjs::show("reset_exam_filters")
+    } else {
+      shinyjs::hide("reset_exam_filters")
+    }
+  })
+  
+# ============================================================================
+# Reset all Exam dropdowns
+# ============================================================================
+  observeEvent(input$reset_exam_filters, {
+    updateSelectInput(session, "exam_title_select", selected = "- not selected -")
+    updateSelectInput(session, "exam_pnr_select", selected = "- not selected -")
+    
+})
+  
+ 
   
   
   
