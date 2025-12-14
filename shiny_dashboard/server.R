@@ -457,7 +457,7 @@ student_grades_for_plot <- reactiveVal(NULL)
           # Label on the right of the box
           annotate(
             "text",
-            x = 1.275,
+            x = 1.265,
             y = student_mean,
             label = paste0("Student: ", round(student_mean, 2)),
             hjust = 0,
@@ -467,10 +467,12 @@ student_grades_for_plot <- reactiveVal(NULL)
             fontface = "bold"
           )
       }
-      }
-        p
-        
+    }
+    
+    p
+    
   })
+  
   
   
   
