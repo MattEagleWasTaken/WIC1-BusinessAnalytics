@@ -516,16 +516,16 @@ output$student_gpa <- renderText({
           tags$label("Exam Title:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams_sorted_title[exams_sorted_title$title == input$exam_title_select, ]
+              row <- exams_sorted_pnr[exams_sorted_pnr$pnr == input$exam_pnr_select, ]
               row$title
             }
           )
         )
       },
       
-# ---------------- Exam Number (PNR) ----------------
+      # ---------------- Exam Number (PNR) ----------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
@@ -540,24 +540,25 @@ output$student_gpa <- renderText({
           tags$label("Exam Number:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams_sorted_pnr[exams_sorted_pnr$pnr == input$exam_pnr_select, ]
+              row <- exams_sorted_title[exams_sorted_title$title == input$exam_title_select, ]
               row$pnr
             }
           )
         )
       },
       
-# ---------------- Reset Button ----------------
+      # ---------------- Reset Button ----------------
       actionButton(
         "reset_exam_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.15);"
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )
     )
   })
+  
   
 # ============================================================================
 # Show / Hide Exam Reset Button
