@@ -41,8 +41,11 @@ server <- function(input, output, session) {
     
     req(input$student_toggle == "One Student")
     
-    name_selected <- !is.null(input$name_select) && input$name_select != "- not selected -"
-    matr_selected <- !is.null(input$matnr_select) && input$matnr_select != "- not selected -"
+    name_selected <- !is.null(input$name_select) &&
+      input$name_select != "- not selected -"
+    
+    matr_selected <- !is.null(input$matnr_select) &&
+      input$matnr_select != "- not selected -"
     
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
@@ -51,21 +54,30 @@ server <- function(input, output, session) {
       if (!matr_selected) {
         selectInput(
           "name_select",
-          label = tags$label("Student Name:",style = "margin-top: 6px;"),
-          choices = name_choices,
+          label = tags$label(
+            "Student Name:",
+            style = "margin-top: 6px;"
+          ),
+          choices  = name_choices,
           selected = input$name_select %||% "- not selected -"
         )
       } else {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Student Name:", style = "margin-top: 6px;"),
+          
+          tags$label(
+            "Student Name:",
+            style = "margin-top: 6px;"
+          ),
+          
           div(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- students_sorted_name[
-                students_sorted_name$matriculation_number == input$matnr_select, ]
+                students_sorted_name$matriculation_number == input$matnr_select,
+              ]
               paste(row$first_name, row$last_name)
             }
           )
@@ -76,28 +88,37 @@ server <- function(input, output, session) {
       if (!name_selected) {
         selectInput(
           "matnr_select",
-          label = tags$label("Matriculation Number:", style = "margin-top: 6px;"),
-          choices = matr_choices,
+          label = tags$label(
+            "Matriculation Number:",
+            style = "margin-top: 6px;"
+          ),
+          choices  = matr_choices,
           selected = input$matnr_select %||% "- not selected -"
         )
       } else {
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Matriculation Number:", style = "margin-top: 6px"),
+          
+          tags$label(
+            "Matriculation Number:",
+            style = "margin-top: 6px;"
+          ),
+          
           div(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- students_sorted_name[
-                students_sorted_name$full_name == input$name_select, ]
+                students_sorted_name$full_name == input$name_select,
+              ]
               row$matriculation_number
             }
           )
         )
       },
       
-# ---------------- Reset Button -----------------------------------------------------
+      # ---------------- Reset Button ----------------
       actionButton(
         "reset_filters",
         "Reset Selection",
@@ -106,6 +127,8 @@ server <- function(input, output, session) {
       )
     )
   })
+  
+  
   
   
 # ============================================================================
@@ -491,7 +514,7 @@ output$student_gpa <- renderText({
   # Dropdown choices
   title_choices    <- c("- not selected -", exams_sorted_title$title)
   pnr_choices      <- c("- not selected -", exams_sorted_pnr$pnr)
-  semester_choices <- c("- not selected -", unique(exams_sorted_sem$semester))
+  semester_choices <- c("- all semester -", unique(exams_sorted_sem$semester))
   
 
 # ============================================================================
@@ -501,29 +524,29 @@ output$exam_semester_filter <- renderUI({
     
     req(input$exam_toggle == "All Exams")
     
+    div(
+    style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;", 
     selectInput(
       "exam_semester_select",
       label = tags$label("Semester:", style = "margin-top: 6px;"),
       choices = semester_choices,
-      selected = "- not selected -"
+      selected = "- all semester -"
     )
+  )
 })
   
 # ============================================================================
 # Dynamic Input Row (for "One Exam")
 # ============================================================================
-output$one_exam_filters <- renderUI({
+  output$one_exam_filters <- renderUI({
     
     req(input$exam_toggle == "One Exam")
     
-    title_selected    <- !is.null(input$exam_title_select) &&
+    title_selected <- !is.null(input$exam_title_select) &&
       input$exam_title_select != "- not selected -"
     
-    pnr_selected      <- !is.null(input$exam_pnr_select) &&
+    pnr_selected <- !is.null(input$exam_pnr_select) &&
       input$exam_pnr_select != "- not selected -"
-    
-    semester_selected <- !is.null(input$exam_semester_select_one) &&
-      input$exam_semester_select_one != "- not selected -"
     
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
@@ -533,7 +556,7 @@ output$one_exam_filters <- renderUI({
         "exam_semester_select_one",
         label = tags$label("Semester:", style = "margin-top: 6px;"),
         choices = semester_choices,
-        selected = input$exam_semester_select_one %||% "- not selected -"
+        selected = input$exam_semester_select_one %||% "- all semester -"
       ),
       
       # ---------------- Exam Title ----------------
@@ -547,9 +570,11 @@ output$one_exam_filters <- renderUI({
       } else {
         div(
           class = "static-text-container",
+          style = "margin-top: 0px;",
           tags$label("Exam Title:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- exams[exams$pnr == input$exam_pnr_select, ]
               row$title
@@ -558,7 +583,7 @@ output$one_exam_filters <- renderUI({
         )
       },
       
-      # ---------------- Exam Number (PNR) ----------------
+      # ---------------- Exam Number ----------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
@@ -569,9 +594,11 @@ output$one_exam_filters <- renderUI({
       } else {
         div(
           class = "static-text-container",
+          style = "margin-top: 0px;",
           tags$label("Exam Number:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
+            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- exams[exams$title == input$exam_title_select, ]
               row$pnr
@@ -585,10 +612,11 @@ output$one_exam_filters <- renderUI({
         "reset_exam_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px;"
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )
     )
-})
+  })
+  
   
   
 # ============================================================================
@@ -612,7 +640,7 @@ output$one_exam_filters <- renderUI({
     
     updateSelectInput(session, "exam_title_select", selected = "- not selected -")
     updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
-    updateSelectInput(session, "exam_semester_select_one", selected = "- not selected -")
+    updateSelectInput(session, "exam_semester_select_one", selected = "- all semester -")
   })
   
  
