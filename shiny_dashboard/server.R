@@ -238,9 +238,9 @@ student_grades_for_plot <- reactiveVal(NULL)
     if (is.null(df) || nrow(df) == 0) return(NULL)
     
     # Assign colors based on grade ranges (4 levels)
-    df$color <- with(df, ifelse(grade <= 1.7, "#3c8d40",   # dark green
-                                ifelse(grade <= 2.7, "#88c999",   # light green
-                                       ifelse(grade <= 4.0, "#f3b173",   # orange
+    df$color <- with(df, ifelse(grade <= 1.5, "#3c8d40",   # dark green
+                                ifelse(grade <= 2.5, "#88c999",   # light green
+                                       ifelse(grade <= 3.5, "#f3b173",   # orange
                                               "#e16b6b"))))            # red
     
     # Order exams: best grade (lowest value) on top
@@ -358,9 +358,9 @@ student_grades_for_plot <- reactiveVal(NULL)
   })
   
   
-# ============================================================================
-# BOX PLOT – Distribution of all students' average grades
-# ============================================================================
+  # ============================================================================
+  # BOX PLOT – Distribution of all students' average grades
+  # ============================================================================
   output$boxplot_avg <- renderPlot({
     
     # Only show plot when 'All Students' is selected
@@ -368,63 +368,80 @@ student_grades_for_plot <- reactiveVal(NULL)
     
     df <- all_student_averages
     
-    # Compute overall mean, median, and standard deviation
-    overall_mean <- mean(df$student_avg, na.rm = TRUE)
+    # Compute statistics
+    overall_mean   <- mean(df$student_avg, na.rm = TRUE)
     overall_median <- median(df$student_avg, na.rm = TRUE)
-    overall_sd   <- sd(df$student_avg, na.rm = TRUE)
+    overall_sd     <- sd(df$student_avg, na.rm = TRUE)
     
     ggplot(df, aes(x = 1, y = student_avg)) +
       
-      # Draw boxplot with default whiskers (T-end caps)
+      # Standard boxplot with default whiskers (T end caps)
       geom_boxplot(
         width = 0.5,
         fill = "lightblue",
-        color = "black",
-        outlier.shape = 16,
-        outlier.size = 2
+        color = "black"
       ) +
       
-      # Draw mean as a horizontal line inside the box width
-      geom_segment(
-        aes(x = 0.75, xend = 1.25, y = overall_mean, yend = overall_mean),
+      # Mean line restricted to box width
+      annotate(
+        "segment",
+        x = 0.75, xend = 1.25,
+        y = overall_mean, yend = overall_mean,
         color = "blue",
-        size = 1
+        linewidth = 1.2
       ) +
       
-      # Add mean label to the right of the box
+      # Mean label left of the box, aligned with mean line
       annotate(
         "text",
-        x = 0.5,             # position right of box
-        y = overall_mean,     
+        x = 0.725,
+        y = overall_mean,
         label = paste0("Mean: ", round(overall_mean, 2)),
-        hjust = 0,            # left-aligned
-        vjust = 0.5,          # vertically centered on line
+        hjust = 1,
+        vjust = 0.5,
         color = "blue",
-        size = 5,
+        size = 4,
         fontface = "bold"
       ) +
       
-      # Boxplot title and subtitle
+      # Median label right of the box, aligned with median line
+      annotate(
+        "text",
+        x = 1.275,
+        y = overall_median,
+        label = paste0("Median: ", round(overall_median, 2)),
+        hjust = 0,
+        vjust = 0.5,
+        color = "black",
+        size = 4,
+        fontface = "bold"
+      ) +
+      
+      # Titles
       labs(
         y = "Average Grade",
         x = NULL,
         title = "Distribution of Average Grades\nAcross All Students",
         subtitle = paste0(
           "Median: ", round(overall_median, 2),
-          "\nSD: ", round(overall_sd, 2)
+          "   |   SD: ", round(overall_sd, 2)
         )
       ) +
       
-      # Theme settings
+      # Expand x-range to avoid clipping of labels
+      scale_x_continuous(limits = c(0.4, 1.6)) +
+      
+      # Theme styling
       theme_minimal(base_size = 14) +
       theme(
-        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
         plot.subtitle = element_text(size = 14, face = "plain", hjust = 0.5),
-        axis.text.x = element_blank(),    # hide x-axis labels
-        axis.ticks.x = element_blank(),   # hide x-axis ticks
-        axis.text.y = element_text(face = "bold", size = 12, color = "black")  # bold y-axis labels
+        axis.text.x   = element_blank(),
+        axis.ticks.x  = element_blank(),
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black")
       )
   })
+  
   
   
   
