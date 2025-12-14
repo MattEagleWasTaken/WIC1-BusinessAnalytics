@@ -365,12 +365,12 @@ student_grades_for_plot <- reactiveVal(NULL)
     
     df <- all_student_averages
     
-    # Reuse already computed overall average
+    # Overall statistics
     overall_mean   <- overall_average
     overall_median <- median(df$student_avg, na.rm = TRUE)
     overall_sd     <- sd(df$student_avg, na.rm = TRUE)
     
-    ggplot(df, aes(x = 1, y = student_avg)) +
+    p <- ggplot(df, aes(x = 1, y = student_avg)) +
       
       # Standard boxplot
       geom_boxplot(
@@ -379,7 +379,7 @@ student_grades_for_plot <- reactiveVal(NULL)
         color = "black"
       ) +
       
-      # Overall mean line (blue)
+      # Overall mean (blue line)
       annotate(
         "segment",
         x = 0.75, xend = 1.25,
@@ -429,11 +429,35 @@ student_grades_for_plot <- reactiveVal(NULL)
       theme_minimal(base_size = 14) +
       theme(
         plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(size = 14, face = "plain", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
         axis.text.x   = element_blank(),
         axis.ticks.x  = element_blank(),
         axis.text.y   = element_text(face = "bold", size = 12, color = "black")
       )
+    
+    # ----------------------------------------------------
+    # Add student mean (red line) ONLY in One Student mode
+    # ----------------------------------------------------
+    if (input$student_toggle == "One Student") {
+      
+      df_student <- student_grades_for_plot()
+      
+      if (!is.null(df_student) && nrow(df_student) > 0) {
+        
+        student_mean <- mean(df_student$grade, na.rm = TRUE)
+        
+        p <- p +
+          annotate(
+            "segment",
+            x = 0.75, xend = 1.25,
+            y = student_mean, yend = student_mean,
+            color = "red",
+            linewidth = 1.2
+          )
+      }
+    }
+    
+    p
   })
   
   
