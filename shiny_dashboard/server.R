@@ -538,6 +538,39 @@ output$exam_semester_filter <- renderUI({
 # ============================================================================
 # Dynamic Input Row (for "One Exam")
 # ============================================================================
+# Semester pre-filter logic included
+# ============================================================================
+  
+# ---- Reactive: Exams filtered by semester (One Exam mode) -------------------
+  filtered_exams_one <- reactive({
+    
+    df <- exams
+    
+    semester <- input$exam_semester_select_one
+    
+    if (!is.null(semester) && semester != "- all semester -") {
+      df <- df[df$semester == semester, ]
+    }
+    
+    df
+  })
+  
+# ---- Reactive: Dropdown choices ---------------------------------------------
+  exam_title_choices_one <- reactive({
+    c(
+      "- not selected -",
+      sort(unique(filtered_exams_one()$title))
+    )
+  })
+  
+  exam_pnr_choices_one <- reactive({
+    c(
+      "- not selected -",
+      sort(unique(filtered_exams_one()$pnr))
+    )
+  })
+  
+# ---- UI ---------------------------------------------------------------------
   output$one_exam_filters <- renderUI({
     
     req(input$exam_toggle == "One Exam")
@@ -551,7 +584,7 @@ output$exam_semester_filter <- renderUI({
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
       
-      # ---------------- Semester ----------------
+# ---------------- Semester ----------------------------------------------------------
       selectInput(
         "exam_semester_select_one",
         label = tags$label("Semester:", style = "margin-top: 6px;"),
@@ -559,12 +592,12 @@ output$exam_semester_filter <- renderUI({
         selected = input$exam_semester_select_one %||% "- all semester -"
       ),
       
-      # ---------------- Exam Title ----------------
+# ---------------- Exam Title -----------------------------------------------------------
       if (!pnr_selected) {
         selectInput(
           "exam_title_select",
           label = tags$label("Exam Title:", style = "margin-top: 6px;"),
-          choices = title_choices,
+          choices = exam_title_choices_one(),
           selected = input$exam_title_select %||% "- not selected -"
         )
       } else {
@@ -576,19 +609,20 @@ output$exam_semester_filter <- renderUI({
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams[exams$pnr == input$exam_pnr_select, ]
+              row <- filtered_exams_one()[
+                filtered_exams_one()$pnr == input$exam_pnr_select, ]
               row$title
             }
           )
         )
       },
       
-      # ---------------- Exam Number ----------------
+# ---------------- Exam Number -------------------------------------------------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
           label = tags$label("Exam Number:", style = "margin-top: 6px;"),
-          choices = pnr_choices,
+          choices = exam_pnr_choices_one(),
           selected = input$exam_pnr_select %||% "- not selected -"
         )
       } else {
@@ -600,14 +634,15 @@ output$exam_semester_filter <- renderUI({
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams[exams$title == input$exam_title_select, ]
+              row <- filtered_exams_one()[
+                filtered_exams_one()$title == input$exam_title_select, ]
               row$pnr
             }
           )
         )
       },
       
-      # ---------------- Reset Button ----------------
+# ---------------- Reset Button ----------------------------------------------------
       actionButton(
         "reset_exam_filters",
         "Reset Selection",
@@ -616,6 +651,15 @@ output$exam_semester_filter <- renderUI({
       )
     )
   })
+  
+# ---- Reset logic -------------------------------------------------------------------
+  observeEvent(input$reset_exam_filters, {
+    
+    updateSelectInput(session, "exam_title_select", selected = "- not selected -")
+    updateSelectInput(session, "exam_pnr_select", selected = "- not selected -")
+    updateSelectInput(session, "exam_semester_select_one", selected = "- all semester -")
+  })
+  
   
   
   
@@ -633,21 +677,8 @@ output$exam_semester_filter <- renderUI({
     }
   })
   
-# ============================================================================
-# Reset Exam Filters
-# ============================================================================
-  observeEvent(input$reset_exam_filters, {
-    
-    updateSelectInput(session, "exam_title_select", selected = "- not selected -")
-    updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
-    updateSelectInput(session, "exam_semester_select_one", selected = "- all semester -")
-  })
-  
+
  
-  
-  
-  
-  
 # Disconnect when session ends---------------------------------------------------------
 session$onSessionEnded(function() dbDisconnect(con))
 }
