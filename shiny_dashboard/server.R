@@ -358,31 +358,28 @@ student_grades_for_plot <- reactiveVal(NULL)
   })
   
   
-  # ============================================================================
-  # BOX PLOT – Distribution of all students' average grades
-  # ============================================================================
+# ============================================================================
+# BOX PLOT – Distribution of all students' average grades
+# ============================================================================
   output$boxplot_avg <- renderPlot({
-    
-    # Only show plot when 'All Students' is selected
-    req(input$student_toggle == "All Students")
     
     df <- all_student_averages
     
-    # Compute statistics
-    overall_mean   <- mean(df$student_avg, na.rm = TRUE)
+    # Reuse already computed overall average
+    overall_mean   <- overall_average
     overall_median <- median(df$student_avg, na.rm = TRUE)
     overall_sd     <- sd(df$student_avg, na.rm = TRUE)
     
     ggplot(df, aes(x = 1, y = student_avg)) +
       
-      # Standard boxplot with default whiskers (T end caps)
+      # Standard boxplot
       geom_boxplot(
         width = 0.5,
         fill = "lightblue",
         color = "black"
       ) +
       
-      # Mean line restricted to box width
+      # Overall mean line (blue)
       annotate(
         "segment",
         x = 0.75, xend = 1.25,
@@ -391,7 +388,7 @@ student_grades_for_plot <- reactiveVal(NULL)
         linewidth = 1.2
       ) +
       
-      # Mean label left of the box, aligned with mean line
+      # Mean label (left)
       annotate(
         "text",
         x = 0.725,
@@ -404,7 +401,7 @@ student_grades_for_plot <- reactiveVal(NULL)
         fontface = "bold"
       ) +
       
-      # Median label right of the box, aligned with median line
+      # Median label (right)
       annotate(
         "text",
         x = 1.275,
@@ -417,7 +414,6 @@ student_grades_for_plot <- reactiveVal(NULL)
         fontface = "bold"
       ) +
       
-      # Titles
       labs(
         y = "Average Grade",
         x = NULL,
@@ -428,10 +424,8 @@ student_grades_for_plot <- reactiveVal(NULL)
         )
       ) +
       
-      # Expand x-range to avoid clipping of labels
       scale_x_continuous(limits = c(0.4, 1.6)) +
       
-      # Theme styling
       theme_minimal(base_size = 14) +
       theme(
         plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
@@ -441,6 +435,7 @@ student_grades_for_plot <- reactiveVal(NULL)
         axis.text.y   = element_text(face = "bold", size = 12, color = "black")
       )
   })
+  
   
   
   
