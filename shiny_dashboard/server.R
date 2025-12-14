@@ -151,6 +151,9 @@ SELECT
 
 # Mean of all Student averages  
 overall_average <- mean(all_student_averages$student_avg, na.rm = TRUE)  
+
+# SD of all Students
+overall_sd      <- sd(all_student_averages$student_avg, na.rm = TRUE) 
   
     
 # ============================================================================
@@ -160,16 +163,18 @@ overall_average <- mean(all_student_averages$student_avg, na.rm = TRUE)
 student_grades_for_plot <- reactiveVal(NULL)
   
   
-  output$student_gpa <- renderText({
+output$student_gpa <- renderText({
     
 # ---------------- If All Students Mode ------------------------------------------------
-    if (input$student_toggle == "All Students") {
-      
-      if (is.null(all_student_averages) || nrow(all_student_averages) == 0)
-        return("-")
-      
-      return(round(overall_average, 2))
-    }    
+  if (input$student_toggle == "All Students") {
+    
+    if (is.null(all_student_averages) || nrow(all_student_averages) == 0)
+      return("-")
+    
+    # Average grade + SD in smaller font
+      return(paste0(round(overall_average, 2), " ± ", round(overall_sd, 2)))  
+    }
+          
     
     
 # ---------------- One Student Mode ---------------------------------------------------    
@@ -469,6 +474,7 @@ student_grades_for_plot <- reactiveVal(NULL)
       }
     }
     
+    # show plot
     p
     
   })
