@@ -43,7 +43,7 @@ margin-bottom: 10px;
 /* 1. Filter row → all filter blocks are placed side by side */
 .filter-row {
   background-color: white;
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;     /* CENTER instead of FLEX-START */
   gap: 25px;
@@ -55,7 +55,7 @@ margin-bottom: 10px;
 
 /* 4. Dropdown Input Menue (Selectize) */
 .selectize-input {
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   height: 40px !important;      /* fixed height for uniformity */
   border-radius: 45px !important;  /* rounded corners */
   padding-left: 10px !important;   /* spacing between text and left border */
@@ -65,13 +65,13 @@ margin-bottom: 10px;
 
 /* 5. Dropdown list (the menu that opens) */
 .selectize-dropdown {
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   border-radius: 10px !important;  /* rounded corners for dropdown menu */
 }
 
 /* 6. Static text field Menue (read-only, same height as dropdown) */
 .static-text-input {
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   height: 40px;                 /* same height as dropdown */
   width: 300px;
   border-radius: 45px;          /* rounded corners */
@@ -89,7 +89,7 @@ margin-bottom: 10px;
 
 /* 8. Reset Button */
 .reset-btn {
-  box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   background-color: #4da3ff;    /* light blue button background */
   color: white;                 /* text color */
   border-radius: 45px;          /* rounded corners to match inputs */
@@ -279,14 +279,21 @@ ui <- dashboardPage(
                 ) # end right container
                 ) # end outer container around plot container and right container
                 ) # end fluid row
-                  ), # end tab Item 1
+                ), # end tab Item 1
                 
               
       
       # --- Tab 2: Module Information -------------------------------------------
       tabItem(tabName = "moduleinfo",
-              h2("Module Information content")
-      )
+              fluidRow(
+                class = "filter-row",
+                
+                # Flex container for toggle + dropdowns + reset button
+                div(
+                  style = "display: flex; align-items: center; gap: 20px;height:100px",
+                  )
+                  )
+                  ) # end Tab item 2
     ) # end TabItems
   ) # end Body
 ) # end UI
