@@ -281,9 +281,9 @@ output$student_gpa <- renderText({
       )
   })
   
-  # ============================================================================
-  # PIE PLOT – Performance distribution of all students
-  # ============================================================================
+# ============================================================================
+# PIE PLOT – Performance distribution of all students
+# ============================================================================
   total_students <- nrow(all_student_averages)
   
   output$pie_plot <- renderPlot({
@@ -477,29 +477,64 @@ output$student_gpa <- renderText({
   })
   
  
-# ---------------- Load Exam Data -----------------------------------------------------------------
+# ---------------- Load Exam Data (incl. semester) ----------------
   exams <- dbGetQuery(con, "
-  SELECT pnr, title FROM exam
-")
+  SELECT pnr, title, semester
+  FROM exam
+  ")
   
-  exams_sorted_pnr <- exams[order(exams$pnr), ]
-  exams_sorted_title <- exams[order(exams$title), ]
+  # Sort variants
+  exams_sorted_pnr    <- exams[order(exams$pnr), ]
+  exams_sorted_title  <- exams[order(exams$title), ]
+  exams_sorted_sem    <- exams[order(exams$semester), ]
   
-  title_choices <- c("- not selected -", exams_sorted_title$title)
-  pnr_choices   <- c("- not selected -", exams_sorted_pnr$pnr)
+  # Dropdown choices
+  title_choices    <- c("- not selected -", exams_sorted_title$title)
+  pnr_choices      <- c("- not selected -", exams_sorted_pnr$pnr)
+  semester_choices <- c("- not selected -", unique(exams_sorted_sem$semester))
+  
+
+# ============================================================================
+# Semester Filter (All Exams)
+# ============================================================================
+output$exam_semester_filter <- renderUI({
+    
+    req(input$exam_toggle == "All Exams")
+    
+    selectInput(
+      "exam_semester_select",
+      label = tags$label("Semester:", style = "margin-top: 6px;"),
+      choices = semester_choices,
+      selected = "- not selected -"
+    )
+})
   
 # ============================================================================
 # Dynamic Input Row (for "One Exam")
 # ============================================================================
-  output$one_exam_filters <- renderUI({
+output$one_exam_filters <- renderUI({
     
     req(input$exam_toggle == "One Exam")
     
-    title_selected <- !is.null(input$exam_title_select) && input$exam_title_select != "- not selected -"
-    pnr_selected   <- !is.null(input$exam_pnr_select) && input$exam_pnr_select != "- not selected -"
+    title_selected    <- !is.null(input$exam_title_select) &&
+      input$exam_title_select != "- not selected -"
+    
+    pnr_selected      <- !is.null(input$exam_pnr_select) &&
+      input$exam_pnr_select != "- not selected -"
+    
+    semester_selected <- !is.null(input$exam_semester_select_one) &&
+      input$exam_semester_select_one != "- not selected -"
     
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      
+      # ---------------- Semester ----------------
+      selectInput(
+        "exam_semester_select_one",
+        label = tags$label("Semester:", style = "margin-top: 6px;"),
+        choices = semester_choices,
+        selected = input$exam_semester_select_one %||% "- not selected -"
+      ),
       
       # ---------------- Exam Title ----------------
       if (!pnr_selected) {
@@ -512,13 +547,11 @@ output$student_gpa <- renderText({
       } else {
         div(
           class = "static-text-container",
-          style = "margin-top: 0px;",
           tags$label("Exam Title:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams_sorted_pnr[exams_sorted_pnr$pnr == input$exam_pnr_select, ]
+              row <- exams[exams$pnr == input$exam_pnr_select, ]
               row$title
             }
           )
@@ -536,13 +569,11 @@ output$student_gpa <- renderText({
       } else {
         div(
           class = "static-text-container",
-          style = "margin-top: 0px;",
           tags$label("Exam Number:", style = "margin-top: 6px;"),
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- exams_sorted_title[exams_sorted_title$title == input$exam_title_select, ]
+              row <- exams[exams$title == input$exam_title_select, ]
               row$pnr
             }
           )
@@ -554,10 +585,10 @@ output$student_gpa <- renderText({
         "reset_exam_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
+        style = "margin-top:35px;"
       )
     )
-  })
+})
   
   
 # ============================================================================
@@ -575,13 +606,14 @@ output$student_gpa <- renderText({
   })
   
 # ============================================================================
-# Reset all Exam dropdowns
+# Reset Exam Filters
 # ============================================================================
   observeEvent(input$reset_exam_filters, {
-    updateSelectInput(session, "exam_title_select", selected = "- not selected -")
-    updateSelectInput(session, "exam_pnr_select", selected = "- not selected -")
     
-})
+    updateSelectInput(session, "exam_title_select", selected = "- not selected -")
+    updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
+    updateSelectInput(session, "exam_semester_select_one", selected = "- not selected -")
+  })
   
  
   

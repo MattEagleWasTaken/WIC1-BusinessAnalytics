@@ -299,14 +299,17 @@ ui <- dashboardPage(
                     )
                     ),
                     
-                    # Dropdowns (rendered dynamically when toggle is 'One Exam')
-                    uiOutput("one_exam_filters")
+                  # Semester filter (ONLY for All Exams)
+                  uiOutput("exam_semester_filter"),
+                  
+                  # Dropdowns for One Exam (title + pnr)
+                  uiOutput("one_exam_filters")
                   
                   ) # end filter container
                 ) # end fluid row filter
               ,
               
-              # Container für Plots + rechte Karten
+              # Container for plots + right cards
               fluidRow(
                 div(
                   style = "
@@ -320,7 +323,7 @@ ui <- dashboardPage(
                   
                   # ==== LEFT PLOT CONTAINER 1 ====
                   div(
-                    id = "module_plot_container1",
+                    id = "exam_plot_container1",
                     style = "
                     flex: 1;
                     background-color: white;
@@ -330,12 +333,12 @@ ui <- dashboardPage(
                     height: calc(100vh - 200px);
                     margin-left: 15px;
                     ",
-                    plotOutput("module_plot1", height = "100%", width = "100%")
+                    plotOutput("exam_plot1", height = "100%", width = "100%")
                   ),
                   
                   # ==== LEFT PLOT CONTAINER 2 ====
                   div(
-                    id = "module_plot_container2",
+                    id = "exam_plot_container2",
                     style = "
                     flex: 1;
                     background-color: white;
@@ -345,12 +348,12 @@ ui <- dashboardPage(
                     height: calc(100vh - 200px);
                     margin-left: 15px;
                     ",
-                    plotOutput("module_plot2", height = "100%", width = "100%")
+                    plotOutput("exam_plot2", height = "100%", width = "100%")
                   ),
                   
                   # ==== RIGHT CONTAINER WITH STACKED CARDS ====
                   div(
-                    id = "module_right_container",
+                    id = "exam_right_container",
                     style = "
                     width: 25%;
                     display: flex; 
@@ -362,7 +365,7 @@ ui <- dashboardPage(
                     
                     # Upper Card Placeholder
                     div(
-                      id = 'module_card1',
+                      id = 'exam_card1',
                       style = "
                       background-color: white;
                       border-radius: 15px;
@@ -377,7 +380,7 @@ ui <- dashboardPage(
                     
                     # Lower Card Placeholder
                     div(
-                      id = 'module_card2',
+                      id = 'exam_card2',
                       style = "
                       background-color: white;
                       border-radius: 15px;
