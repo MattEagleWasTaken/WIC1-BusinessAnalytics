@@ -753,7 +753,7 @@ filtered_exams_one <- reactive({
     )
     
     ggplot(df, aes(y = exam_title, x = grade, color = cluster)) +
-      geom_jitter(height = 0.2, size = 3, alpha = 0.8) +
+      geom_jitter(height = 0, size = 3, alpha = 1) +
       scale_color_manual(values = grade_colors) +
       labs(
         title = "All Student Grades per Exam",
@@ -773,6 +773,16 @@ filtered_exams_one <- reactive({
         legend.title     = element_text(face = "bold", size = 14),
         legend.text      = element_text(size = 12)
       )
+  },
+# DYNAMIC HEIGHT → enables vertical scrolling
+# ============================================================================
+  height = function() {
+    
+    df <- filtered_grades()
+    n_exams <- length(unique(df$exam_title))
+    
+    # Minimum height + growth per exam
+    max(400, n_exams * 35)
   })
   
   
