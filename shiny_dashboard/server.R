@@ -710,7 +710,6 @@ observe({
   filtered_grades <- reactive({
     
     req(all_grades)
-    req(input$exam_toggle == "All Exams")
     
     semester_selected <- input$exam_semester_select
     
@@ -719,7 +718,43 @@ observe({
     } else {
       all_grades[all_grades$semester == semester_selected, ]
     }
-  })
+})
+ 
+# ============================================================================
+# Reactive: Average grade of the selected exam (PNR preferred, title fallback)
+# ============================================================================
+  selected_exam_avg <- reactive({
+    
+    req(input$exam_toggle == "One Exam")
+    
+    df <- filtered_grades()
+    req(nrow(df) > 0)
+    
+# ------------------------------------------------------------
+# Case 1: PNR selected (preferred, unique)
+# ------------------------------------------------------------
+    if (!is.null(input$exam_pnr_select) &&
+        input$exam_pnr_select != "- not selected -") {
+      
+      df <- df[df$pnr == input$exam_pnr_select, ]
+      
+# ------------------------------------------------------------
+# Case 2: Only exam title selected (fallback)
+# ------------------------------------------------------------
+    } else if (!is.null(input$exam_title_select) &&
+               input$exam_title_select != "- not selected -") {
+      
+      df <- df[df$exam_title == input$exam_title_select, ]
+      
+    } else {
+      return(NULL)
+    }
+    
+    req(nrow(df) > 0)
+    
+    mean(df$grade, na.rm = TRUE)
+})
+  
   
   
 # ============================================================================
@@ -892,12 +927,10 @@ output$exam_plot2 <- renderPlot({
 # ============================================================================
   output$exam_boxplot_avg <- renderPlot({
     
-    req(input$exam_toggle == "All Exams")
-    
     df    <- exam_averages_filtered()
     stats <- exam_stats()
     
-    ggplot(df, aes(x = 1, y = grade)) +
+    p <- ggplot(df, aes(x = 1, y = grade)) +
       
 # ----------------------------------------------------
 # Boxplot of exam averages
@@ -909,7 +942,7 @@ output$exam_plot2 <- renderPlot({
     ) +
       
 # ----------------------------------------------------
-# Mean line
+# Mean line (blue)
 # ----------------------------------------------------
     annotate(
       "segment",
@@ -942,18 +975,15 @@ output$exam_plot2 <- renderPlot({
         size = 4
       ) +
       
-# ----------------------------------------------------
-# Labels
-# ----------------------------------------------------
-    labs(
-      title = "Distribution of Exam Average Grades",
-      subtitle = paste0(
-        "Median: ", round(stats$median, 2),
-        "   |   SD: ", round(stats$sd, 2)
-      ),
-      y = "Average Grade",
-      x = NULL
-    ) +
+      labs(
+        title = "Distribution of Exam Average Grades",
+        subtitle = paste0(
+          "Median: ", round(stats$median, 2),
+          "   |   SD: ", round(stats$sd, 2)
+        ),
+        y = "Average Grade",
+        x = NULL
+      ) +
       
       scale_x_continuous(limits = c(0.4, 1.6)) +
       
@@ -965,7 +995,40 @@ output$exam_plot2 <- renderPlot({
         axis.ticks.x  = element_blank(),
         axis.text.y   = element_text(face = "bold", size = 12)
       )
+    
+# ----------------------------------------------------
+# One Exam mode → add selected exam average (red line)
+# ----------------------------------------------------
+    if (input$exam_toggle == "One Exam") {
+      
+      ex_avg <- selected_exam_avg()
+      
+      if (!is.null(ex_avg) && is.numeric(ex_avg)) {
+        
+        p <- p +
+          annotate(
+            "segment",
+            x = 0.75, xend = 1.25,
+            y = ex_avg, yend = ex_avg,
+            color = "red",
+            linewidth = 1.2
+          ) +
+          annotate(
+            "text",
+            x = 1.265,
+            y = ex_avg,
+            label = paste0("Exam: ", round(ex_avg, 2)),
+            hjust = 0,
+            vjust = 0.5,
+            color = "red",
+            fontface = "bold",
+            size = 4
+          )
+      }
+    }
+        p
   })
+  
   
 
   # ============================================================================
