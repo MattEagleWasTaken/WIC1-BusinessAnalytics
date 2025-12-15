@@ -4,7 +4,6 @@ server <- function(input, output, session) {
   library(RPostgres)
   library(jsonlite)
   library(shinyjs)
-  # ggplot2 → used for creating the grade visualization plot
   library(ggplot2)
   
   
@@ -292,8 +291,8 @@ output$student_gpa <- renderText({
       labs(x = "Grade", y = "Exam", title = "Student Grades Overview") +
       theme_minimal(base_size = 14) +
       theme(
-        plot.background  = element_rect(fill = "white", color = NA, size = 0),
-        panel.background = element_rect(fill = "white", color = "grey90", size = 1),
+        plot.background  = element_rect(fill = "white", color = NA, linewidth = 0),
+        panel.background = element_rect(fill = "white", color = "grey90", linewidth = 1),
         panel.grid.major = element_line(color = "grey90"),
         panel.grid.minor = element_blank(),
         plot.title       = element_text(face = "bold", hjust = 0.5, size = 18),
