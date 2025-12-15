@@ -1072,14 +1072,16 @@ output$exam_plot2 <- renderPlot({
     }
     
     # ---------------- One Exam Mode ----------------
-    # Display the average grade of the selected exam
     req(input$exam_toggle == "One Exam")
     
-    # Retrieve the average of the selected exam
     ex_avg <- selected_exam_avg()
-    req(ex_avg)
     
-    # Return rounded exam average
+    # not selected
+    if (is.null(ex_avg) || !is.numeric(ex_avg)) {
+      return("-")
+    }
+    
+    # selected
     round(ex_avg, 2)
   })
   
