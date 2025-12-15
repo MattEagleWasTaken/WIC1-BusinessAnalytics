@@ -127,9 +127,7 @@ server <- function(input, output, session) {
     )
   })
   
-  
-  
-  
+ 
 # ============================================================================
 # Show / Hide Reset Button
 # ============================================================================
@@ -236,7 +234,7 @@ output$student_gpa <- renderText({
     
   })
   
-  #----- Dynamic Average Grade Text Output-------------------------------------- 
+ #----- Dynamic Average Grade Text Output-------------------------------------- 
   output$gpa_title <- renderUI({
     title <- if (input$student_toggle == "All Students") {
       HTML("Overall<br>Average Grade")
@@ -459,9 +457,9 @@ output$student_gpa <- renderText({
         axis.text.y   = element_text(face = "bold", size = 12, color = "black")
       )
     
-    # ----------------------------------------------------
-    # Add student mean (red line) ONLY in One Student mode
-    # ----------------------------------------------------
+# ----------------------------------------------------
+# Add student mean (red line) ONLY in One Student mode
+# ----------------------------------------------------
     if (input$student_toggle == "One Student") {
       
       df_student <- student_grades_for_plot()
@@ -559,7 +557,7 @@ filtered_exams_one <- reactive({
     df
   })
   
-  # ---- Reactive: Dropdown choices --------------------------------------------
+# ---- Reactive: Dropdown choices --------------------------------------------
   exam_title_choices_one <- reactive({
     c(
       "- not selected -",
@@ -575,7 +573,7 @@ filtered_exams_one <- reactive({
   })
   
   
-  # ---- UI --------------------------------------------------------------------
+# ---- UI --------------------------------------------------------------------
   output$one_exam_filters <- renderUI({
     req(input$exam_toggle == "One Exam")
     
@@ -588,7 +586,7 @@ filtered_exams_one <- reactive({
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
       
-      # ---------------- Semester ----------------------------------------------
+# ---------------- Semester ----------------------------------------------
       selectInput(
         "exam_semester_select_one",
         label    = tags$label("Semester:", style = "margin-top: 6px;"),
@@ -596,7 +594,7 @@ filtered_exams_one <- reactive({
         selected = input$exam_semester_select_one %||% "- all semester -"
       ),
       
-      # ---------------- Exam Title --------------------------------------------
+# ---------------- Exam Title --------------------------------------------
       if (!pnr_selected) {
         selectInput(
           "exam_title_select",
@@ -622,7 +620,7 @@ filtered_exams_one <- reactive({
         )
       },
       
-      # ---------------- Exam Number -------------------------------------------
+# ---------------- Exam Number -------------------------------------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
@@ -648,7 +646,7 @@ filtered_exams_one <- reactive({
         )
       },
       
-      # ---------------- Reset Button ------------------------------------------
+# ---------------- Reset Button ------------------------------------------
       actionButton(
         "reset_exam_filters",
         "Reset Selection",
@@ -656,23 +654,23 @@ filtered_exams_one <- reactive({
         style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )
     )
-  })
+})
   
   
-  # ---- Reset logic ------------------------------------------------------------
+# ---- Reset logic ------------------------------------------------------------
   observeEvent(input$reset_exam_filters, {
     updateSelectInput(session, "exam_title_select", selected = "- not selected -")
     updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
     updateSelectInput(session, "exam_semester_select_one",
                       selected = "- all semester -")
-  })
+})
   
   
-  # ============================================================================
-  # Show / Hide Exam Reset Button
-  # ============================================================================
+# ============================================================================
+# Show / Hide Exam Reset Button
+# ============================================================================
   
-  observe({
+observe({
     if (
       (!is.null(input$exam_title_select) &&
        input$exam_title_select != "- not selected -") ||
@@ -685,8 +683,10 @@ filtered_exams_one <- reactive({
     }
   })
   
-  
-# ---------------- Load All Grades for All Exams ----------------
+
+# ============================================================================  
+# Load All Grades for All Exams 
+# ============================================================================
 # This query loads all grades for all exams and will be used for both the "All Exams" plot
 # and the "One Exam" filtering later. We do it outside of any reactive to avoid repeated DB hits.
   all_grades <- dbGetQuery(con, "
@@ -843,6 +843,21 @@ output$exam_plot2 <- renderPlot({
       FUN = mean
     )
   })
+  
+# ============================================================================
+# Reactive: Statistics of exam averages (semester-aware)
+# ============================================================================
+  exam_stats <- reactive({
+    
+    df <- exam_averages_filtered()
+    req(nrow(df) > 1)   # boxplot needs more than one value
+    
+    list(
+      mean   = mean(df$grade, na.rm = TRUE),
+      median = median(df$grade, na.rm = TRUE),
+      sd     = sd(df$grade, na.rm = TRUE)
+    )
+  })
 
 # ============================================================================
 # BOX PLOT – Distribution of Exam Average Grades (Semester-aware)
@@ -851,66 +866,66 @@ output$exam_plot2 <- renderPlot({
     
     req(input$exam_toggle == "All Exams")
     
-    df <- exam_averages_filtered()
-    req(nrow(df) > 1)   # boxplot needs more than one value
+    df    <- exam_averages_filtered()
+    stats <- exam_stats()
     
-    # Statistics
-    exam_mean   <- mean(df$grade, na.rm = TRUE)
-    exam_median <- median(df$grade, na.rm = TRUE)
-    exam_sd     <- sd(df$grade, na.rm = TRUE)
-    
-# ------------------------
-# Base plot
-# ------------------------
-    p <- ggplot(df, aes(x = 1, y = grade)) +
+    ggplot(df, aes(x = 1, y = grade)) +
       
-      geom_boxplot(
-        width = 0.5,
-        fill  = "lightblue",
-        color = "black"
-      ) +
+# ----------------------------------------------------
+# Boxplot of exam averages
+# ----------------------------------------------------
+    geom_boxplot(
+      width = 0.5,
+      fill  = "lightblue",
+      color = "black"
+    ) +
       
-      # Mean line
-      annotate(
-        "segment",
-        x = 0.75, xend = 1.25,
-        y = exam_mean, yend = exam_mean,
-        color = "blue",
-        linewidth = 1.2
-      ) +
+# ----------------------------------------------------
+# Mean line
+# ----------------------------------------------------
+    annotate(
+      "segment",
+      x = 0.75, xend = 1.25,
+      y = stats$mean, yend = stats$mean,
+      color = "blue",
+      linewidth = 1.2
+    ) +
       
-      # Mean label
+      # Mean label (left)
       annotate(
         "text",
         x = 0.72,
-        y = exam_mean,
-        label = paste0("Mean: ", round(exam_mean, 2)),
+        y = stats$mean,
+        label = paste0("Mean: ", round(stats$mean, 2)),
         hjust = 1,
         color = "blue",
         fontface = "bold",
         size = 4
       ) +
       
-      # Median label
+      # Median label (right)
       annotate(
         "text",
         x = 1.28,
-        y = exam_median,
-        label = paste0("Median: ", round(exam_median, 2)),
+        y = stats$median,
+        label = paste0("Median: ", round(stats$median, 2)),
         hjust = 0,
         fontface = "bold",
         size = 4
       ) +
       
-      labs(
-        title = "Distribution of Exam Average Grades",
-        subtitle = paste0(
-          "Median: ", round(exam_median, 2),
-          "   |   SD: ", round(exam_sd, 2)
-        ),
-        y = "Average Grade",
-        x = NULL
-      ) +
+# ----------------------------------------------------
+# Labels
+# ----------------------------------------------------
+    labs(
+      title = "Distribution of Exam Average Grades",
+      subtitle = paste0(
+        "Median: ", round(stats$median, 2),
+        "   |   SD: ", round(stats$sd, 2)
+      ),
+      y = "Average Grade",
+      x = NULL
+    ) +
       
       scale_x_continuous(limits = c(0.4, 1.6)) +
       
@@ -922,19 +937,87 @@ output$exam_plot2 <- renderPlot({
         axis.ticks.x  = element_blank(),
         axis.text.y   = element_text(face = "bold", size = 12)
       )
+  })
+  
+
+# ============================================================================
+output$exam_gpa_value <- renderText({
     
-# ------------------------
-# Return plot
-# ------------------------
-    p
+    # ---------------- All Exams Mode ----------------
+    if (input$exam_toggle == "All Exams") {
+      
+      stats <- exam_stats()
+      req(stats)
+      
+      return(
+        paste0(
+          round(stats$mean, 2),
+          " ± ",
+          round(stats$sd, 2)
+        )
+      )
+    }
+    
+    # ---------------- One Exam Mode ----------------
+    req(input$exam_toggle == "One Exam")
+    
+    ex_avg <- selected_exam_avg()
+    req(ex_avg)
+    
+    round(ex_avg, 2)
+  })
+ 
+  
+# ============================================================================
+# Dynamic title for the Exam GPA card
+# ============================================================================
+# The title adapts based on:
+# - Exam toggle (All Exams vs. One Exam)
+# - Semester filter selection
+ 
+output$exam_gpa_title <- renderUI({
+    
+    title <- if (input$exam_toggle == "All Exams") {
+      
+# ---------------- All Exams Mode ----------------
+      # Distinguish between overall and semester-specific aggregation
+      if (is.null(input$exam_semester_select) ||
+          input$exam_semester_select == "- all semester -") {
+        
+        # Overall average across all exams and semesters
+        HTML("Overall<br>Exam Average")
+        
+      } else {
+        
+        # Semester-specific average across all exams
+        HTML("Semester<br>Exam Average")
+      }
+      
+    } else {
+      
+# ---------------- One Exam Mode ----------------
+# Displays the average grade of the selected exam
+      "Exam Average"
+    }
+    
+    # Render the title with consistent styling
+    h3(
+      title,
+      style = "
+      margin: 0;
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    "
+    )
   })
   
   
-
-  
-  
-  # ---- Disconnect when session ends ------------------------------------------
-  session$onSessionEnded(function() {
+# ============================================================================
+# Disconnect when session ends
+# ============================================================================
+   session$onSessionEnded(function() {
     dbDisconnect(con)
   })
   

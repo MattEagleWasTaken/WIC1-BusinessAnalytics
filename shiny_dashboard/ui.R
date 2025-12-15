@@ -243,6 +243,7 @@ ui <- dashboardPage(
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                       ",
                       uiOutput("gpa_title"),
+                      
                       h2(
                         textOutput('student_gpa', inline = TRUE),
                         style = "
@@ -376,7 +377,17 @@ ui <- dashboardPage(
                       justify-content: center;
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+                      ",
+                      
+                      uiOutput("exam_gpa_title"),
+                      
+                      h2(
+                        textOutput("exam_gpa_value", inline = TRUE),
+                        style = "
+                        margin: 0;
+                        font-size: 32px;
                       "
+                      )
                       ),
                     
                     # Lower Card Placeholder
