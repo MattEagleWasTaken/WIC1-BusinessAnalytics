@@ -703,6 +703,21 @@ observe({
   # Ensure exam_title is a factor to preserve order in plots
   all_grades$exam_title <- factor(all_grades$exam_title, levels = unique(all_grades$exam_title))
   
+ 
+# ============================================================================
+# Reactive: active semester (shared by All Exams & One Exam)
+# ============================================================================
+active_exam_semester <- reactive({
+    
+    if (input$exam_toggle == "One Exam") {
+      input$exam_semester_select_one
+    } else {
+      input$exam_semester_select
+    }
+    
+})  
+
+  
   
 # ============================================================================
 # Reactive: Filter grades by semester (ONLY for All Exams mode)
@@ -711,7 +726,7 @@ observe({
     
     req(all_grades)
     
-    semester_selected <- input$exam_semester_select
+    semester_selected <- active_exam_semester()
     
     if (is.null(semester_selected) || semester_selected == "- all semester -") {
       all_grades
