@@ -753,6 +753,13 @@ filtered_exams_one <- reactive({
     )
     
     ggplot(df, aes(y = exam_title, x = grade, color = cluster)) +
+      # Grade threshold reference lines
+      geom_vline(
+        xintercept = c(1.5, 2.5, 3.5),
+        color = "black",
+        linewidth = 1
+      ) +
+      
       geom_jitter(height = 0, size = 3, alpha = 1) +
       scale_color_manual(values = grade_colors) +
       labs(
@@ -774,7 +781,7 @@ filtered_exams_one <- reactive({
         legend.text      = element_text(size = 12)
       )
   },
-# DYNAMIC HEIGHT → enables vertical scrolling
+# DYNAMIC HEIGHT enables vertical scrolling
 # ============================================================================
   height = function() {
     
@@ -810,6 +817,138 @@ output$exam_plot2 <- renderPlot({
       shinyjs::show("exam_plot_container2")
     }
   })
+  
+  
+# ============================================================================
+# Calculate average grade per exam
+# ============================================================================
+  exam_averages <- aggregate(
+    grade ~ pnr + exam_title,
+    data = all_grades,
+    FUN = mean
+  )
+  
+  colnames(exam_averages)[colnames(exam_averages) == "grade"] <- "exam_avg" 
+  
+# ============================================================================
+# BOX PLOT – Distribution of average grades across all exams
+# ============================================================================
+  output$exam_boxplot <- renderPlot({
+    
+    req(input$exam_toggle == "All Exams")
+    req(nrow(exam_averages) > 0)
+    
+    df <- exam_averages
+    
+    # Overall statistics (exam level)
+    overall_mean   <- mean(df$exam_avg, na.rm = TRUE)
+    overall_median <- median(df$exam_avg, na.rm = TRUE)
+    overall_sd     <- sd(df$exam_avg, na.rm = TRUE)
+    
+    p <- ggplot(df, aes(x = 1, y = exam_avg)) +
+      
+      # Standard boxplot
+      geom_boxplot(
+        width = 0.5,
+        fill  = "lightblue",
+        color = "black"
+      ) +
+      
+      # Overall mean (blue line)
+      annotate(
+        "segment",
+        x = 0.75, xend = 1.25,
+        y = overall_mean, yend = overall_mean,
+        color = "blue",
+        linewidth = 1.2
+      ) +
+      
+      # Mean label (left)
+      annotate(
+        "text",
+        x = 0.72,
+        y = overall_mean,
+        label = paste0("Mean: ", round(overall_mean, 2)),
+        hjust = 1,
+        vjust = 0.5,
+        color = "blue",
+        size = 4,
+        fontface = "bold"
+      ) +
+      
+      # Median label (right)
+      annotate(
+        "text",
+        x = 1.28,
+        y = overall_median,
+        label = paste0("Median: ", round(overall_median, 2)),
+        hjust = 0,
+        vjust = 0.5,
+        color = "black",
+        size = 4,
+        fontface = "bold"
+      ) +
+      
+      labs(
+        y = "Average Exam Grade",
+        x = NULL,
+        title = "Distribution of Average Grades\nAcross All Exams",
+        subtitle = paste0(
+          "Median: ", round(overall_median, 2),
+          "   |   SD: ", round(overall_sd, 2)
+        )
+      ) +
+      
+      scale_x_continuous(limits = c(0.4, 1.6)) +
+      
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        axis.text.x   = element_blank(),
+        axis.ticks.x  = element_blank(),
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black")
+      )
+    
+# ----------------------------------------------------
+# One Exam highlight (red line)
+# ----------------------------------------------------
+    if (input$exam_toggle == "One Exam") {
+      
+      selected_pnr <- input$exam_pnr_select
+      
+      if (!is.null(selected_pnr) && selected_pnr != "- not selected -") {
+        
+        exam_mean <- df$exam_avg[df$pnr == selected_pnr]
+        
+        if (length(exam_mean) == 1) {
+          p <- p +
+            annotate(
+              "segment",
+              x = 0.75, xend = 1.25,
+              y = exam_mean, yend = exam_mean,
+              color = "red",
+              linewidth = 1.2
+            ) +
+            annotate(
+              "text",
+              x = 1.28,
+              y = exam_mean,
+              label = paste0("Exam: ", round(exam_mean, 2)),
+              hjust = 0,
+              vjust = 0.5,
+              color = "red",
+              size = 4,
+              fontface = "bold"
+            )
+        }
+      }
+    }
+    
+    p
+  })
+  
+
   
   
   # ---- Disconnect when session ends ------------------------------------------

@@ -392,7 +392,8 @@ ui <- dashboardPage(
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                       flex: 1;
                       padding: 15px;
-                      "
+                      ",
+                      plotOutput("exam_boxplot", height = "100%", width = "100%")
                       )
                     
                   ) # end right container
