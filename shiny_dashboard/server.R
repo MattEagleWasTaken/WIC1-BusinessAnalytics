@@ -732,6 +732,15 @@ observe({
     df <- filtered_grades()
     req(nrow(df) > 0)
     
+# ------------------------------------------------------------
+# Create unique exam label for Y-axis (PNR + exam title)
+# ------------------------------------------------------------
+    df$exam_label <- paste0(df$pnr, " – ", df$exam_title)
+    df$exam_label <- factor(df$exam_label, levels = unique(df$exam_label))
+    
+# ------------------------------------------------------------
+# Color definition for grade clusters
+# ------------------------------------------------------------
     grade_colors <- c(
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
@@ -739,7 +748,9 @@ observe({
       "Poor (3.6–4.0)"   = "#e16b6b"
     )
     
-    # Grade clusters
+# ------------------------------------------------------------
+# Assign grade clusters
+# ------------------------------------------------------------
     df$cluster <- cut(
       df$grade,
       breaks = c(0, 1.5, 2.5, 3.5, 4.1),
@@ -752,7 +763,11 @@ observe({
       include.lowest = TRUE
     )
     
-    ggplot(df, aes(y = exam_title, x = grade, color = cluster)) +
+# ------------------------------------------------------------
+# Scatter plot
+# ------------------------------------------------------------
+    ggplot(df, aes(y = exam_label, x = grade, color = cluster)) +
+      
       # Grade threshold reference lines
       geom_vline(
         xintercept = c(1.5, 2.5, 3.5),
@@ -760,14 +775,21 @@ observe({
         linewidth = 1
       ) +
       
+      # Individual student grades
       geom_jitter(height = 0, size = 3, alpha = 1) +
+      
+      # Manual color scale
       scale_color_manual(values = grade_colors) +
+      
+      # Labels
       labs(
         title = "All Student Grades per Exam",
         x = "Grade",
         y = "Exam",
         color = "Grade Cluster"
       ) +
+      
+      # Theme
       theme_minimal(base_size = 14) +
       theme(
         plot.title       = element_text(face = "bold", size = 18, hjust = 0.5),
@@ -783,7 +805,7 @@ observe({
   })
   
 # ============================================================================
-# Dynamic plotOutput height for exam_plot1 (prevents renderPlot height race)
+# Dynamic plotOutput height for exam_plot1
 # ============================================================================
   output$exam_plot1_ui <- renderUI({
     
@@ -792,15 +814,21 @@ observe({
     df <- filtered_grades()
     req(!is.null(df))
     req(nrow(df) > 0)
-    req("exam_title" %in% names(df))
     
-    n_exams <- length(unique(df$exam_title))
+    # Use unique exam labels (PNR + title) for height calculation
+    exam_labels <- paste0("PNR ", df$pnr, " – ", df$exam_title)
+    n_exams <- length(unique(exam_labels))
     
-    # px height grows with number of exams (enables scrolling inside container)
+    # Height grows with number of exams (enables scrolling)
     h <- max(400, n_exams * 35)
     
-    plotOutput("exam_plot1", height = paste0(h, "px"), width = "100%")
+    plotOutput(
+      "exam_plot1",
+      height = paste0(h, "px"),
+      width  = "100%"
+    )
   })
+  
   
   
 # ============================================================================
