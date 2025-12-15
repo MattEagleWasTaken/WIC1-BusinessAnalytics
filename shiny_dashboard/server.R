@@ -499,52 +499,57 @@ output$student_gpa <- renderText({
   })
   
  
-# ---------------- Load Exam Data (incl. semester) ----------------
-  exams <- dbGetQuery(con, "
-  SELECT pnr, title, semester
+# ============================================================================
+# Load Exam Data (incl. semester) for the dropdowns
+# ============================================================================
+  
+exams <- dbGetQuery(
+    con,
+    "
+  SELECT
+    pnr,
+    title,
+    semester
   FROM exam
-  ")
+  "
+  )
   
-  # Sort variants
-  exams_sorted_pnr    <- exams[order(exams$pnr), ]
-  exams_sorted_title  <- exams[order(exams$title), ]
-  exams_sorted_sem    <- exams[order(exams$semester), ]
+  # ---- Sort variants ---------------------------------------------------------
+  exams_sorted_pnr   <- exams[order(exams$pnr), ]
+  exams_sorted_title <- exams[order(exams$title), ]
+  exams_sorted_sem   <- exams[order(exams$semester), ]
   
-  # Dropdown choices
+  # ---- Dropdown choices ------------------------------------------------------
   title_choices    <- c("- not selected -", exams_sorted_title$title)
   pnr_choices      <- c("- not selected -", exams_sorted_pnr$pnr)
   semester_choices <- c("- all semester -", unique(exams_sorted_sem$semester))
   
-
+  
 # ============================================================================
 # Semester Filter (All Exams)
 # ============================================================================
 output$exam_semester_filter <- renderUI({
-    
     req(input$exam_toggle == "All Exams")
     
     div(
-    style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;", 
-    selectInput(
-      "exam_semester_select",
-      label = tags$label("Semester:", style = "margin-top: 6px;"),
-      choices = semester_choices,
-      selected = "- all semester -"
+      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      selectInput(
+        "exam_semester_select",
+        label    = tags$label("Semester:", style = "margin-top: 6px;"),
+        choices  = semester_choices,
+        selected = "- all semester -"
+      )
     )
-  )
-})
-  
+  })
+
 # ============================================================================
 # Dynamic Input Row (for "One Exam")
-# ============================================================================
 # Semester pre-filter logic included
 # ============================================================================
   
-# ---- Reactive: Exams filtered by semester (One Exam mode) -------------------
-  filtered_exams_one <- reactive({
-    
+# ---- Reactive: Exams filtered by semester ----------------------------------
+filtered_exams_one <- reactive({
     df <- exams
-    
     semester <- input$exam_semester_select_one
     
     if (!is.null(semester) && semester != "- all semester -") {
@@ -554,7 +559,7 @@ output$exam_semester_filter <- renderUI({
     df
   })
   
-# ---- Reactive: Dropdown choices ---------------------------------------------
+  # ---- Reactive: Dropdown choices --------------------------------------------
   exam_title_choices_one <- reactive({
     c(
       "- not selected -",
@@ -569,9 +574,9 @@ output$exam_semester_filter <- renderUI({
     )
   })
   
-# ---- UI ---------------------------------------------------------------------
+  
+  # ---- UI --------------------------------------------------------------------
   output$one_exam_filters <- renderUI({
-    
     req(input$exam_toggle == "One Exam")
     
     title_selected <- !is.null(input$exam_title_select) &&
@@ -583,20 +588,20 @@ output$exam_semester_filter <- renderUI({
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
       
-# ---------------- Semester ----------------------------------------------------------
+      # ---------------- Semester ----------------------------------------------
       selectInput(
         "exam_semester_select_one",
-        label = tags$label("Semester:", style = "margin-top: 6px;"),
-        choices = semester_choices,
+        label    = tags$label("Semester:", style = "margin-top: 6px;"),
+        choices  = semester_choices,
         selected = input$exam_semester_select_one %||% "- all semester -"
       ),
       
-# ---------------- Exam Title -----------------------------------------------------------
+      # ---------------- Exam Title --------------------------------------------
       if (!pnr_selected) {
         selectInput(
           "exam_title_select",
-          label = tags$label("Exam Title:", style = "margin-top: 6px;"),
-          choices = exam_title_choices_one(),
+          label    = tags$label("Exam Title:", style = "margin-top: 6px;"),
+          choices  = exam_title_choices_one(),
           selected = input$exam_title_select %||% "- not selected -"
         )
       } else {
@@ -609,19 +614,20 @@ output$exam_semester_filter <- renderUI({
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- filtered_exams_one()[
-                filtered_exams_one()$pnr == input$exam_pnr_select, ]
+                filtered_exams_one()$pnr == input$exam_pnr_select,
+              ]
               row$title
             }
           )
         )
       },
       
-# ---------------- Exam Number -------------------------------------------------------
+      # ---------------- Exam Number -------------------------------------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
-          label = tags$label("Exam Number:", style = "margin-top: 6px;"),
-          choices = exam_pnr_choices_one(),
+          label    = tags$label("Exam Number:", style = "margin-top: 6px;"),
+          choices  = exam_pnr_choices_one(),
           selected = input$exam_pnr_select %||% "- not selected -"
         )
       } else {
@@ -634,14 +640,15 @@ output$exam_semester_filter <- renderUI({
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
               row <- filtered_exams_one()[
-                filtered_exams_one()$title == input$exam_title_select, ]
+                filtered_exams_one()$title == input$exam_title_select,
+              ]
               row$pnr
             }
           )
         )
       },
       
-# ---------------- Reset Button ----------------------------------------------------
+      # ---------------- Reset Button ------------------------------------------
       actionButton(
         "reset_exam_filters",
         "Reset Selection",
@@ -651,24 +658,26 @@ output$exam_semester_filter <- renderUI({
     )
   })
   
-# ---- Reset logic -------------------------------------------------------------------
+  
+  # ---- Reset logic ------------------------------------------------------------
   observeEvent(input$reset_exam_filters, {
-    
     updateSelectInput(session, "exam_title_select", selected = "- not selected -")
-    updateSelectInput(session, "exam_pnr_select", selected = "- not selected -")
-    updateSelectInput(session, "exam_semester_select_one", selected = "- all semester -")
+    updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
+    updateSelectInput(session, "exam_semester_select_one",
+                      selected = "- all semester -")
   })
   
   
+  # ============================================================================
+  # Show / Hide Exam Reset Button
+  # ============================================================================
   
-  
-# ============================================================================
-# Show / Hide Exam Reset Button
-# ============================================================================
   observe({
     if (
-      (!is.null(input$exam_title_select) && input$exam_title_select != "- not selected -") ||
-      (!is.null(input$exam_pnr_select) && input$exam_pnr_select != "- not selected -")
+      (!is.null(input$exam_title_select) &&
+       input$exam_title_select != "- not selected -") ||
+      (!is.null(input$exam_pnr_select) &&
+       input$exam_pnr_select != "- not selected -")
     ) {
       shinyjs::show("reset_exam_filters")
     } else {
@@ -676,8 +685,127 @@ output$exam_semester_filter <- renderUI({
     }
   })
   
-
- 
-# Disconnect when session ends---------------------------------------------------------
-session$onSessionEnded(function() dbDisconnect(con))
+  
+# ---------------- Load All Grades for All Exams ----------------
+# This query loads all grades for all exams and will be used for both the "All Exams" plot
+# and the "One Exam" filtering later. We do it outside of any reactive to avoid repeated DB hits.
+  all_grades <- dbGetQuery(con, "
+  SELECT
+    g.grade,
+    g.matriculation_number,
+    g.pnr,
+    e.title    AS exam_title,
+    e.semester AS semester
+  FROM grade g
+  JOIN exam e ON g.pnr = e.pnr
+")
+  
+  # Ensure exam_title is a factor to preserve order in plots
+  all_grades$exam_title <- factor(all_grades$exam_title, levels = unique(all_grades$exam_title))
+  
+  
+# ============================================================================
+# Reactive: Filter grades by semester (ONLY for All Exams mode)
+# ============================================================================
+  filtered_grades <- reactive({
+    
+    req(all_grades)
+    req(input$exam_toggle == "All Exams")
+    
+    semester_selected <- input$exam_semester_select
+    
+    if (is.null(semester_selected) || semester_selected == "- all semester -") {
+      all_grades
+    } else {
+      all_grades[all_grades$semester == semester_selected, ]
+    }
+  })
+  
+  
+# ============================================================================
+# LEFT PLOT 1: Scatter Plot of All Grades per Exam (All Exams Mode)
+# ============================================================================
+  output$exam_plot1 <- renderPlot({
+    
+    req(input$exam_toggle == "All Exams")
+    
+    df <- filtered_grades()
+    req(nrow(df) > 0)
+    
+    grade_colors <- c(
+      "Very Good (≤1.5)" = "#3c8d40",
+      "Good (1.6–2.5)"   = "#88c999",
+      "Average (2.6–3.5)"= "#f3b173",
+      "Poor (3.6–4.0)"   = "#e16b6b"
+    )
+    
+    # Grade clusters
+    df$cluster <- cut(
+      df$grade,
+      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      labels = c(
+        "Very Good (≤1.5)",
+        "Good (1.6–2.5)",
+        "Average (2.6–3.5)",
+        "Poor (3.6–4.0)"
+      ),
+      include.lowest = TRUE
+    )
+    
+    ggplot(df, aes(y = exam_title, x = grade, color = cluster)) +
+      geom_jitter(height = 0.2, size = 3, alpha = 0.8) +
+      scale_color_manual(values = grade_colors) +
+      labs(
+        title = "All Student Grades per Exam",
+        x = "Grade",
+        y = "Exam",
+        color = "Grade Cluster"
+      ) +
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title       = element_text(face = "bold", size = 18, hjust = 0.5),
+        axis.title.x     = element_text(face = "bold", size = 16),
+        axis.title.y     = element_text(face = "bold", size = 16),
+        axis.text.x      = element_text(size = 14),
+        axis.text.y      = element_text(size = 12),
+        panel.grid.major = element_line(color = "grey60"),
+        panel.grid.minor = element_line(color = "grey70"),
+        legend.title     = element_text(face = "bold", size = 14),
+        legend.text      = element_text(size = 12)
+      )
+  })
+  
+  
+# ============================================================================
+# LEFT PLOT 2: Placeholder for One Exam Mode
+# ============================================================================
+# For now, this can be an empty plot that will be filled later with One Exam data
+output$exam_plot2 <- renderPlot({
+    # You can fill this later with a filtered plot
+    NULL
+  })
+  
+  
+# ============================================================================
+# SHOW / HIDE LEFT CONTAINERS BASED ON RADIO BUTTON
+# ============================================================================
+# When "All Exams" is selected, only left1 is visible.
+# When "One Exam" is selected, left2 is visible 
+  observe({
+    if (input$exam_toggle == "All Exams") {
+      shinyjs::show("exam_plot_container1")
+      shinyjs::hide("exam_plot_container2")
+    } else if (input$exam_toggle == "One Exam") {
+      shinyjs::hide("exam_plot_container1")
+      shinyjs::show("exam_plot_container2")
+    }
+  })
+  
+  
+  # ---- Disconnect when session ends ------------------------------------------
+  session$onSessionEnded(function() {
+    dbDisconnect(con)
+  })
+  
 }
+  

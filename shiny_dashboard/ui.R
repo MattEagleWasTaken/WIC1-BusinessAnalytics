@@ -299,7 +299,7 @@ ui <- dashboardPage(
                     )
                     ),
                     
-                  # Semester filter (ONLY for All Exams)
+                  # Semester filter
                   uiOutput("exam_semester_filter"),
                   
                   # Dropdowns for One Exam (title + pnr)
@@ -330,9 +330,10 @@ ui <- dashboardPage(
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);
+                    height: calc(100vh - 200px);      /* fixed height for scroll */
+                    overflow-y: auto;   /* vertical scrollbar */
                     margin-left: 15px;
-                    ",
+                  ",
                     plotOutput("exam_plot1", height = "100%", width = "100%")
                   ),
                   
