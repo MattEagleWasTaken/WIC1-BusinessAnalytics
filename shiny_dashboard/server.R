@@ -239,7 +239,7 @@ output$student_gpa <- renderText({
     title <- if (input$student_toggle == "All Students") {
       HTML("Overall<br>Average Grade")
     } else {
-      "Average Grade"
+      HTML("Student<br>Average Grade")
     }
     
     h3(
@@ -940,15 +940,37 @@ output$exam_plot2 <- renderPlot({
   })
   
 
-# ============================================================================
-output$exam_gpa_value <- renderText({
+  # ============================================================================
+  # Exam GPA Value Output (Upper Card)
+  # ============================================================================
+  # Displays the main numeric value in the Exam GPA card.
+  #
+  # Behavior:
+  # - All Exams mode:
+  #     Shows the overall (or semester-filtered) average exam grade
+  #     together with the standard deviation (mean ± SD).
+  #
+  # - One Exam mode:
+  #     Shows the average grade of the selected exam only.
+  #
+  # Data sources:
+  # - exam_stats(): provides mean and standard deviation for all exams
+  # - selected_exam_avg(): provides the average grade for one specific exam
+  #
+  # Important:
+  # - No database queries are executed here.
+  # - All values come from centralized reactive calculations to ensure consistency.
+  output$exam_gpa_value <- renderText({
     
     # ---------------- All Exams Mode ----------------
+    # Display overall or semester-specific exam average with standard deviation
     if (input$exam_toggle == "All Exams") {
       
+      # Retrieve centralized exam statistics
       stats <- exam_stats()
       req(stats)
       
+      # Format: Mean ± SD
       return(
         paste0(
           round(stats$mean, 2),
@@ -959,13 +981,17 @@ output$exam_gpa_value <- renderText({
     }
     
     # ---------------- One Exam Mode ----------------
+    # Display the average grade of the selected exam
     req(input$exam_toggle == "One Exam")
     
+    # Retrieve the average of the selected exam
     ex_avg <- selected_exam_avg()
     req(ex_avg)
     
+    # Return rounded exam average
     round(ex_avg, 2)
   })
+  
  
   
 # ============================================================================
