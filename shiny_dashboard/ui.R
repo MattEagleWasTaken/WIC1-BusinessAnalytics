@@ -334,7 +334,7 @@ ui <- dashboardPage(
                     overflow-y: auto;   /* vertical scrollbar */
                     margin-left: 15px;
                   ",
-                    plotOutput("exam_plot1", height = "100%", width = "100%")
+                    uiOutput("exam_plot1_ui")
                   ),
                   
                   # ==== LEFT PLOT CONTAINER 2 ====
@@ -393,7 +393,7 @@ ui <- dashboardPage(
                       flex: 1;
                       padding: 15px;
                       ",
-                      plotOutput("exam_boxplot", height = "100%", width = "100%")
+                      plotOutput("exam_boxplot_avg", height = "100%", width = "100%")
                       )
                     
                   ) # end right container

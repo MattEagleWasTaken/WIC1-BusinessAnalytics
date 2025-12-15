@@ -780,16 +780,26 @@ filtered_exams_one <- reactive({
         legend.title     = element_text(face = "bold", size = 14),
         legend.text      = element_text(size = 12)
       )
-  },
-# DYNAMIC HEIGHT enables vertical scrolling
+  })
+  
 # ============================================================================
-  height = function() {
+# Dynamic plotOutput height for exam_plot1 (prevents renderPlot height race)
+# ============================================================================
+  output$exam_plot1_ui <- renderUI({
+    
+    req(input$exam_toggle == "All Exams")
     
     df <- filtered_grades()
+    req(!is.null(df))
+    req(nrow(df) > 0)
+    req("exam_title" %in% names(df))
+    
     n_exams <- length(unique(df$exam_title))
     
-    # Minimum height + growth per exam
-    max(400, n_exams * 35)
+    # px height grows with number of exams (enables scrolling inside container)
+    h <- max(400, n_exams * 35)
+    
+    plotOutput("exam_plot1", height = paste0(h, "px"), width = "100%")
   })
   
   
@@ -820,133 +830,105 @@ output$exam_plot2 <- renderPlot({
   
   
 # ============================================================================
-# Calculate average grade per exam
+# Reactive: Average grade per exam (respects semester filter)
 # ============================================================================
-  exam_averages <- aggregate(
-    grade ~ pnr + exam_title,
-    data = all_grades,
-    FUN = mean
-  )
-  
-  colnames(exam_averages)[colnames(exam_averages) == "grade"] <- "exam_avg" 
-  
+  exam_averages_filtered <- reactive({
+    
+    df <- filtered_grades()
+    req(nrow(df) > 0)
+    
+    aggregate(
+      grade ~ exam_title,
+      data = df,
+      FUN = mean
+    )
+  })
+
 # ============================================================================
-# BOX PLOT – Distribution of average grades across all exams
+# BOX PLOT – Distribution of Exam Average Grades (Semester-aware)
 # ============================================================================
-  output$exam_boxplot <- renderPlot({
+  output$exam_boxplot_avg <- renderPlot({
     
     req(input$exam_toggle == "All Exams")
-    req(nrow(exam_averages) > 0)
     
-    df <- exam_averages
+    df <- exam_averages_filtered()
+    req(nrow(df) > 1)   # boxplot needs more than one value
     
-    # Overall statistics (exam level)
-    overall_mean   <- mean(df$exam_avg, na.rm = TRUE)
-    overall_median <- median(df$exam_avg, na.rm = TRUE)
-    overall_sd     <- sd(df$exam_avg, na.rm = TRUE)
+    # Statistics
+    exam_mean   <- mean(df$grade, na.rm = TRUE)
+    exam_median <- median(df$grade, na.rm = TRUE)
+    exam_sd     <- sd(df$grade, na.rm = TRUE)
     
-    p <- ggplot(df, aes(x = 1, y = exam_avg)) +
+# ------------------------
+# Base plot
+# ------------------------
+    p <- ggplot(df, aes(x = 1, y = grade)) +
       
-      # Standard boxplot
       geom_boxplot(
         width = 0.5,
         fill  = "lightblue",
         color = "black"
       ) +
       
-      # Overall mean (blue line)
+      # Mean line
       annotate(
         "segment",
         x = 0.75, xend = 1.25,
-        y = overall_mean, yend = overall_mean,
+        y = exam_mean, yend = exam_mean,
         color = "blue",
         linewidth = 1.2
       ) +
       
-      # Mean label (left)
+      # Mean label
       annotate(
         "text",
         x = 0.72,
-        y = overall_mean,
-        label = paste0("Mean: ", round(overall_mean, 2)),
+        y = exam_mean,
+        label = paste0("Mean: ", round(exam_mean, 2)),
         hjust = 1,
-        vjust = 0.5,
         color = "blue",
-        size = 4,
-        fontface = "bold"
+        fontface = "bold",
+        size = 4
       ) +
       
-      # Median label (right)
+      # Median label
       annotate(
         "text",
         x = 1.28,
-        y = overall_median,
-        label = paste0("Median: ", round(overall_median, 2)),
+        y = exam_median,
+        label = paste0("Median: ", round(exam_median, 2)),
         hjust = 0,
-        vjust = 0.5,
-        color = "black",
-        size = 4,
-        fontface = "bold"
+        fontface = "bold",
+        size = 4
       ) +
       
       labs(
-        y = "Average Exam Grade",
-        x = NULL,
-        title = "Distribution of Average Grades\nAcross All Exams",
+        title = "Distribution of Exam Average Grades",
         subtitle = paste0(
-          "Median: ", round(overall_median, 2),
-          "   |   SD: ", round(overall_sd, 2)
-        )
+          "Median: ", round(exam_median, 2),
+          "   |   SD: ", round(exam_sd, 2)
+        ),
+        y = "Average Grade",
+        x = NULL
       ) +
       
       scale_x_continuous(limits = c(0.4, 1.6)) +
       
       theme_minimal(base_size = 14) +
       theme(
-        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.title    = element_text(face = "bold", size = 16, hjust = 0.5),
         plot.subtitle = element_text(size = 14, hjust = 0.5),
         axis.text.x   = element_blank(),
         axis.ticks.x  = element_blank(),
-        axis.text.y   = element_text(face = "bold", size = 12, color = "black")
+        axis.text.y   = element_text(face = "bold", size = 12)
       )
     
-# ----------------------------------------------------
-# One Exam highlight (red line)
-# ----------------------------------------------------
-    if (input$exam_toggle == "One Exam") {
-      
-      selected_pnr <- input$exam_pnr_select
-      
-      if (!is.null(selected_pnr) && selected_pnr != "- not selected -") {
-        
-        exam_mean <- df$exam_avg[df$pnr == selected_pnr]
-        
-        if (length(exam_mean) == 1) {
-          p <- p +
-            annotate(
-              "segment",
-              x = 0.75, xend = 1.25,
-              y = exam_mean, yend = exam_mean,
-              color = "red",
-              linewidth = 1.2
-            ) +
-            annotate(
-              "text",
-              x = 1.28,
-              y = exam_mean,
-              label = paste0("Exam: ", round(exam_mean, 2)),
-              hjust = 0,
-              vjust = 0.5,
-              color = "red",
-              size = 4,
-              fontface = "bold"
-            )
-        }
-      }
-    }
-    
+# ------------------------
+# Return plot
+# ------------------------
     p
   })
+  
   
 
   
