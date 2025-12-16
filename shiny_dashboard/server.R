@@ -770,6 +770,51 @@ active_exam_semester <- reactive({
     mean(df$grade, na.rm = TRUE)
 })
   
+# ============================================================================
+# LEFT PLOT 2 – Reactive: All individual grades of the selected exam
+# ============================================================================
+  
+selected_exam_grades <- reactive({
+    
+    # This reactive is only relevant in "One Exam" mode
+    req(input$exam_toggle == "One Exam")
+    
+    # Start from the centrally filtered grade dataset
+    df <- filtered_grades()
+    req(nrow(df) > 0)
+    
+# ------------------------------------------------------------
+# Case 1: Exam Number (PNR) selected
+# ------------------------------------------------------------
+# The PNR uniquely identifies an exam and is therefore preferred
+    if (!is.null(input$exam_pnr_select) &&
+        input$exam_pnr_select != "- not selected -") {
+      
+      df <- df[df$pnr == input$exam_pnr_select, ]
+      
+# ------------------------------------------------------------
+# Case 2: Exam Title selected (fallback)
+# ------------------------------------------------------------
+# This case is only used if no PNR is selected.
+# It assumes that the combination of semester + title is sufficient.
+    } else if (!is.null(input$exam_title_select) &&
+               input$exam_title_select != "- not selected -") {
+      
+      df <- df[df$exam_title == input$exam_title_select, ]
+      
+# ------------------------------------------------------------
+# Case 3: No valid exam selection
+# ------------------------------------------------------------
+    } else {
+      return(NULL)
+    }
+    
+    # Ensure that at least one grade exists for the selected exam
+    req(nrow(df) > 0)
+    
+    # Return all individual grades of the selected exam
+    df
+  })
   
   
 # ============================================================================
@@ -885,9 +930,86 @@ active_exam_semester <- reactive({
 # LEFT PLOT 2: Placeholder for One Exam Mode
 # ============================================================================
 # For now, this can be an empty plot that will be filled later with One Exam data
-output$exam_plot2 <- renderPlot({
-    # You can fill this later with a filtered plot
-    NULL
+  output$exam_plot2 <- renderPlot({
+    
+    # Only relevant in One Exam mode
+    req(input$exam_toggle == "One Exam")
+    
+    # Get all grades of the selected exam
+    df <- selected_exam_grades()
+    req(!is.null(df))
+    req(nrow(df) > 0)
+    
+    # ------------------------------------------------------------
+    # Define official grading scale (HS Aalen – 0.3 steps)
+    # ------------------------------------------------------------
+    grade_levels <- c(
+      1.0, 1.3, 1.7,
+      2.0, 2.3, 2.7,
+      3.0, 3.3, 3.7,
+      4.0
+    )
+    
+    # Convert grades to ordered factor
+    df$grade_factor <- factor(
+      df$grade,
+      levels = grade_levels,
+      ordered = TRUE
+    )
+    
+    # Count number of students per grade (keep empty grades)
+    grade_counts <- as.data.frame(table(df$grade_factor))
+    names(grade_counts) <- c("grade", "count")
+    
+    # Exam average for reference line
+    ex_avg <- selected_exam_avg()
+    n_students <- nrow(df)
+    
+    # Extract exam title from the filtered data
+    exam_title <- unique(df$exam_title)
+    
+    # ------------------------------------------------------------
+    # Plot
+    # ------------------------------------------------------------
+    ggplot(grade_counts, aes(x = grade, y = count)) +
+      
+      geom_col(
+        fill  = "#88c999",
+        color = "black",
+        width = 0.7
+      ) +
+      
+      # Average grade reference line
+      {
+        if (!is.null(ex_avg) && is.numeric(ex_avg))
+          geom_vline(
+            xintercept = as.numeric(
+              factor(
+                min(grade_levels[grade_levels >= ex_avg]),
+                levels = grade_levels
+              )
+            ),
+            color = "red",
+            linewidth = 1.2
+          )
+      } +
+      
+      labs(
+      title = paste0("Grade Distribution – ", exam_title),
+      subtitle = paste0("Number of students: ", n_students),
+      x = "Grade",
+      y = "Number of Students"
+      ) +
+      
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title    = element_text(face = "bold", size = 18, hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        axis.title.x  = element_text(face = "bold", size = 14),
+        axis.title.y  = element_text(face = "bold", size = 14),
+        axis.text.x   = element_text(face = "bold", size = 12),
+        axis.text.y   = element_text(size = 12)
+      )
   })
   
   
@@ -1044,29 +1166,13 @@ output$exam_plot2 <- renderPlot({
         p
   })
   
-  
 
-  # ============================================================================
-  # Exam GPA Value Output (Upper Card)
-  # ============================================================================
-  # Displays the main numeric value in the Exam GPA card.
-  #
-  # Behavior:
-  # - All Exams mode:
-  #     Shows the overall (or semester-filtered) average exam grade
-  #     together with the standard deviation (mean ± SD).
-  #
-  # - One Exam mode:
-  #     Shows the average grade of the selected exam only.
-  #
-  # Data sources:
-  # - exam_stats(): provides mean and standard deviation for all exams
-  # - selected_exam_avg(): provides the average grade for one specific exam
-  #
-  # Important:
-  # - No database queries are executed here.
-  # - All values come from centralized reactive calculations to ensure consistency.
-  output$exam_gpa_value <- renderText({
+# ============================================================================
+# Exam GPA Value Output (Upper Card)
+# ============================================================================
+# Displays the main numeric value in the Exam GPA card.
+
+output$exam_gpa_value <- renderText({
     
     # ---------------- All Exams Mode ----------------
     # Display overall or semester-specific exam average with standard deviation
