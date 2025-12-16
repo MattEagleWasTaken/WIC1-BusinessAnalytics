@@ -318,7 +318,7 @@ output$student_gpa <- renderText({
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Poor (3.6–4.0)"
+        "Below Average (3.6–4.0)"
       ),
       include.lowest = TRUE
     )
@@ -348,7 +348,7 @@ output$student_gpa <- renderText({
           "Very Good (≤1.5)" = "#3c8d40",
           "Good (1.6–2.5)"   = "#88c999",
           "Average (2.6–3.5)"= "#f3b173",
-          "Poor (3.6–4.0)"    = "#e16b6b"
+          "Below Average (3.6–4.0)"    = "#e16b6b"
         )
       ) +
       labs(
@@ -840,7 +840,7 @@ selected_exam_grades <- reactive({
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
       "Average (2.6–3.5)"= "#f3b173",
-      "Poor (3.6–4.0)"   = "#e16b6b"
+      "Below Average (3.6–4.0)"   = "#e16b6b"
     )
     
 # ------------------------------------------------------------
@@ -853,7 +853,7 @@ selected_exam_grades <- reactive({
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Poor (3.6–4.0)"
+        "Below Average (3.6–4.0)"
       ),
       include.lowest = TRUE
     )
@@ -925,10 +925,10 @@ selected_exam_grades <- reactive({
   })
   
 
-# ============================================================================
-# LEFT PLOT 2: Placeholder for One Exam Mode
-# ============================================================================
-# For now, this can be an empty plot that will be filled later with One Exam data
+  # ============================================================================
+  # LEFT PLOT 2: Placeholder for One Exam Mode
+  # ============================================================================
+  # Histogram of grade distribution for one selected exam
   output$exam_plot2 <- renderPlot({
     
     # Only relevant in One Exam mode
@@ -950,12 +950,14 @@ selected_exam_grades <- reactive({
       "> 4.0"
     )
     
-    # colors
+    # ------------------------------------------------------------
+    # Color definition (consistent with other plots)
+    # ------------------------------------------------------------
     grade_colors <- c(
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
       "Average (2.6–3.5)"= "#f3b173",
-      "Poor (3.6–6.0)"   = "#e16b6b"
+      "Below Average (3.6–6.0)"   = "#e16b6b"
     )
     
     # ------------------------------------------------------------
@@ -967,21 +969,6 @@ selected_exam_grades <- reactive({
       as.character(df$grade)
     )
     
-    # ------------------------------------------------------------
-    # Assign performance clusters for coloring
-    # ------------------------------------------------------------
-    df$grade_cluster <- cut(
-      as.numeric(df$grade),
-      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
-      labels = c(
-        "Very Good (≤1.5)",
-        "Good (1.6–2.5)",
-        "Average (2.6–3.5)",
-        "Poor (3.6–6.0)"
-      ),
-      include.lowest = TRUE
-    )
-    
     # Convert grades to ordered factor
     df$grade_factor <- factor(
       df$grade_plot,
@@ -989,14 +976,18 @@ selected_exam_grades <- reactive({
       ordered = TRUE
     )
     
+    # ------------------------------------------------------------
     # Count number of students per grade (keep empty grades)
+    # ------------------------------------------------------------
     grade_counts <- as.data.frame(table(df$grade_factor))
     names(grade_counts) <- c("grade", "count")
     
     # ------------------------------------------------------------
     # Assign performance cluster per grade level (for coloring)
     # ------------------------------------------------------------
-    grade_counts$grade_num <- suppressWarnings(as.numeric(as.character(grade_counts$grade)))
+    grade_counts$grade_num <- suppressWarnings(
+      as.numeric(as.character(grade_counts$grade))
+    )
     
     grade_counts$grade_cluster <- cut(
       grade_counts$grade_num,
@@ -1005,19 +996,28 @@ selected_exam_grades <- reactive({
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Poor (3.6–6.0)"
+        "Below Average (3.6–6.0)"
       ),
       include.lowest = TRUE
     )
     
+    # Assign failing grades (>4.0) explicitly to "Below Average"
+    grade_counts$grade_cluster[
+      is.na(grade_counts$grade_cluster)
+    ] <- "Below Average (3.6–6.0)"
+    
+    grade_counts$grade_cluster <- factor(
+      grade_counts$grade_cluster,
+      levels = names(grade_colors)
+    )
+    
+    # ------------------------------------------------------------
     # Exam average for reference line
+    # ------------------------------------------------------------
     ex_avg <- selected_exam_avg()
     n_students <- nrow(df)
-    
-    # Extract exam title from the filtered data
     exam_title <- unique(df$exam_title)
     
-    # X-position of mean on discrete scale
     mean_x <- as.numeric(
       factor(
         min(grade_levels[grade_levels >= ex_avg]),
@@ -1037,17 +1037,16 @@ selected_exam_grades <- reactive({
       ) +
       
       scale_fill_manual(
+        name   = "Grade Cluster",
         values = grade_colors,
-        drop = FALSE
+        drop   = TRUE
       ) +
       
       # ------------------------------------------------------------
     # Show count labels near the bottom of each bar
     # ------------------------------------------------------------
     geom_text(
-      aes(
-        label = ifelse(count > 0, count, "")
-      ),
+      aes(label = ifelse(count > 0, count, "")),
       y = 0.5,
       fontface = "bold",
       size = 5,
@@ -1055,35 +1054,25 @@ selected_exam_grades <- reactive({
       vjust = 0
     ) +
       
+      # ------------------------------------------------------------
+    # Mean reference line + fixed-position label
     # ------------------------------------------------------------
-    # Mean reference line + label at top of the line
-    # ------------------------------------------------------------
-    {
-      if (!is.null(ex_avg) && is.numeric(ex_avg)) {
-        
-        list(
-          # Mean line
-          geom_vline(
-            xintercept = mean_x,
-            color = "red",
-            linewidth = 1.2
-          ),
-          
-          # Mean label at top of the line
-          annotate(
-            "text",
-            x = mean_x,
-            y = 0.25,
-            label = paste0("Mean: ", round(ex_avg, 2)),
-            color = "red",
-            fontface = "bold",
-            size = 4,
-            hjust = -0.1,   # slightly right of the line
-            vjust = -0.4    # slightly above the highest bar
-          )
-        )
-      }
-    } +
+    geom_vline(
+      xintercept = mean_x,
+      color = "red",
+      linewidth = 1.2
+    ) +
+      
+      annotate(
+        "text",
+        x = mean_x,
+        y = 0.25,
+        label = paste0("Mean: ", round(ex_avg, 2)),
+        color = "red",
+        fontface = "bold",
+        size = 4,
+        hjust = -0.1
+      ) +
       
       labs(
         title = paste0("Grade Distribution – ", exam_title),
@@ -1093,11 +1082,7 @@ selected_exam_grades <- reactive({
       ) +
       
       scale_y_continuous(
-        breaks = seq(
-          0,
-          max(grade_counts$count, na.rm = TRUE),
-          by = 1
-        ),
+        breaks = seq(0, max(grade_counts$count), by = 1),
         expand = expansion(mult = c(0, 0.15))
       ) +
       
@@ -1109,22 +1094,12 @@ selected_exam_grades <- reactive({
         axis.title.y  = element_text(face = "bold", size = 14),
         axis.text.x   = element_text(face = "bold", size = 12),
         axis.text.y   = element_text(size = 12),
-        
-        # ------------------------------------------------------------
-        # Make gridlines more visible
-        # ------------------------------------------------------------
-        panel.grid.major.y = element_line(
-          color = "grey70",
-          linewidth = 0.8
-        ),
-        panel.grid.major.x = element_line(
-          color = "grey80",
-          linewidth = 0.6
-        ),
-        
-        panel.grid.minor = element_blank()
+        panel.grid.major.y = element_line(color = "grey70", linewidth = 0.8),
+        panel.grid.major.x = element_line(color = "grey80", linewidth = 0.6),
+        panel.grid.minor   = element_blank()
       )
   })
+  
   
   
 # ============================================================================
