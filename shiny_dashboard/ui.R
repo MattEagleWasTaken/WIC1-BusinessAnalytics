@@ -437,11 +437,11 @@ ui <- dashboardPage(
               )
             ),
             
-            # Placeholder: Semester / Degree filter
-            uiOutput("degree_filter_1"),
+            # Semester filter (All Programs & One Program)
+            uiOutput("degree_semester_filter"),
             
-            # Placeholder: Additional dropdowns (e.g. degree_program)
-            uiOutput("degree_filter_2")
+            # Dropdown + Reset (only in One Program mode)
+            uiOutput("one_degree_filters")
             
           ) # end filter container
         ), # end fluid row filter

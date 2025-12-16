@@ -496,9 +496,23 @@ output$student_gpa <- renderText({
       theme(
         plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
         plot.subtitle = element_text(size = 14, hjust = 0.5),
+        
         axis.text.x   = element_blank(),
         axis.ticks.x  = element_blank(),
-        axis.text.y   = element_text(face = "bold", size = 12, color = "black")
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black"),
+        
+        # ------------------------------------------------------------
+        # Grid styling (same as bar plot / histogram)
+        # ------------------------------------------------------------
+        panel.grid.major.y = element_line(
+          color = "grey70",
+          linewidth = 0.8
+        ),
+        panel.grid.major.x = element_line(
+          color = "grey85",
+          linewidth = 0.6
+        ),
+        panel.grid.minor = element_blank()
       )
     
 # ----------------------------------------------------
@@ -936,8 +950,8 @@ selected_exam_grades <- reactive({
         axis.title.y     = element_text(face = "bold", size = 16),
         axis.text.x      = element_text(size = 14),
         axis.text.y      = element_text(size = 12),
-        panel.grid.major = element_line(color = "grey60"),
-        panel.grid.minor = element_line(color = "grey70"),
+        panel.grid.major = element_line(color = "grey70"),
+        panel.grid.minor = element_line(color = "grey85"),
         legend.title     = element_text(face = "bold", size = 14),
         legend.text      = element_text(size = 12)
       )
@@ -1139,7 +1153,7 @@ selected_exam_grades <- reactive({
         axis.text.x   = element_text(face = "bold", size = 12),
         axis.text.y   = element_text(size = 12),
         panel.grid.major.y = element_line(color = "grey70", linewidth = 0.8),
-        panel.grid.major.x = element_line(color = "grey80", linewidth = 0.6),
+        panel.grid.major.x = element_line(color = "grey85", linewidth = 0.6),
         panel.grid.minor   = element_blank()
       )
   })
@@ -1259,11 +1273,25 @@ selected_exam_grades <- reactive({
       
       theme_minimal(base_size = 14) +
       theme(
-        plot.title    = element_text(face = "bold", size = 16, hjust = 0.5),
+        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
         plot.subtitle = element_text(size = 14, hjust = 0.5),
+        
         axis.text.x   = element_blank(),
         axis.ticks.x  = element_blank(),
-        axis.text.y   = element_text(face = "bold", size = 12)
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black"),
+        
+        # ------------------------------------------------------------
+        # Grid styling (same as bar plot / histogram)
+        # ------------------------------------------------------------
+        panel.grid.major.y = element_line(
+          color = "grey70",
+          linewidth = 0.8
+        ),
+        panel.grid.major.x = element_line(
+          color = "grey85",
+          linewidth = 0.6
+        ),
+        panel.grid.minor = element_blank()
       )
     
 # ----------------------------------------------------
@@ -1384,6 +1412,125 @@ output$exam_gpa_title <- renderUI({
     "
     )
   })
+
+  
+# ============================================================================
+# Load Degree Program Data (incl. semester)
+# ============================================================================
+  degrees <- dbGetQuery(
+    con,
+    "
+  SELECT DISTINCT
+    e.degree_program,
+    e.semester
+  FROM exam e
+  ORDER BY e.degree_program, e.semester
+  "
+  )
+  
+# ---- Sort variants ----------------------------------------------------------
+  degrees_sorted_prog <- degrees[order(degrees$degree_program), ]
+  degrees_sorted_sem  <- degrees[order(degrees$semester), ]
+  
+# ---- Dropdown choices -------------------------------------------------------
+  degree_choices   <- c("- not selected -", unique(degrees_sorted_prog$degree_program))
+  semester_choices <- c("- all semester -", unique(degrees_sorted_sem$semester))
+  
+  
+# ============================================================================
+# Semester Filter (Degree – shared for All Programs & One Program)
+# ============================================================================
+  output$degree_semester_filter <- renderUI({
+    
+    div(
+      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      selectInput(
+        "degree_semester_select",
+        label    = tags$label("Semester:", style = "margin-top: 6px;"),
+        choices  = semester_choices,
+        selected = "- all semester -"
+      )
+    )
+  })
+  
+  
+# ============================================================================
+# Reactive: Degree programs filtered by semester
+# ============================================================================
+  filtered_degrees_one <- reactive({
+    
+    df <- degrees
+    semester <- input$degree_semester_select
+    
+    if (!is.null(semester) && semester != "- all semester -") {
+      df <- df[df$semester == semester, ]
+    }
+    
+    df
+  })
+  
+  
+# ============================================================================
+# Reactive: Degree program dropdown choices (semester-aware)
+# ============================================================================
+  degree_program_choices_one <- reactive({
+    c(
+      "- not selected -",
+      sort(unique(filtered_degrees_one()$degree_program))
+    )
+  })
+  
+  
+# ============================================================================
+# Dynamic Input Row (for "One Program")
+# ============================================================================
+  output$one_degree_filters <- renderUI({
+    
+    req(input$degree_toggle == "One Program")
+    
+    div(
+      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      
+      # ---------------- Degree Program ---------------------------------------
+      selectInput(
+        "degree_program_select",
+        label    = tags$label("Degree Program:", style = "margin-top: 6px;"),
+        choices  = degree_program_choices_one(),
+        selected = input$degree_program_select %||% "- not selected -"
+      ),
+      
+      # ---------------- Reset Button -----------------------------------------
+      actionButton(
+        "reset_degree_filters",
+        "Reset Selection",
+        class = "reset-btn",
+        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
+      )
+    )
+  })
+  
+  
+# ============================================================================
+# Reset Degree Filters
+# ============================================================================
+  observeEvent(input$reset_degree_filters, {
+    updateSelectInput(session, "degree_program_select", selected = "- not selected -")
+    updateSelectInput(session, "degree_semester_select", selected = "- all semester -")
+  })
+  
+  
+# ============================================================================
+# Show / Hide Degree Reset Button
+# ============================================================================
+  observe({
+    if (!is.null(input$degree_program_select) &&
+        input$degree_program_select != "- not selected -") {
+      shinyjs::show("reset_degree_filters")
+    } else {
+      shinyjs::hide("reset_degree_filters")
+    }
+  })
+  
   
   
 # ============================================================================
