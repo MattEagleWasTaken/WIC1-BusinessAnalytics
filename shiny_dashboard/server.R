@@ -271,6 +271,32 @@ output$student_gpa <- renderText({
     # Order exams: best grade (lowest value) on top
     df$exam_title <- factor(df$exam_title, levels = rev(df$exam_title[order(df$grade)]))
     
+    # ------------------------------------------------------------
+    # Resolve student full name for dynamic title
+    # ------------------------------------------------------------
+    student_name <- NULL
+    
+    if (input$student_toggle == "One Student") {
+      
+      if (!is.null(input$name_select) &&
+          input$name_select != "- not selected -") {
+        
+        student_name <- input$name_select
+        
+      } else if (!is.null(input$matnr_select) &&
+                 input$matnr_select != "- not selected -") {
+        
+        row <- students_sorted_name[
+          students_sorted_name$matriculation_number == input$matnr_select,
+        ]
+        
+        if (nrow(row) == 1) {
+          student_name <- row$full_name
+        }
+      }
+    }
+    
+    
     ggplot(df, aes(x = grade, y = exam_title, fill = color)) +
       geom_col(width = 0.6, color = "black", show.legend = FALSE) +
       # Add grade labels inside the bars
@@ -286,12 +312,30 @@ output$student_gpa <- renderText({
         expand = expansion(mult = c(0.02, 0.05))
       ) +
       scale_fill_identity() +  # Use actual hex colors
-      labs(x = "Grade", y = "Exam", title = "Student Grades Overview") +
+      labs(
+        x = "Grade",
+        y = "Exam",
+        title = if (!is.null(student_name)) {
+          paste0("Student Grades Overview – ", student_name)
+        } else {
+          "Student Grades Overview"
+        }
+      ) +
       theme_minimal(base_size = 14) +
       theme(
         plot.background  = element_rect(fill = "white", color = NA, linewidth = 0),
         panel.background = element_rect(fill = "white", color = "grey90", linewidth = 1),
-        panel.grid.major = element_line(color = "grey90"),
+        # ------------------------------------------------------------
+        # Grid styling (consistent with One Exam histogram)
+        # ------------------------------------------------------------
+        panel.grid.major.y = element_line(
+          color = "grey70",
+          linewidth = 0.8
+        ),
+        panel.grid.major.x = element_line(
+          color = "grey80",
+          linewidth = 0.6
+        ),
         panel.grid.minor = element_blank(),
         plot.title       = element_text(face = "bold", hjust = 0.5, size = 18),
         axis.text        = element_text(face = "bold", color = "black"),
