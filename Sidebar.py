@@ -95,14 +95,14 @@ class MainWindow(QMainWindow):
         self.stats_tab = StatsPage()
         
         # Setting up Signals between MainWindow and different pages
-        #self.home_tab...
+        self.home_tab.status_message.connect(self.show_status_message)
         self.grade_tab.data_changed.connect(self.handle_grade_data)
         self.grade_tab.status_message.connect(self.show_status_message)
         self.student_tab.data_changed.connect(self.handle_student_data)
         self.student_tab.status_message.connect(self.show_status_message)       
         self.exam_tab.data_changed.connect(self.handle_exam_data)
         self.exam_tab.status_message.connect(self.show_status_message)
-        #self.stats_tab...
+        self.stats_tab.status_message.connect(self.show_status_message)
 
     @Slot(str)
     def show_status_message(self, message, timeout):
@@ -111,15 +111,15 @@ class MainWindow(QMainWindow):
     @Slot(dict)
     def handle_grade_data(self, data):
         # TODO: in Datenbank speichern
-        self.statusBar().showMessage(f"Saving grade {data['grade']} for student {data['student']}")
+        self.statusBar().showMessage(f"Saving grade {data['grade']} for student {data['student']}", 2000)
 
     def handle_student_data(self, data):
         # TODO: in Datenbank speichern
-        self.statusBar().showMessage(f"Saving student {data['first_name']} {data['last_name']}")   
+        self.statusBar().showMessage(f"Saving student {data['first_name']} {data['last_name']}", 2000)   
 
     def handle_exam_data(self, data):
         # TODO: in Datenbank speichern
-        self.statusBar().showMessage(f"Creating Exam {data['exam']}")         
+        self.statusBar().showMessage(f"Creating Exam {data['exam_title']}", 2000)         
 
 
     # TODO: Style auf Sidebar buttons anpassen

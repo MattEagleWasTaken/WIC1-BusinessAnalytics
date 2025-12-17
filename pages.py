@@ -1,19 +1,45 @@
 ''' OFFENE TODOS IM FILE ABARBEITEN!!!
 
 ALLGEMEINE TODOS:
-[] Kommentare aufräumen
+[] Kommentare aufräumen + Docstring ergänzen
+[x] Dropdown Menüs aus der DB
+[x] Dropdown Menüs aus Backend-Liste 
 [x] MotherClass einführen
 [] delete_btn in allen Pages implementieren
-[] Worker implementieren 
+[x] Worker implementieren 
 [] Settings / PopUp Delete Button 
+
+MIT MARVIN ABSTIMMEN:
+[] wie wird die MatrikelNr. eingeführt/validiert?
 
 
 '''
 from database_worker import DatabaseWorker
 import os 
+import json
 from PySide6.QtGui import QDoubleValidator, QIntValidator, QPixmap
-from PySide6.QtWidgets import QDateEdit, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout
+from PySide6.QtWidgets import QComboBox, QDateEdit, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout
 from PySide6.QtCore import Signal, QDate, Qt
+
+
+def dropdown_options_path():
+    """loads the dropdown options path and returns it"""
+    config_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),"dropdown_options.json")
+    return config_path
+
+def load_dropdown_options():
+    """loads the dropdown-options from the JSON-File"""
+    config_path = dropdown_options_path()
+
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return True, json.load(f), ""  # success, options, error_msg for reload_options 
+    except FileNotFoundError:
+        return False, {"study_programs": [], "semesters": []}, "dropdown_options.json not found!" # success, options, error_msg for reload_options
+    except json.JSONDecodeError:
+        return False, {"study_programs": [], "semesters": []}, "Invalid JSON in dropdown_options.json!" # success, options, error_msg for reload_options
+
 
 class BasePage(QWidget):
     data_changed = Signal(dict)
@@ -90,46 +116,79 @@ class BasePage(QWidget):
 
 
 class HomePage(BasePage):
+    """
+    ToDos:
+    [x] connect buttons
+    [x] clear forms
+    [x] emit status message
+    [x] add semster layout
+    [] add complete config settings logic 
+    [] add how-to use
     
+    """
     def __init__(self):
         super().__init__("TODO: Home Page & Settings")
         self.setup_ui()
 
-
+    # TODO: UI Überarbeiten
     def setup_ui(self):
-        form_layout = QFormLayout()
+        self.semester_layout = QHBoxLayout()
+        self.study_program_layout = QHBoxLayout()
         
-        name_layout = QHBoxLayout()
-        self.first_name_input = QLineEdit()
-        self.first_name_input.setPlaceholderText("Firstname")
-        self.last_name_input = QLineEdit()
-        self.last_name_input.setPlaceholderText("Lastname")
-        name_layout.addWidget(self.first_name_input)
-        name_layout.addWidget(self.last_name_input)
+        # TODO: new_semester_input könnte man noch validieren
+        self.new_semester_label = QLabel("Add new semester:")
+        self.new_semester_input = QLineEdit()
+        self.new_semester_input.setPlaceholderText("e.g. SoSe 26 or WiSe 26/27")
+        self.add_semester_btn = QPushButton("Add")
+        self.add_semester_btn.clicked.connect(self.add_semester_btn_clicked)
 
-        form_layout.addRow("Name:", name_layout)
+        self.new_study_program_label = QLabel("Add new study / degree program:")
+        self.new_study_program_input = QLineEdit()
+        self.new_study_program_input.setPlaceholderText("e.g. Business Informatics (M.Sc.)")
+        self.add_study_program_btn = QPushButton("add")
+        self.add_study_program_btn.clicked.connect(self.add_study_program_btn_clicked)
 
-        self.birth_date_input = QDateEdit()
-        self.birth_date_input.setDisplayFormat("dd.MM.yyyy")
-        self.birth_date_input.setDate(QDate.currentDate())
-        self.birth_date_input.setCalendarPopup(True)
+        self.semester_layout.addWidget(self.new_semester_label)
+        self.semester_layout.addWidget(self.new_semester_input)
+        self.semester_layout.addWidget(self.add_semester_btn)
+
+        self.study_program_layout.addWidget(self.new_study_program_label)
+        self.study_program_layout.addWidget(self.new_study_program_input)
+        self.study_program_layout.addWidget(self.add_study_program_btn)
+
         
-        self.matriculation_no_input = QLineEdit()
-        matriculation_validator = QIntValidator(0, 999999999)
-        self.matriculation_no_input.setValidator(matriculation_validator)
-
-        form_layout.addRow("Date of Birth:", self.birth_date_input)
-        form_layout.addRow("Matriculation Number:", self.matriculation_no_input)
-
-
-
-        save_btn = QPushButton("Save")
-        save_btn.clicked.connect(self.save_data)
-        
-        self.content_layout.addLayout(form_layout)
-        self.content_layout.addWidget(save_btn)
+        self.content_layout.addLayout(self.semester_layout)
+        self.content_layout.addLayout(self.study_program_layout)
         self.content_layout.addStretch()
         
+    def add_semester_btn_clicked(self):
+        key = "semesters"
+        value = self.new_semester_input.text()
+
+        if not value:
+            self.status_message.emit("Please enter a semester", 3000)
+            return
+
+        success = self.append_dropdown_options(key, value)
+        if success:
+            self.new_semester_input.clear()
+            self.status_message.emit(f"Added {value} to Semesters", 3000)
+
+
+
+    def add_study_program_btn_clicked(self):
+        key = "study_programs"
+        value = self.new_study_program_input.text()
+
+        if not value:
+            self.status_message.emit("Please enter a study program", 3000)
+            return
+
+        success = self.append_dropdown_options(key, value)
+        if success: 
+            self.new_study_program_input.clear()
+            self.status_message.emit(f"Added {value} to study programs", 3000)
+
 
 
     def save_data(self):
@@ -149,7 +208,7 @@ class HomePage(BasePage):
             'birth_date': self.birth_date_input.text(),
             'matriculation_no': self.matriculation_no_input.text()
         }
-        # Signal aussenden
+        
         self.data_changed.emit(self.data)
         self.status_message.emit("Student Data saved succesfully!", 2000)
     
@@ -169,19 +228,116 @@ class HomePage(BasePage):
         self.birth_date_input.clear()
         self.matriculation_no_input.clear()
 
+    def append_dropdown_options(self, key: str, value: str):
+        """
+        Append dropdown-options in dropdown_options.json
+
+        Args:
+            key: fixed key from dropdown_options.json file
+            value: the value that will be appended to the selected key-list
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        success, data, error_msg = load_dropdown_options()
+        if success: 
+            if key not in data:
+                self.status_message.emit(f"Error: cannot append to list {key}", 5000)
+                return False
+            
+            if value in data[key]:
+                self.status_message.emit(f"'{value}' already exists in {key}", 3000)
+                return False
+            
+            data[key].append(value)
+            return self.save_dropdown_json(data)
+        else: 
+            self.status_message.emit(f"Error: {error_msg}", 5000)
+            return False
+
+    def save_dropdown_json(self, data: dict):
+        """Saves appended dropdown_options.json file"""
+        config_path = dropdown_options_path()
+        try:
+            with open(config_path, 'w', encoding='utf-8') as file:
+                json.dump(data, file, indent=4, ensure_ascii=False)
+                return True
+        except Exception as e:
+                self.status_message.emit(f"Error while saving Data to the list: {e}", 5000)
+                return False
+
+
+
+
 
 class GradePage(BasePage):
 
     def __init__(self):
         super().__init__("Grade Entry")
         self.setup_ui()
+        self.reload_dropdowns() 
     
+    def showEvent(self, event):
+        """Gets called when switching to this tab/page"""
+        super().showEvent(event)
+        self.reload_dropdowns()
+
+    def reload_dropdowns(self): #
+        """Load students and exams from the database into dropdown menu-lists"""
+        self.load_students()
+        self.load_exams()
+
+    def load_students(self):
+        """Load students from students from the database"""
+        query = """SELECT matriculation_number, first_name, last_name FROM student ORDER BY last_name, first_name"""
+        self.student_worker = DatabaseWorker(query, fetch=True)
+        self.student_worker.data_fetched.connect(self.on_students_loaded)
+        self.student_worker.start()
+
+    def on_students_loaded(self, success, rows, error_msg):
+        """ Callback when students are loaded"""
+        if not success: 
+            self.status_message.emit(f"Error loading students: {error_msg}"),
+            return
+
+        self.student_input.clear()
+        self.student_input.addItem("-- Select student --", None)
+
+        for row in rows:
+            matriculation_number, first_name, last_name = row
+            display_text = f"{last_name}, {first_name}, ({matriculation_number})"
+            self.student_input.addItem(display_text, matriculation_number)
+
+    def load_exams(self):
+        """Load exams from the database"""
+        query = "SELECT pnr, title, semester, exam_date FROM exam ORDER BY title"
+        self.exam_worker = DatabaseWorker(query, fetch=True)
+        self.exam_worker.data_fetched.connect(self.on_exams_loaded)
+        self.exam_worker.start()
+
+    def on_exams_loaded(self, success, rows, error_msg):
+        """Callback when exams are loaded"""
+        if not success:
+            self.status_message.emit(f"Error loading exams: {error_msg}", 5000)
+            return
+        
+        self.exam_input.clear()
+        self.exam_input.addItem("-- Select exam --", None)
+
+        for row in rows:
+            pnr, title, semester, exam_date = row
+            display_text = f"{pnr} - {title} ({exam_date} | {semester})"
+            self.exam_input.addItem(display_text, pnr)
+
     def setup_ui(self):
         form_layout = QFormLayout()
         
-        self.student_input = QLineEdit()
-        self.exam_input = QLineEdit()
+        self.student_input = QComboBox()
+        self.exam_input = QComboBox()
         self.grade_input = QLineEdit()
+        self.grade_input.setPlaceholderText("e.g. 1.3")
+        grade_validator = QDoubleValidator(1.0, 6.0, 1)
+        self.grade_input.setValidator(grade_validator)
         
         form_layout.addRow("Student:", self.student_input)
         form_layout.addRow("Exam", self.exam_input)
@@ -194,37 +350,68 @@ class GradePage(BasePage):
         self.content_layout.addWidget(save_btn)
         self.content_layout.addStretch()
 
-    
     def save_data(self):
-        if not self.student_input.text().strip():
+        if  self.student_input.currentIndex() == 0:
             self.status_message.emit("Please select a student", 2000)
             return
-        if not self.exam_input.text().strip():
+        if  self.exam_input.currentIndex() == 0:
             self.status_message.emit("Please select an exam", 2000)
             return
-        if not self.student_input.text().strip():
+        if not self.grade_input.text().strip():
             self.status_message.emit(f"Please enter a grade", 2000)
             return
+        
+        matriculation_number = self.student_input.currentData()
+        pnr = self.exam_input.currentData()
+
+        query = """ INSERT INTO grade (matriculation_number, pnr, grade, grade_date) VALUES (%s, %s, %s, CURRENT_DATE)"""
+        params = (
+            matriculation_number,
+            pnr, 
+            float(self.grade_input.text().replace(',', '.'))
+        )
+
+        self.db_worker = DatabaseWorker(query, params)
+        self.db_worker.finished.connect(self.on_save_finished)
+        self.db_worker.start()
+        self.status_message.emit("Saving...", 0) # TODO: das wird doch nie angezeigt...
+
         self.data = {
-            'student': self.student_input.text(),
-            'exam': self.exam_input.text(),
+            'student': self.student_input.currentText(),
+            'exam': self.exam_input.currentText(),
             'grade': self.grade_input.text()
         }
-        # Signal aussenden
+        
         self.data_changed.emit(self.data)
     
+    def on_save_finished(self, success, message):
+        if success: 
+            self.status_message.emit(message, 2000)
+            self.data = self.get_data()
+            self.data_changed.emit(self.data)
+            self.clear_form()
+
+        else:
+            if "grade_unique_student_exam" in message or "unique" in message.lower():
+                self.status_message.emit("This student already has a grade for this exam! Delete the grade first to update it!", 5000) 
+            else:
+                self.status_message.emit(f"Error: {message}", 5000)          
+
+
+
+
     def get_data(self):
-        """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
+        """Return (unsaved) formulardata"""
         return {
-            'student': self.student_input.text(),
-            'exam': self.exam_input.text(),
+            'student': self.student_input.currentText(),
+            'exam': self.exam_input.currentText(),
             'grade': self.grade_input.text()
         }
     
     def clear_form(self):
-        """Formular zurücksetzen nach erfolgreichem Speichern"""
-        self.student_input.clear()
-        self.exam_input.clear()
+        """delete input after saving successfully"""
+        self.student_input.setCurrentIndex(0)
+        self.exam_input.setCurrentIndex(0)
         self.grade_input.clear()
 
 
@@ -283,7 +470,7 @@ class StudentPage(BasePage):
             return
 
         query = """
-            INSERT INTO students (first_name, last_name, birth_date, matriculation_no)
+            INSERT INTO student (first_name, last_name, date_of_birth, matriculation_number)
             VALUES (%s, %s, %s, %s)
         """
         params = (
@@ -303,20 +490,12 @@ class StudentPage(BasePage):
     def on_save_finished(self, success, message):
         if success:
             self.status_message.emit(message, 2000)
-            self.data_changed.emit({
-                'first_name': self.first_name_input.text(),
-                'last_name': self.last_name_input.text(),
-                #'name': f"{self.first_name_input.text()} {self.last_name_input.text()}",
-                'birth_date': self.birth_date_input.text(),
-                'matriculation_no': self.matriculation_no_input.text()
-            })
+            self.data = self.get_data()
+            self.data_changed.emit(self.data)
             self.clear_form()
         else:
             self.status_message.emit(message, 5000)
         
-        # Signal aussenden
-        self.data_changed.emit(self.data)
-        self.status_message.emit("Student Data saved succesfully!", 2000)
     
     def get_data(self):
         """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
@@ -341,13 +520,35 @@ class ExamPage(BasePage):
     def __init__(self):
         super().__init__("Exam Entry")
         self.setup_ui()
-    
+        self.reload_dropdowns()
+
+    def showEvent(self, event):
+        """ gets called when switching to this tab/page"""
+        super().showEvent(event)
+        self.reload_dropdowns()
+
+    def reload_dropdowns(self):
+        """reloads dropdown options from the JSON-file"""
+        success, options, error_msg = load_dropdown_options()
+
+        if not success:
+            self.status_message.emit(f"Error: {error_msg}", 5000)
+            return
+
+        self.semester_input.clear()
+        self.semester_input.addItem("-- Select semester --")
+        self.semester_input.addItems(options.get("semesters", []))
+
+        self.study_program_input.clear()
+        self.study_program_input.addItem("--Select study program --")
+        self.study_program_input.addItems(options.get("study_programs", []))
+
    
     def setup_ui(self):
         form_layout = QFormLayout()
               
         self.pnr_input = QLineEdit()
-        self.pnr_input.setPlaceholderText("Exam Number")
+        self.pnr_input.setPlaceholderText("Exam number")
 
         self.exam_title_input = QLineEdit()
         self.exam_title_input.setPlaceholderText("Exam title")
@@ -357,15 +558,12 @@ class ExamPage(BasePage):
         self.exam_date_input.setCalendarPopup(True)
 
 
-        #TODO: Das könnte auch ein Dropdown sein? -> Mega Fehleranfällig
-        self.semester_input = QLineEdit()
-        self.semester_input.setPlaceholderText("Semester")
-        semester_validator = QIntValidator(0,7)
-        self.semester_input.setValidator(semester_validator)
+        #TODO: Kann die Zeile dann noch leer sein? - Errorhandling wenn "-- Select..."
+        self.semester_input = QComboBox()
+
 
         #TODO: Auch das könnte ein Dropdown sein?! -> mega fehleranfällig
-        self.study_program_input = QLineEdit()
-        self.study_program_input.setPlaceholderText("Lastname")
+        self.study_program_input = QComboBox()
 
 
         form_layout.addRow("PNr:", self.pnr_input)
@@ -397,46 +595,66 @@ class ExamPage(BasePage):
         if not self.exam_date_input.text().strip():
             self.status_message.emit("Please enter an exam date", 2000)
             return
-        if not self.semester_input.text().strip():
+        if self.semester_input.currentIndex() == 0:
             self.status_message.emit("Please select a semester", 2000) #TODO: 'Select' oder 'Enter' je nach Dropdown oder nicht
             return
-        if not self.study_program_input.text().strip(): #
+        if self.study_program_input.currentIndex() == 0: 
             self.status_message.emit("Please select a study program", 2000) #TODO: 'Select' oder 'Enter' je nach Dropdown oder nicht
             return
+        
 
-        self.data = {
-            'pnr': self.pnr_input.text(),
-            'exam_title': self.exam_title_input.text(),
-            'exam_date': self.exam_date_input.text(),
-            'semester': self.semester_input.text(),
-            'study_program': self.study_program_input.text()
-        }
-        # Signal aussenden
-        self.data_changed.emit(self.data)
-        self.status_message.emit("Student Data saved succesfully!", 2000)
+        query = """
+            INSERT INTO exam (pnr, title, exam_date, semester, degree_program) 
+            VALUES (%s, %s, %s, %s, %s)
+        """
+
+        params = (
+            self.pnr_input.text(),
+            self.exam_title_input.text(),
+            self.exam_date_input.date().toString("yyyy-MM-dd"),
+            self.semester_input.currentText(),
+            self.study_program_input.currentText()
+        )
+        # Worker-Thread starten
+        self.db_worker = DatabaseWorker(query, params)
+        self.db_worker.finished.connect(self.on_save_finished)
+        self.db_worker.start()
+        
+        self.status_message.emit("Saving...", 0)
     
+    def on_save_finished(self, success, message):
+        if success:
+            self.status_message.emit(message, 2000)
+            self.data = self.get_data()
+            self.data_changed.emit(self.data)
+            self.clear_form()
+        else:
+            self.status_message.emit(message, 5000)
+
+
     def get_data(self):
-        """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
+        """return (unsaved) formulardata"""
         return {
-            'first_name': self.first_name_input.text(),
-            'last_name': self.last_name_input.text(),
-            'birth_date': self.birth_date_input.text(),
-            'matriculation_no': self.matriculation_no_input.text()
+            'PNr': self.pnr_input.text(),
+            'exam_title': self.exam_title_input.text(),
+            'exam_date': self.exam_date_input.date().toString("yyyy-MM-dd"),
+            'semester': self.semester_input.currentText(),
+            'study_program': self.study_program_input.currentText()
         }
     
     def delete_data(self):
         if not self.pnr_input.text().strip():
-            self.status_message.emit("Please enter an exam number to delete it", 2000) #TODO: Entweder so, oder separat aus nem Dropdown auswählen. 
+            self.status_message.emit("Please enter an exam number (\"PNr\") to delete it", 2000) #TODO: separat aus nem Dropdown auswählen. 
             return
-        
         
 
     def clear_form(self):
-        """Formular zurücksetzen nach erfolgreichem Speichern"""
-        self.first_name_input.clear()
-        self.last_name_input.clear()
-        self.birth_date_input.clear()
-        self.matriculation_no_input.clear()
+        """delete input after saving successfully"""
+        self.pnr_input.clear()
+        self.exam_title_input.clear()
+        self.exam_date_input.clear()
+        self.semester_input.setCurrentIndex(0)
+        self.study_program_input.setCurrentIndex(0)
 
 
 class StatsPage(BasePage):
