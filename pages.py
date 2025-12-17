@@ -8,6 +8,7 @@ ALLGEMEINE TODOS:
 [] delete_btn in allen Pages implementieren
 [x] Worker implementieren 
 [] Settings / PopUp Delete Button 
+[] shiny in stats page implementieren
 
 MIT MARVIN ABSTIMMEN:
 [] wie wird die MatrikelNr. eingeführt/validiert?
@@ -149,7 +150,6 @@ class HomePage(BasePage):
         self.load_current_config()
 
 
-    # TODO: UI Überarbeiten
     def setup_ui(self):
         # === Database Connection Section ===
         db_section_label = QLabel("Database Connection")
@@ -171,38 +171,62 @@ class HomePage(BasePage):
             "background-color: #f0f8ff; padding: 10px; border-radius: 5px; "
             "color: #333; font-size: 12px; margin: 5px 0;"
         )
-        self.info_label.setVisible(False)  # Standardmäßig ausgeblendet
+        self.info_label.setVisible(False) 
         
         self.content_layout.addWidget(self.info_btn)
         self.content_layout.addWidget(self.info_label)
         
-        db_form_layout = QFormLayout()
+        host_layout = QHBoxLayout()
+        port_layout = QHBoxLayout()
+        database_layout = QHBoxLayout()
+        username_layout = QHBoxLayout()
+        password_layout = QHBoxLayout()
+        min_label_width = 210
 
+        self.host_label = QLabel("Host:")
+        self.host_label.setMinimumWidth(min_label_width)
         self.host_input = QLineEdit()
         self.host_input.setPlaceholderText("localhost")
+        host_layout.addWidget(self.host_label)
+        host_layout.addWidget(self.host_input)
         
+        self.port_label = QLabel("Port:")
+        self.port_label.setMinimumWidth(min_label_width)
         self.port_input = QLineEdit()
         self.port_input.setPlaceholderText("5432")
         port_validator = QIntValidator(1, 65535)
         self.port_input.setValidator(port_validator)
+        port_layout.addWidget(self.port_label)
+        port_layout.addWidget(self.port_input)
 
+        self.database_label = QLabel("Database:")
+        self.database_label.setMinimumWidth(min_label_width)
         self.database_input = QLineEdit()
         self.database_input.setPlaceholderText("db_exam_management")
+        database_layout.addWidget(self.database_label)
+        database_layout.addWidget(self.database_input)
 
+        self.username_label = QLabel("Username")
+        self.username_label.setMinimumWidth(min_label_width)
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Your PostgreSQL username")
+        username_layout.addWidget(self.username_label)
+        username_layout.addWidget(self.username_input)
 
+        self.password_label = QLabel("Password:")
+        self.password_label.setMinimumWidth(min_label_width)
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Your PostgreSQL password")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        password_layout.addWidget(self.password_label)
+        password_layout.addWidget(self.password_input)
 
-        db_form_layout.addRow("Host:", self.host_input)
-        db_form_layout.addRow("Port:", self.port_input)
-        db_form_layout.addRow("Database:", self.database_input)
-        db_form_layout.addRow("Username:", self.username_input)
-        db_form_layout.addRow("Password:", self.password_input)
 
-        self.content_layout.addLayout(db_form_layout)
+        self.content_layout.addLayout(host_layout)
+        self.content_layout.addLayout(port_layout)
+        self.content_layout.addLayout(database_layout)
+        self.content_layout.addLayout(username_layout)
+        self.content_layout.addLayout(password_layout)
 
         # DB-Config Buttons
         db_btn_layout = QHBoxLayout()
@@ -232,12 +256,14 @@ class HomePage(BasePage):
         self.study_program_layout = QHBoxLayout()
         
         self.new_semester_label = QLabel("Add new semester:")
+        self.new_semester_label.setMinimumWidth(min_label_width)
         self.new_semester_input = QLineEdit()
         self.new_semester_input.setPlaceholderText("e.g. SoSe 26 or WiSe 26/27")
         self.add_semester_btn = QPushButton("Add")
         self.add_semester_btn.clicked.connect(self.add_semester_btn_clicked)
 
         self.new_study_program_label = QLabel("Add new study / degree program:")
+        self.new_study_program_label.setMinimumWidth(min_label_width)
         self.new_study_program_input = QLineEdit()
         self.new_study_program_input.setPlaceholderText("e.g. Business Informatics (M.Sc.)")
         self.add_study_program_btn = QPushButton("Add")
@@ -409,9 +435,6 @@ class HomePage(BasePage):
         except Exception as e:
                 self.status_message.emit(f"Error while saving Data to the list: {e}", 5000)
                 return False
-
-
-
 
 
 class GradePage(BasePage):

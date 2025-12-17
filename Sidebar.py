@@ -10,11 +10,12 @@ ALLGEMEINE TODOS:
 
 import os
 from pages import ExamPage, GradePage, HomePage, StatsPage, StudentPage
-from PySide6.QtCore import QSize, Qt, QDate, Signal, Slot
-from PySide6.QtGui import QIcon, QPixmap
-from PySide6.QtWidgets import (QMainWindow, QPushButton, QStatusBar, QLineEdit, QComboBox,
-QHBoxLayout, QVBoxLayout, QWidget, QLabel, QTabWidget, QDateEdit, 
+from PySide6.QtCore import QSize, Slot, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (QMainWindow, QPushButton, QStatusBar,
+QHBoxLayout, QVBoxLayout, QWidget, QLabel, QTabWidget
 )
+
 
 
 class MainWindow(QMainWindow):
@@ -32,7 +33,8 @@ class MainWindow(QMainWindow):
     # setup the frame of the main window 
     def setup_window(self):
         self.setWindowTitle("ExaMS")
-        self.setFixedSize(800, 700) # maybe change this to resizable later
+        self.setMinimumSize(800, 700)  # min-size
+        self.resize(800, 700)         # Startsize
         self.setStatusBar(QStatusBar(self))
         self.create_sidebar_buttons()
         self.setup_tabs()
@@ -130,11 +132,11 @@ class MainWindow(QMainWindow):
     def apply_sidebar_button_style(self, button):
         button.setCheckable(True)
         button.setChecked(False)
-        button.setFixedSize(QSize(100, 100))
-        button.setIconSize(QSize(100, 100))  # Icon füllt den gesamten Button
+        button.setMinimumSize(QSize(100, 100))
+        button.setMaximumSize(QSize(150, 150))
         button.setStyleSheet("""
             QPushButton {
-                padding: 0px;
+                padding: 5px;
                 border: 2px solid #cccccc;
                 border-radius: 5px;
                 background-color: transparent;
@@ -148,10 +150,41 @@ class MainWindow(QMainWindow):
                 background-color: transparent;
             }
             QPushButton:checked {
-                border: 3px solid #27ae60;
-                background-color: transparent;
+                border: 3px solid #FEFEFE;
+                background-color: #FEFEFE;
             }
         """)
+
+    def resizeEvent(self, event):
+        """Resize Icon-size when resizing Window"""
+        super().resizeEvent(event)
+        self.update_icon_sizes()
+
+    def update_icon_sizes(self):
+        """calculate icon size based in button size"""
+        buttons = [
+            self.home_btn, 
+            self.grade_entry_btn, 
+            self.student_entry_btn, 
+            self.exam_entry_btn, 
+            self.stats_btn
+        ]
+        
+        for btn in buttons:
+            btn_size = btn.size()
+            icon_width = btn_size.width()  
+            icon_height = btn_size.height()
+            icon_size = min(icon_width, icon_height)
+            icon_size = max(40, icon_size)  
+            
+            btn.setIconSize(QSize(icon_size, icon_size))
+
+    def showEvent(self, event):
+        """initial Icon-size when opening app"""
+        super().showEvent(event)
+        
+
+        QTimer.singleShot(10, self.update_icon_sizes)
 
 
     def home_btn_clicked(self):
@@ -184,8 +217,6 @@ class MainWindow(QMainWindow):
         self.update_button_icons()
         self.right_widget.setCurrentIndex(4)
 
-
-
     def uncheck_sidebar_buttons(self):
         self.home_btn.setChecked(False)
         self.grade_entry_btn.setChecked(False)
@@ -196,15 +227,19 @@ class MainWindow(QMainWindow):
 
     def setup_layout(self):
         left_layout = QVBoxLayout()
-        left_layout.addWidget(self.home_btn)
-        left_layout.addWidget(self.grade_entry_btn)
-        left_layout.addWidget(self.student_entry_btn)
-        left_layout.addWidget(self.exam_entry_btn)
-        left_layout.addWidget(self.stats_btn)
-        left_layout.addStretch(5)
-        left_layout.setSpacing(20)
+        left_layout.addWidget(self.home_btn, 1)
+        left_layout.addWidget(self.grade_entry_btn, 1)
+        left_layout.addWidget(self.student_entry_btn, 1)
+        left_layout.addWidget(self.exam_entry_btn, 1)
+        left_layout.addWidget(self.stats_btn, 1)
+        left_layout.addStretch(3)
+        left_layout.setSpacing(10)
+
+
         left_widget = QWidget()
         left_widget.setLayout(left_layout)
+        left_widget.setMinimumWidth(80)
+        left_widget.setMaximumWidth(150)
         left_widget.setStyleSheet("""
             QWidget {
                 background-color: #0073B9;            }
@@ -225,7 +260,7 @@ class MainWindow(QMainWindow):
 
         main_layout = QHBoxLayout()
         main_layout.addWidget(left_widget)
-        main_layout.addWidget(self.right_widget)
+        main_layout.addWidget(self.right_widget,1)
         main_layout.setStretch(0, 40)
         main_layout.setStretch(1, 200)
         main_layout.setSpacing(0)  # Kein Abstand zwischen Widgets
