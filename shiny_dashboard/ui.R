@@ -453,13 +453,13 @@ ui <- dashboardPage(
         fluidRow(
           div(
             style = "
-      display: flex;
-      align-items: flex-start;
-      gap: 30px;
-      width: 100%;
-      height: calc(100vh - 200px);
-      margin-top: 15px;
-      ",
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            width: 100%;
+            height: calc(100vh - 200px);
+            margin-top: 15px;
+            ",
             
             # ================================================================
             # LEFT PLOT CONTAINER 1
@@ -467,15 +467,15 @@ ui <- dashboardPage(
             div(
               id = "degree_plot_container1",
               style = "
-        flex: 1;
-        background-color: white;
-        border-radius: 15px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
-        padding: 20px;
-        height: calc(100vh - 200px);
-        overflow-y: auto;
-        margin-left: 15px;
-        ",
+              flex: 1;
+              background-color: white;
+              border-radius: 15px;
+              box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+              padding: 20px;
+              height: calc(100vh - 200px);
+              overflow-y: auto;
+              margin-left: 15px;
+              ",
               
               # Placeholder for dynamic plot / UI
               uiOutput("degree_plot1_ui")
@@ -487,14 +487,14 @@ ui <- dashboardPage(
             div(
               id = "degree_plot_container2",
               style = "
-        flex: 1;
-        background-color: white;
-        border-radius: 15px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
-        padding: 20px;
-        height: calc(100vh - 200px);
-        margin-left: 15px;
-        ",
+              flex: 1;
+              background-color: white;
+              border-radius: 15px;
+              box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+              padding: 20px;
+              height: calc(100vh - 200px);
+              margin-left: 15px;
+              ",
               
               # Placeholder plot
               plotOutput("degree_plot2", height = "100%", width = "100%")
@@ -506,27 +506,27 @@ ui <- dashboardPage(
             div(
               id = "degree_right_container",
               style = "
-        width: 25%;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        margin-right: 15px;
-        height: calc(100vh - 200px);
-        ",
+              width: 25%;
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+              margin-right: 15px;
+              height: calc(100vh - 200px);
+              ",
               
               # ---------------- Upper Card ----------------
               div(
                 id = "degree_card1",
                 style = "
-          background-color: white;
-          border-radius: 15px;
-          height: 160px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-          ",
+                background-color: white;
+                border-radius: 15px;
+                height: 160px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+                ",
                 
                 # Placeholder title
                 uiOutput("degree_card1_title"),
@@ -535,26 +535,26 @@ ui <- dashboardPage(
                 h2(
                   textOutput("degree_card1_value", inline = TRUE),
                   style = "
-            margin: 0;
-            font-size: 32px;
-            "
+                  margin: 0;
+                  font-size: 32px;
+                  "
                 )
               ),
               
               # ---------------- Lower Card ----------------
               div(
                 id = "degree_card2",
-                style = "
-          background-color: white;
-          border-radius: 15px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-          flex: 1;
-          padding: 15px;
-          ",
+                      style = "
+                background-color: white;
+                border-radius: 15px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+                flex: 1;
+                padding: 15px;
+                ",
                 
                 # Placeholder plot
                 plotOutput("degree_plot3", height = "100%", width = "100%")

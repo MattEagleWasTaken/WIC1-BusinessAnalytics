@@ -752,8 +752,9 @@ observe({
     g.grade,
     g.matriculation_number,
     g.pnr,
-    e.title    AS exam_title,
-    e.semester AS semester
+    e.title          AS exam_title,
+    e.semester       AS semester,
+    e.degree_program AS degree_program
   FROM grade g
   JOIN exam e ON g.pnr = e.pnr
 ")
@@ -1530,8 +1531,186 @@ output$exam_gpa_title <- renderUI({
       shinyjs::hide("reset_degree_filters")
     }
   })
+ 
   
+# ============================================================================
+# Reactive: Exam averages per Degree Program (semester-aware)
+# ----------------------------------------------------------------------------
+degree_exam_averages <- reactive({
+    
+    # Ensure the central grade dataset is available
+    req(all_grades)
+    
+    # Start from the complete dataset
+    df <- all_grades
+    
+# ------------------------------------------------------------
+# Apply semester filter (Degree tab)
+# ------------------------------------------------------------
+# If a specific semester is selected, only keep exams
+# that were held in that semester.
+    if (!is.null(input$degree_semester_select) &&
+        input$degree_semester_select != "- all semester -") {
+      
+      df <- df[df$semester == input$degree_semester_select, ]
+    }
+    
+    # Ensure that data is still available after filtering
+    req(nrow(df) > 0)
+    
+# ------------------------------------------------------------
+# Aggregate grades
+# ------------------------------------------------------------
+# One row = one exam
+# grade   = average grade of that exam
+    aggregate(
+      grade ~ degree_program + pnr + exam_title,
+      data = df,
+      FUN  = mean
+    )
+})
   
+# ============================================================================
+# LEFT PLOT 1 – Scatter Plot
+# ----------------------------------------------------------------------------
+output$degree_plot1 <- renderPlot({
+    
+    # Plot is only relevant in "All Programs" mode
+    req(input$degree_toggle == "All Programs")
+    
+    # Get aggregated exam averages
+    df <- degree_exam_averages()
+    req(nrow(df) > 0)
+    
+# ------------------------------------------------------------
+# Assign grade clusters (consistent terminology)
+# ------------------------------------------------------------
+    df$cluster <- cut(
+      df$grade,
+      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
+      labels = c(
+        "Very Good (≤1.5)",
+        "Good (1.6–2.5)",
+        "Average (2.6–3.5)",
+        "Below Average (3.6–6.0)"
+      ),
+      include.lowest = TRUE
+    )
+    
+    # Consistent color mapping used across the dashboard
+    grade_colors <- c(
+      "Very Good (≤1.5)"        = "#3c8d40",
+      "Good (1.6–2.5)"          = "#88c999",
+      "Average (2.6–3.5)"       = "#f3b173",
+      "Below Average (3.6–6.0)" = "#e16b6b"
+    )
+    
+# ------------------------------------------------------------
+# Scatter plot
+# ------------------------------------------------------------
+    ggplot(df, aes(
+      y = degree_program,
+      x = grade,
+      color = cluster
+    )) +
+      
+      # Reference lines for grading thresholds
+      geom_vline(
+        xintercept = c(1.5, 2.5, 3.5),
+        color = "black",
+        linewidth = 1
+      ) +
+      
+      # One jittered point per exam average
+      geom_jitter(
+        height = 0.15,
+        size   = 3,
+        alpha  = 1
+      ) +
+      
+      # Apply consistent color palette
+      scale_color_manual(values = grade_colors) +
+      
+      # Axis labels and title
+      labs(
+        title = "Exam Average Grades per Degree Program",
+        subtitle = if (
+          is.null(input$degree_semester_select) ||
+          input$degree_semester_select == "- all semester -"
+        ) {
+          "All semesters"
+        } else {
+          paste("Semester:", input$degree_semester_select)
+        },
+        x = "Average Grade per Exam",
+        y = "Degree Program",
+        color = "Grade Cluster"
+      ) +
+      
+      # Theme consistent with Exam scatter plot
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title       = element_text(face = "bold", size = 18, hjust = 0.5),
+        plot.subtitle    = element_text(size = 14, hjust = 0.5),
+        axis.title.x     = element_text(face = "bold", size = 16),
+        axis.title.y     = element_text(face = "bold", size = 16),
+        axis.text.x      = element_text(size = 14),
+        axis.text.y      = element_text(size = 12),
+        panel.grid.major = element_line(color = "grey70"),
+        panel.grid.minor = element_line(color = "grey85"),
+        legend.title     = element_text(face = "bold", size = 14),
+        legend.text      = element_text(size = 12)
+      )
+})
+  
+
+# ============================================================================
+# Dynamic plotOutput height for Degree scatter plot
+# ============================================================================
+  output$degree_plot1_ui <- renderUI({
+    
+    req(input$degree_toggle == "All Programs")
+    
+    df <- degree_exam_averages()
+    req(nrow(df) > 0)
+    
+    # Height scales with number of degree programs
+    n_degrees <- length(unique(df$degree_program))
+    height_px <- max(400, n_degrees * 35)
+    
+    plotOutput(
+      "degree_plot1",
+      height = paste0(height_px, "px"),
+      width  = "100%"
+    )
+})
+  
+# ============================================================================
+# SHOW / HIDE LEFT CONTAINERS – DEGREE TAB
+# ----------------------------------------------------------------------------
+# When "All Programs" is selected:
+#   - Show left container 1 (overview scatter plot)
+#   - Hide left container 2 (detail view)
+#
+# When "One Program" is selected:
+#   - Hide left container 1
+#   - Show left container 2
+# ============================================================================
+observe({
+    
+    req(input$degree_toggle)
+    
+    if (input$degree_toggle == "All Programs") {
+      
+      shinyjs::show("degree_plot_container1")
+      shinyjs::hide("degree_plot_container2")
+      
+    } else if (input$degree_toggle == "One Program") {
+      
+      shinyjs::hide("degree_plot_container1")
+      shinyjs::show("degree_plot_container2")
+    }
+  })
   
 # ============================================================================
 # Disconnect when session ends
