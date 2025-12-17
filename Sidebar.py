@@ -1,7 +1,11 @@
 """
 ALLGEMEINE TODOS:
 [] Kommentare aufräumen
-[] Signal/Slot Logik für data.changed überdenken
+[x] Signal/Slot Logik für data.changed überdenken
+[] ToDos im Code durchgehen 
+[] HomeScreen als Default weiß 
+[] Evtl. StatsPage raus
+[] Evtl. neuer Stretch/ look Sidebar
 """
 
 import os
@@ -22,13 +26,13 @@ class MainWindow(QMainWindow):
         self.base_path = os.path.dirname(os.path.abspath(__file__)) 
         self.image_path = os.path.join(self.base_path, "Images")
         self.setup_window()
+        self.home_btn_clicked()
 
-    #TODO: Datenbankverbindung herstellen
 
     # setup the frame of the main window 
     def setup_window(self):
         self.setWindowTitle("ExaMS")
-        self.setFixedSize(800, 600) # maybe change this to resizable later
+        self.setFixedSize(800, 700) # maybe change this to resizable later
         self.setStatusBar(QStatusBar(self))
         self.create_sidebar_buttons()
         self.setup_tabs()

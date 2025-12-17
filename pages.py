@@ -139,23 +139,43 @@ class HomePage(BasePage):
     [x] clear forms
     [x] emit status message
     [x] add semster layout
-    [] add complete config settings logic 
-    [] add how-to use
+    [x] add complete config settings logic 
+    [x] add how-to use
     
     """
     def __init__(self):
-        super().__init__("TODO: Home Page & Settings")
+        super().__init__("Home Page & Settings")
         self.setup_ui()
         self.load_current_config()
 
 
     # TODO: UI Überarbeiten
     def setup_ui(self):
-# === Database Connection Section ===
+        # === Database Connection Section ===
         db_section_label = QLabel("Database Connection")
         db_section_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px;")
         self.content_layout.addWidget(db_section_label)
-
+        
+        # Info-Box 
+        self.info_btn = QPushButton("(i) Show help")
+        self.info_btn.setStyleSheet("text-align: left; border: none; color: #0073B9;")
+        self.info_btn.clicked.connect(self.toggle_info)
+        
+        self.info_label = QLabel(
+            "You should not have to change Host, Port and Database. "
+            "Your Username is either your PostgreSQL username or your login username of your device. "
+            "Your Password is either your PostgreSQL password or blank."
+        )
+        self.info_label.setWordWrap(True)
+        self.info_label.setStyleSheet(
+            "background-color: #f0f8ff; padding: 10px; border-radius: 5px; "
+            "color: #333; font-size: 12px; margin: 5px 0;"
+        )
+        self.info_label.setVisible(False)  # Standardmäßig ausgeblendet
+        
+        self.content_layout.addWidget(self.info_btn)
+        self.content_layout.addWidget(self.info_label)
+        
         db_form_layout = QFormLayout()
 
         self.host_input = QLineEdit()
@@ -184,17 +204,20 @@ class HomePage(BasePage):
 
         self.content_layout.addLayout(db_form_layout)
 
-        # Buttons für DB-Config
+        # DB-Config Buttons
         db_btn_layout = QHBoxLayout()
         self.save_config_btn = QPushButton("Save Connection")
         self.save_config_btn.clicked.connect(self.save_login_config)
         self.test_connection_btn = QPushButton("Test Connection")
         self.test_connection_btn.clicked.connect(self.test_connection)
+        self.restore_default_btn = QPushButton("restore defaults")
+        self.restore_default_btn.clicked.connect(self.restore_default_conn)
         db_btn_layout.addWidget(self.save_config_btn)
         db_btn_layout.addWidget(self.test_connection_btn)
+        db_btn_layout.addWidget(self.restore_default_btn)
         self.content_layout.addLayout(db_btn_layout)
 
-        # Trennlinie
+      
         separator = QLabel()
         separator.setStyleSheet("QLabel { border-bottom: 1px solid #bdc3c7; margin: 15px 0; }")
         separator.setFixedHeight(2)
@@ -232,6 +255,13 @@ class HomePage(BasePage):
         self.content_layout.addLayout(self.study_program_layout)
         self.content_layout.addStretch()
         
+    def toggle_info(self):
+        """Toggle info label visibility"""
+        is_visible = self.info_label.isVisible()
+        self.info_label.setVisible(not is_visible)
+        self.info_btn.setText("(i) Hide help" if not is_visible else "(i) Show help")
+
+
     def load_current_config(self):
         """Loads current config values into the form fields"""
         success, config, error_msg = load_login_config()
@@ -273,9 +303,9 @@ class HomePage(BasePage):
         try:
             import psycopg2
             conn = psycopg2.connect(
-                host=self.host_input.text() or "localhost",
-                port=int(self.port_input.text() or 5432),
-                database=self.database_input.text() or "db_exam_management",
+                host=self.host_input.text(),
+                port=int(self.port_input.text()),
+                database=self.database_input.text(),
                 user=self.username_input.text(),
                 password=self.password_input.text()
             )
@@ -284,6 +314,12 @@ class HomePage(BasePage):
         except Exception as e:
             self.status_message.emit(f"Connection failed: {e}", 5000)
 
+    def restore_default_conn(self):
+        """restores the default values for Host, Port and Database"""
+        self.host_input.setText("localhost")
+        self.port_input.setText("5432")
+        self.database_input.setText("db_exam_management")
+        self.status_message.emit("Default values restored", 3000)
 
     def add_semester_btn_clicked(self):
         key = "semesters"
