@@ -40,6 +40,23 @@ def load_dropdown_options():
     except json.JSONDecodeError:
         return False, {"study_programs": [], "semesters": []}, "Invalid JSON in dropdown_options.json!" # success, options, error_msg for reload_options
 
+def login_config_path():
+    """ returns the path of the user_login_config.json file used for loggin into the database"""
+    config_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),"user_login_config.json")
+    return config_path
+
+def load_login_config():
+    """Loads the login config from the JSON file"""
+    config_path = login_config_path()
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            return True, json.load(f), ""
+    except FileNotFoundError:
+        return False, {}, "user_login_config.json not found!"
+    except json.JSONDecodeError:
+        return False, {}, "Invalid JSON in user_login_config.json!"
+
 
 class BasePage(QWidget):
     data_changed = Signal(dict)
@@ -129,13 +146,68 @@ class HomePage(BasePage):
     def __init__(self):
         super().__init__("TODO: Home Page & Settings")
         self.setup_ui()
+        self.load_current_config()
+
 
     # TODO: UI Überarbeiten
     def setup_ui(self):
+# === Database Connection Section ===
+        db_section_label = QLabel("Database Connection")
+        db_section_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px;")
+        self.content_layout.addWidget(db_section_label)
+
+        db_form_layout = QFormLayout()
+
+        self.host_input = QLineEdit()
+        self.host_input.setPlaceholderText("localhost")
+        
+        self.port_input = QLineEdit()
+        self.port_input.setPlaceholderText("5432")
+        port_validator = QIntValidator(1, 65535)
+        self.port_input.setValidator(port_validator)
+
+        self.database_input = QLineEdit()
+        self.database_input.setPlaceholderText("db_exam_management")
+
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Your PostgreSQL username")
+
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText("Your PostgreSQL password")
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+
+        db_form_layout.addRow("Host:", self.host_input)
+        db_form_layout.addRow("Port:", self.port_input)
+        db_form_layout.addRow("Database:", self.database_input)
+        db_form_layout.addRow("Username:", self.username_input)
+        db_form_layout.addRow("Password:", self.password_input)
+
+        self.content_layout.addLayout(db_form_layout)
+
+        # Buttons für DB-Config
+        db_btn_layout = QHBoxLayout()
+        self.save_config_btn = QPushButton("Save Connection")
+        self.save_config_btn.clicked.connect(self.save_login_config)
+        self.test_connection_btn = QPushButton("Test Connection")
+        self.test_connection_btn.clicked.connect(self.test_connection)
+        db_btn_layout.addWidget(self.save_config_btn)
+        db_btn_layout.addWidget(self.test_connection_btn)
+        self.content_layout.addLayout(db_btn_layout)
+
+        # Trennlinie
+        separator = QLabel()
+        separator.setStyleSheet("QLabel { border-bottom: 1px solid #bdc3c7; margin: 15px 0; }")
+        separator.setFixedHeight(2)
+        self.content_layout.addWidget(separator)
+
+        # === Dropdown Options Section ===
+        dropdown_section_label = QLabel("Dropdown Options")
+        dropdown_section_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px;")
+        self.content_layout.addWidget(dropdown_section_label)
+
         self.semester_layout = QHBoxLayout()
         self.study_program_layout = QHBoxLayout()
         
-        # TODO: new_semester_input könnte man noch validieren
         self.new_semester_label = QLabel("Add new semester:")
         self.new_semester_input = QLineEdit()
         self.new_semester_input.setPlaceholderText("e.g. SoSe 26 or WiSe 26/27")
@@ -145,7 +217,7 @@ class HomePage(BasePage):
         self.new_study_program_label = QLabel("Add new study / degree program:")
         self.new_study_program_input = QLineEdit()
         self.new_study_program_input.setPlaceholderText("e.g. Business Informatics (M.Sc.)")
-        self.add_study_program_btn = QPushButton("add")
+        self.add_study_program_btn = QPushButton("Add")
         self.add_study_program_btn.clicked.connect(self.add_study_program_btn_clicked)
 
         self.semester_layout.addWidget(self.new_semester_label)
@@ -156,11 +228,63 @@ class HomePage(BasePage):
         self.study_program_layout.addWidget(self.new_study_program_input)
         self.study_program_layout.addWidget(self.add_study_program_btn)
 
-        
         self.content_layout.addLayout(self.semester_layout)
         self.content_layout.addLayout(self.study_program_layout)
         self.content_layout.addStretch()
         
+    def load_current_config(self):
+        """Loads current config values into the form fields"""
+        success, config, error_msg = load_login_config()
+        if success:
+            self.host_input.setText(config.get("host", "localhost"))
+            self.port_input.setText(str(config.get("port", 5432)))
+            self.database_input.setText(config.get("database", ""))
+            self.username_input.setText(config.get("username", ""))
+            self.password_input.setText(config.get("password", ""))
+        else:
+            self.status_message.emit(f"Error loading config: {error_msg}", 5000)
+
+    def save_login_config(self):
+        """Saves the login config to the JSON file"""
+        if not self.username_input.text().strip():
+            self.status_message.emit("Please enter a username", 3000)
+            return
+        
+        config = {
+            "_comment1": "This file stores the login credentials for the local PostgreSQL database.",
+            "_comment2": "Please enter your own username and password. Do not share them with others.",
+            "username": self.username_input.text(),
+            "password": self.password_input.text(),
+            "_comment3": "These values usually do not need to be changed unless your local PostgreSQL setup differs.",
+            "host": self.host_input.text() or "localhost",
+            "port": int(self.port_input.text() or 5432),
+            "database": self.database_input.text() or "db_exam_management"
+        }
+
+        try:
+            with open(login_config_path(), 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=4, ensure_ascii=False)
+            self.status_message.emit("Database configuration saved successfully!", 3000)
+        except Exception as e:
+            self.status_message.emit(f"Error saving config: {e}", 5000)
+
+    def test_connection(self):
+        """Tests the database connection with current settings"""
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=self.host_input.text() or "localhost",
+                port=int(self.port_input.text() or 5432),
+                database=self.database_input.text() or "db_exam_management",
+                user=self.username_input.text(),
+                password=self.password_input.text()
+            )
+            conn.close()
+            self.status_message.emit("Connection successful!", 3000)
+        except Exception as e:
+            self.status_message.emit(f"Connection failed: {e}", 5000)
+
+
     def add_semester_btn_clicked(self):
         key = "semesters"
         value = self.new_semester_input.text()
@@ -173,8 +297,6 @@ class HomePage(BasePage):
         if success:
             self.new_semester_input.clear()
             self.status_message.emit(f"Added {value} to Semesters", 3000)
-
-
 
     def add_study_program_btn_clicked(self):
         key = "study_programs"
@@ -189,30 +311,22 @@ class HomePage(BasePage):
             self.new_study_program_input.clear()
             self.status_message.emit(f"Added {value} to study programs", 3000)
 
-
-
     def save_data(self):
-        if not self.first_name_input.text().strip():
-            self.status_message.emit("Please enter a firstname", 2000)
-            return
-        if not self.last_name_input.text().strip():
-            self.status_message.emit("Please enter a lastname", 2000)
-            return
-        if not self.matriculation_no_input.text().strip():
-            self.status_message.emit("Please enter a matriculation number", 2000)
-            return
+        """Not used in HomePage - config is saved via save_login_config"""
+        pass
 
-        self.data = {
-            'first_name': self.first_name_input.text(),
-            'last_name': self.last_name_input.text(),
-            'birth_date': self.birth_date_input.text(),
-            'matriculation_no': self.matriculation_no_input.text()
-        }
-        
-        self.data_changed.emit(self.data)
-        self.status_message.emit("Student Data saved succesfully!", 2000)
-    
     def get_data(self):
+        """Returns current config data"""
+        return {
+            'host': self.host_input.text(),
+            'port': self.port_input.text(),
+            'database': self.database_input.text(),
+            'username': self.username_input.text()
+        }
+
+    def clear_form(self):
+        """Reloads the current config"""
+        self.load_current_config()
         """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
         return {
             'first_name': self.first_name_input.text(),
@@ -221,12 +335,6 @@ class HomePage(BasePage):
             'matriculation_no': self.matriculation_no_input.text()
         }
     
-    def clear_form(self):
-        """Formular zurücksetzen nach erfolgreichem Speichern"""
-        self.first_name_input.clear()
-        self.last_name_input.clear()
-        self.birth_date_input.clear()
-        self.matriculation_no_input.clear()
 
     def append_dropdown_options(self, key: str, value: str):
         """
