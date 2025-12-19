@@ -1713,6 +1713,234 @@ observe({
   })
   
 # ============================================================================
+# DEGREE BOXPLOT – Distribution of Exam Average Grades
+# ----------------------------------------------------------------------------
+# Shows the distribution of exam averages across all degree programs.
+# - Semester-aware via degree_exam_averages()
+# - In "One Program" mode, a red reference line is added
+# ============================================================================
+  output$degree_plot3 <- renderPlot({
+    
+# ------------------------------------------------------------
+# Base data: exam averages per degree program (semester-aware)
+# ------------------------------------------------------------
+    df <- degree_exam_averages()
+    req(nrow(df) > 1)   # Boxplot needs more than one value
+    
+# ------------------------------------------------------------
+# Overall statistics (All Programs)
+# ------------------------------------------------------------
+    overall_mean   <- mean(df$grade, na.rm = TRUE)
+    overall_median <- median(df$grade, na.rm = TRUE)
+    overall_sd     <- sd(df$grade, na.rm = TRUE)
+    
+# ------------------------------------------------------------
+# Base boxplot
+# ------------------------------------------------------------
+    p <- ggplot(df, aes(x = 1, y = grade)) +
+      
+      geom_boxplot(
+        width = 0.5,
+        fill  = "lightblue",
+        color = "black"
+      ) +
+      
+# ------------------------------------------------------------
+# Overall mean (blue reference line)
+# ------------------------------------------------------------
+    annotate(
+      "segment",
+      x = 0.75, xend = 1.25,
+      y = overall_mean, yend = overall_mean,
+      color = "blue",
+      linewidth = 1.2
+    ) +
+      
+# Mean label (left)
+      annotate(
+        "text",
+        x = 0.72,
+        y = overall_mean,
+        label = paste0("Mean: ", round(overall_mean, 2)),
+        hjust = 1,
+        vjust = 0.5,
+        color = "blue",
+        size = 4,
+        fontface = "bold"
+      ) +
+      
+# Median label (right)
+      annotate(
+        "text",
+        x = 1.28,
+        y = overall_median,
+        label = paste0("Median: ", round(overall_median, 2)),
+        hjust = 0,
+        vjust = 0.5,
+        size = 4,
+        fontface = "bold"
+      ) +
+      
+      labs(
+        title = "Distribution of Exam Average Grades\nAcross Degree Programs",
+        subtitle = paste0(
+          "Median: ", round(overall_median, 2),
+          "   |   SD: ", round(overall_sd, 2)
+        ),
+        y = "Average Grade",
+        x = NULL
+      ) +
+      
+      scale_x_continuous(limits = c(0.4, 1.6)) +
+      
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        
+        axis.text.x   = element_blank(),
+        axis.ticks.x  = element_blank(),
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black"),
+        
+        # Consistent grid styling
+        panel.grid.major.y = element_line(
+          color = "grey70",
+          linewidth = 0.8
+        ),
+        panel.grid.major.x = element_line(
+          color = "grey85",
+          linewidth = 0.6
+        ),
+        panel.grid.minor = element_blank()
+      )
+    
+# ------------------------------------------------------------
+# One Program mode → add red reference line
+# ------------------------------------------------------------
+    if (input$degree_toggle == "One Program") {
+      
+      req(input$degree_program_select)
+      req(input$degree_program_select != "- not selected -")
+      
+      df_prog <- df[df$degree_program == input$degree_program_select, ]
+      req(nrow(df_prog) > 0)
+      
+      program_mean <- mean(df_prog$grade, na.rm = TRUE)
+      
+      p <- p +
+        annotate(
+          "segment",
+          x = 0.75, xend = 1.25,
+          y = program_mean, yend = program_mean,
+          color = "red",
+          linewidth = 1.2
+        ) +
+        annotate(
+          "text",
+          x = 1.265,
+          y = program_mean,
+          label = paste0("Program: ", round(program_mean, 2)),
+          hjust = 0,
+          vjust = 0.5,
+          color = "red",
+          size = 4,
+          fontface = "bold"
+        )
+    }
+    
+# ------------------------------------------------------------
+# Render plot
+# ------------------------------------------------------------
+    p
+  })
+  
+
+  
+# ============================================================================
+# Reactive: Statistics of degree exam averages (semester-aware)
+# ============================================================================
+  degree_stats <- reactive({
+    
+    df <- degree_exam_averages()
+    req(nrow(df) > 1)
+    
+    list(
+      mean = mean(df$grade, na.rm = TRUE),
+      sd   = sd(df$grade, na.rm = TRUE)
+    )
+})  
+
+# ============================================================================
+# Degree KPI Value Output (Upper Card)
+# ============================================================================
+  output$degree_card1_value <- renderText({
+    
+    # ---------------- All Programs ----------------
+    if (input$degree_toggle == "All Programs") {
+      
+      stats <- degree_stats()
+      req(stats)
+      
+      return(
+        paste0(
+          round(stats$mean, 2),
+          " ± ",
+          round(stats$sd, 2)
+        )
+      )
+    }
+    
+    # ---------------- One Program ----------------
+    req(input$degree_toggle == "One Program")
+    req(input$degree_program_select)
+    req(input$degree_program_select != "- not selected -")
+    
+    df <- degree_exam_averages()
+    df <- df[df$degree_program == input$degree_program_select, ]
+    req(nrow(df) > 0)
+    
+    round(mean(df$grade, na.rm = TRUE), 2)
+})  
+  
+
+# ============================================================================
+# Dynamic title for Degree KPI card
+# ============================================================================
+  output$degree_card1_title <- renderUI({
+    
+    title <- if (input$degree_toggle == "All Programs") {
+      
+# Distinguish between overall and semester-specific aggregation
+      if (is.null(input$degree_semester_select) ||
+          input$degree_semester_select == "- all semester -") {
+        
+        HTML("Overall<br>Degree Program Average Grade")
+        
+      } else {
+        
+        HTML("Semester<br>Degree Program Average Grade")
+      }
+      
+    } else {
+      
+# One Program mode
+      HTML("Program<br>Average Grade")
+    }
+    
+    h3(
+      title,
+      style = "
+      margin: 0;
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+    "
+    )
+})
+  
+  
+# ============================================================================
 # Disconnect when session ends
 # ============================================================================
    session$onSessionEnded(function() {

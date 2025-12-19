@@ -366,7 +366,7 @@ ui <- dashboardPage(
                     height: calc(100vh - 200px);
                     ",
                     
-                    # Upper Card Placeholder
+                    # Upper Card 
                     div(
                       id = 'exam_card1',
                       style = "
@@ -391,7 +391,7 @@ ui <- dashboardPage(
                       )
                       ),
                     
-                    # Lower Card Placeholder
+                    # Lower Card 
                     div(
                       id = 'exam_card2',
                       style = "
@@ -427,7 +427,7 @@ ui <- dashboardPage(
           div(
             style = "display: flex; align-items: center; gap: 20px; height:100px",
             
-            # Toggle placeholder (e.g. All Degrees / One Degree)
+            # Toggle (e.g. All Degrees / One Degree)
             div(
               radioButtons(
                 "degree_toggle",
@@ -477,7 +477,7 @@ ui <- dashboardPage(
               margin-left: 15px;
               ",
               
-              # Placeholder for dynamic plot / UI
+              # for dynamic plot / UI
               uiOutput("degree_plot1_ui")
             ),
             
@@ -496,7 +496,7 @@ ui <- dashboardPage(
               margin-left: 15px;
               ",
               
-              # Placeholder plot
+              # plot
               plotOutput("degree_plot2", height = "100%", width = "100%")
             ),
             
@@ -528,10 +528,10 @@ ui <- dashboardPage(
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                 ",
                 
-                # Placeholder title
+                # title
                 uiOutput("degree_card1_title"),
                 
-                # Placeholder value
+                # value
                 h2(
                   textOutput("degree_card1_value", inline = TRUE),
                   style = "
@@ -556,7 +556,7 @@ ui <- dashboardPage(
                 padding: 15px;
                 ",
                 
-                # Placeholder plot
+                # plot
                 plotOutput("degree_plot3", height = "100%", width = "100%")
               )
               
