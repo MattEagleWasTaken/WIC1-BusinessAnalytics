@@ -5,10 +5,13 @@ ALLGEMEINE TODOS:
 [x] Dropdown Menüs aus der DB
 [x] Dropdown Menüs aus Backend-Liste 
 [x] MotherClass einführen
-[] load_students und load_exams in GradePage reimplementieren
-[] delete_btn in allen Pages implementieren (zuerst StudentPage)
+[x] load_students und load_exams in GradePage reimplementieren
+[x] delete_btn in allen Pages implementieren (zuerst StudentPage)
 [x] Worker implementieren 
 [x] Settings 
+[] .emit zeiten anpassen 
+[] Alter bei Studenten prüfen
+[] Fehlermöglichkeiten prüfen 
 [] Form Layouts kicken
 [] shiny in stats page implementieren
 
@@ -180,7 +183,7 @@ class BasePage(QWidget):
             self._active_workers = []
         self._active_workers.append(student_worker)
 
-        student_worker.finished.connect(lambda: self._cleanup_worker(student_worker))
+        student_worker.operation_finished.connect(lambda: self._cleanup_worker(student_worker))
         student_worker.start()
 
 
@@ -225,7 +228,7 @@ class BasePage(QWidget):
             self._active_workers = []
         self._active_workers.append(exam_worker)
 
-        exam_worker.finished.connect(lambda: self._cleanup_worker(exam_worker))
+        exam_worker.operation_finished.connect(lambda: self._cleanup_worker(exam_worker))
         exam_worker.start()
 
     def _on_exams_loaded(self, success, rows, error_msg, combobox, placeholder):
@@ -289,12 +292,12 @@ class BasePage(QWidget):
 
         self._delete_callback = callback
         self.delete_worker = DatabaseWorker(query, params)
-        self.delete_worker.finished.connect(self._on_delete_finished)
+        self.delete_worker.operation_finished.connect(self._on_delete_finished)
         self.delete_worker.start()
         
         self.status_message.emit("Deleting...", 0) # das ist doch quatsch 
 
-    def _on_delete_finished(self, success, message):
+    def _on_delete_finished(self, success, message, rows_affected):
         """
         Callback when delete operation finishes
         Args:   
@@ -302,13 +305,15 @@ class BasePage(QWidget):
             rows: list of data 
             message: message to display as status_message
         """
-        if success:
+        if success and rows_affected > 0:
             self.status_message.emit("Record deleted successfully!", 3000)
+        elif success and rows_affected == 0:
+            self.status_message.emit("Error: There was no record to delete with given specification", 5000)
         else:
             self.status_message.emit(f"Error deleting: {message}", 5000)
         
         if self._delete_callback:
-            self._delete_callback(success, message)
+            self._delete_callback(success, message, rows_affected)
 
 class HomePage(BasePage):
     """
@@ -608,7 +613,6 @@ class HomePage(BasePage):
                 self.status_message.emit(f"Error while saving Data to the list: {e}", 5000)
                 return False
 
-
 class GradePage(BasePage):
 
     def __init__(self):
@@ -721,30 +725,34 @@ class GradePage(BasePage):
         self.mat_no_del = self.delete_grade_student_input.currentData() # matriculation number of student to delete their grade
         self.exam_no_del = self.delete_grade_exam_input.currentData() #pnr of exam to delete grade 
         if self.mat_no_del is None:
-            self.status_message.emit("Please select a student to delete their grade")
+            self.status_message.emit("Please select a student to delete their grade", 5000)
             return
         elif self.exam_no_del is None:
-            self.status_message.emit("Please select an exam to delete a grade")
+            self.status_message.emit("Please select an exam to delete a grade", 5000)
             return
         else:
             self.delete_record("grade", "matriculation_number", self.mat_no_del, self.on_deleted, "pnr", self.exam_no_del)
 
-    def on_deleted(self, success, message):
-        if success:
+    def on_deleted(self, success, message, rows_affected):
+        if success and rows_affected > 0:
             self.reload_dropdowns()
-            self.status_message.emit(f"grade for student with mat. no. {self.mat_no_del} for exam with pnr {self.pnr_del} deleted successfully", 3000)
+            self.status_message.emit(f"grade for student with mat. no. {self.mat_no_del} for exam with pnr {self.exam_no_del} deleted successfully", 3000)
+        elif success and rows_affected == 0:
+            self.reload_dropdowns()
+            self.status_message.emit("the selected student does not have a grade for the selected exam!", 5000)
+            return
         else:
             self.status_message.emit(f"{message}")
 
     def save_data(self):
         if  self.student_input.currentIndex() == 0:
-            self.status_message.emit("Please select a student", 2000)
+            self.status_message.emit("Please select a student", 3000)
             return
         if  self.exam_input.currentIndex() == 0:
-            self.status_message.emit("Please select an exam", 2000)
+            self.status_message.emit("Please select an exam", 3000)
             return
         if not self.grade_input.text().strip():
-            self.status_message.emit(f"Please enter a grade", 2000)
+            self.status_message.emit(f"Please enter a grade", 3000)
             return
         
         matriculation_number = self.student_input.currentData()
@@ -758,7 +766,7 @@ class GradePage(BasePage):
         )
 
         self.db_worker = DatabaseWorker(query, params)
-        self.db_worker.finished.connect(self.on_save_finished)
+        self.db_worker.operation_finished.connect(self.on_save_finished)
         self.db_worker.start()
         self.status_message.emit("Saving...", 0) # TODO: das wird doch nie angezeigt...
 
@@ -799,7 +807,6 @@ class GradePage(BasePage):
         self.student_input.setCurrentIndex(0)
         self.exam_input.setCurrentIndex(0)
         self.grade_input.clear()
-
 
 class StudentPage(BasePage):
    
@@ -880,7 +887,8 @@ class StudentPage(BasePage):
         else:
             self.delete_record("student", "matriculation_number", self.matriculation_number_del, self.on_deleted)
 
-    def on_deleted(self, success, message):
+    #TODO: dropdown menü zum löschen wird noch nicht aktualisiert
+    def on_deleted(self, success, message, rows_affected):
         if success:
             self.reload_student_dropdown()
             self.status_message.emit(f"student with mat. no {self.matriculation_number_del} deleted successfully", 3000)
@@ -911,7 +919,7 @@ class StudentPage(BasePage):
         
         # Worker-Thread starten
         self.db_worker = DatabaseWorker(query, params)
-        self.db_worker.finished.connect(self.on_save_finished) 
+        self.db_worker.operation_finished.connect(self.on_save_finished) 
         self.db_worker.start()
         
         self.status_message.emit("Saving...", 0)# TODO: das ist doch quatsch
@@ -1036,7 +1044,7 @@ class ExamPage(BasePage):
         else: 
             self.delete_record("exam", "pnr", self.pnr_del, self.on_deleted)
 
-    def on_deleted(self, success, message):
+    def on_deleted(self, success, message, rows_affected):
         if success:
             self.reload_exam_dropdown()
             self.status_message.emit(f"exam with pnr {self.pnr_del} deleted successfully", 3000)
@@ -1077,7 +1085,7 @@ class ExamPage(BasePage):
         )
         # Worker-Thread starten
         self.db_worker = DatabaseWorker(query, params)
-        self.db_worker.finished.connect(self.on_save_finished)
+        self.db_worker.operation_finished.connect(self.on_save_finished)
         self.db_worker.start()
         
         self.status_message.emit("Saving...", 0)
