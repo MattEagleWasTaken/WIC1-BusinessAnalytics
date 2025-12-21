@@ -1,2 +1,6 @@
 /.idea
 user_login_config.json
+
+# Python
+__pycache__/
+*.pyc
