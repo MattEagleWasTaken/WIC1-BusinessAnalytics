@@ -289,9 +289,9 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px;height:100px",
+                  style = "display: flex; align-items: center; gap: 20px; height:100px",
                   
-                  # Toggle: All Exams / One Exam
+                  # Radio Buttons
                   div(
                     radioButtons(
                       "exam_toggle",
@@ -299,16 +299,19 @@ ui <- dashboardPage(
                       choices = c("All Exams", "One Exam"),
                       inline = TRUE
                     )
-                    ),
-                    
-                  # Semester filter
+                  ),
+                  
+                  # ------------------------------------------------------------
+                  # Semester (ALWAYS visible)
+                  # ------------------------------------------------------------
                   uiOutput("exam_semester_filter"),
                   
-                  # Dropdowns for One Exam (title + pnr)
+                  # ------------------------------------------------------------
+                  # Exam filters (ONLY One Exam)
+                  # ------------------------------------------------------------
                   uiOutput("one_exam_filters")
-                  
-                  ) # end filter container
-                ) # end fluid row filter
+                )
+              ) # end fluid row filter
               ,
               
               # Container for plots + right cards

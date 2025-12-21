@@ -1571,12 +1571,12 @@ degree_exam_averages <- reactive({
 # ============================================================================
 # LEFT PLOT 1 – Scatter Plot
 # ----------------------------------------------------------------------------
-output$degree_plot1 <- renderPlot({
+  output$degree_plot1 <- renderPlot({
     
-    # Plot is only relevant in "All Programs" mode
+# Plot is only relevant in "All Programs" mode
     req(input$degree_toggle == "All Programs")
     
-    # Get aggregated exam averages
+# Get aggregated exam averages
     df <- degree_exam_averages()
     req(nrow(df) > 0)
     
@@ -1595,7 +1595,7 @@ output$degree_plot1 <- renderPlot({
       include.lowest = TRUE
     )
     
-    # Consistent color mapping used across the dashboard
+# Consistent color mapping used across the dashboard
     grade_colors <- c(
       "Very Good (≤1.5)"        = "#3c8d40",
       "Good (1.6–2.5)"          = "#88c999",
@@ -1612,24 +1612,24 @@ output$degree_plot1 <- renderPlot({
       color = cluster
     )) +
       
-      # Reference lines for grading thresholds
+# Reference lines for grading thresholds
       geom_vline(
         xintercept = c(1.5, 2.5, 3.5),
         color = "black",
         linewidth = 1
       ) +
       
-      # One jittered point per exam average
+# One jittered point per exam average
       geom_jitter(
         height = 0.15,
         size   = 3,
         alpha  = 1
       ) +
       
-      # Apply consistent color palette
+# Apply consistent color palette
       scale_color_manual(values = grade_colors) +
       
-      # Axis labels and title
+# Axis labels and title
       labs(
         title = "Exam Average Grades per Degree Program",
         subtitle = if (
@@ -1645,7 +1645,7 @@ output$degree_plot1 <- renderPlot({
         color = "Grade Cluster"
       ) +
       
-      # Theme consistent with Exam scatter plot
+# Theme consistent with Exam scatter plot
       theme_minimal(base_size = 14) +
       theme(
         plot.title       = element_text(face = "bold", size = 18, hjust = 0.5),
@@ -1659,7 +1659,9 @@ output$degree_plot1 <- renderPlot({
         legend.title     = element_text(face = "bold", size = 14),
         legend.text      = element_text(size = 12)
       )
-})
+  })
+  
+  
   
 
 # ============================================================================
@@ -1813,7 +1815,7 @@ output$degree_plot1 <- renderPlot({
       
       geom_vline(
         xintercept = mean_x,
-        color = "red",
+        color = "blue",
         linewidth = 1.2
       ) +
       
@@ -1822,7 +1824,7 @@ output$degree_plot1 <- renderPlot({
         x = mean_x,
         y = 0.25,
         label = paste0("Mean: ", round(program_mean, 2)),
-        color = "red",
+        color = "blue",
         fontface = "bold",
         size = 4,
         hjust = -0.1
@@ -1863,33 +1865,7 @@ output$degree_plot1 <- renderPlot({
       )
 })
   
-# ============================================================================
-# SHOW / HIDE LEFT CONTAINERS – DEGREE TAB
-# ----------------------------------------------------------------------------
-# When "All Programs" is selected:
-#   - Show left container 1 (overview scatter plot)
-#   - Hide left container 2 (detail view)
-#
-# When "One Program" is selected:
-#   - Hide left container 1
-#   - Show left container 2
-# ============================================================================
-observe({
-    
-    req(input$degree_toggle)
-    
-    if (input$degree_toggle == "All Programs") {
-      
-      shinyjs::show("degree_plot_container1")
-      shinyjs::hide("degree_plot_container2")
-      
-    } else if (input$degree_toggle == "One Program") {
-      
-      shinyjs::hide("degree_plot_container1")
-      shinyjs::show("degree_plot_container2")
-    }
-  })
-  
+
 # ============================================================================
 # DEGREE BOXPLOT – Distribution of Exam Average Grades
 # ----------------------------------------------------------------------------
@@ -1977,42 +1953,157 @@ observe({
       )
     
 # ------------------------------------------------------------
-# IMPORTANT: return plot explicitly
+# return plot
 # ------------------------------------------------------------
     p
 })
   
   
 # ============================================================================
-# DEGREE BOXPLOT – One Program (Placeholder)
+# DEGREE BOXPLOT – One Program
+# ----------------------------------------------------------------------------
+# Distribution of ALL individual grades for the selected degree program
+# - Semester-aware
+# - Same layout as "All Programs" boxplot
 # ============================================================================
   output$degree_boxplot_one <- renderPlot({
     
     req(input$degree_toggle == "One Program")
+    req(input$degree_program_select)
+    req(input$degree_program_select != "- not selected -")
     
-    ggplot() +
+# ------------------------------------------------------------
+# Base data: all individual grades of the selected program
+# ------------------------------------------------------------
+    df <- degree_program_grades()
+    req(nrow(df) > 1)   # Boxplot needs more than one value
+    
+# ------------------------------------------------------------
+# Statistics
+# ------------------------------------------------------------
+    program_mean   <- mean(df$grade, na.rm = TRUE)
+    program_median <- median(df$grade, na.rm = TRUE)
+    program_sd     <- sd(df$grade, na.rm = TRUE)
+    
+# ------------------------------------------------------------
+# Boxplot (same styling as All Programs)
+# ------------------------------------------------------------
+    ggplot(df, aes(x = 1, y = grade)) +
+      
+      geom_boxplot(
+        width = 0.5,
+        fill  = "lightblue",
+        color = "black"
+      ) +
+      
+# ------------------------------------------------------------
+# Mean reference line (blue)
+# ------------------------------------------------------------
+    annotate(
+      "segment",
+      x = 0.75, xend = 1.25,
+      y = program_mean, yend = program_mean,
+      color = "blue",
+      linewidth = 1.2
+    ) +
+      
+# Mean label (left)
       annotate(
         "text",
-        x = 0.5,
-        y = 0.5,
-        label = "Degree Program Boxplot\n(Placeholder)",
-        size = 6,
-        fontface = "bold",
-        hjust = 0.5,
-        vjust = 0.5
+        x = 0.72,
+        y = program_mean,
+        label = paste0("Mean: ", round(program_mean, 2)),
+        hjust = 1,
+        vjust = 0.5,
+        color = "blue",
+        size = 4,
+        fontface = "bold"
       ) +
-      theme_void() +
+      
+# Median label (right)
+      annotate(
+        "text",
+        x = 1.28,
+        y = program_median,
+        label = paste0("Median: ", round(program_median, 2)),
+        hjust = 0,
+        vjust = 0.5,
+        size = 4,
+        fontface = "bold"
+      ) +
+      
       labs(
-        title = "Grade Distribution – Degree Program",
-        subtitle = "Detail view (to be implemented)"
+        title = if (
+          is.null(input$degree_semester_select) ||
+          input$degree_semester_select == "- all semester -"
+        ) {
+          "Distribution of Grades – All Semesters"
+        } else {
+          paste0(
+            "Distribution of Grades – Semester ",
+            input$degree_semester_select
+          )
+        },
+        subtitle = paste0(
+          "Median: ", round(program_median, 2),
+          " | SD: ", round(program_sd, 2)
+        ),
+        y = "Grade",
+        x = NULL
       ) +
+      
+      scale_x_continuous(limits = c(0.4, 1.6)) +
+      
+      theme_minimal(base_size = 14) +
       theme(
         plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
-        plot.subtitle = element_text(size = 14, hjust = 0.5)
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        
+        axis.text.x   = element_blank(),
+        axis.ticks.x  = element_blank(),
+        axis.text.y   = element_text(face = "bold", size = 12, color = "black"),
+        
+        panel.grid.major.y = element_line(
+          color = "grey70",
+          linewidth = 0.8
+        ),
+        panel.grid.major.x = element_line(
+          color = "grey85",
+          linewidth = 0.6
+        ),
+        panel.grid.minor = element_blank()
       )
-  })
-
+})
   
+
+
+# ============================================================================
+# SHOW / HIDE LEFT CONTAINERS – DEGREE TAB
+# ----------------------------------------------------------------------------
+# When "All Programs" is selected:
+#   - Show left container 1 (overview scatter plot)
+#   - Hide left container 2 (detail view)
+#
+# When "One Program" is selected:
+#   - Hide left container 1
+#   - Show left container 2
+# ============================================================================
+  observe({
+    
+    req(input$degree_toggle)
+    
+    if (input$degree_toggle == "All Programs") {
+      
+      shinyjs::show("degree_plot_container1")
+      shinyjs::hide("degree_plot_container2")
+      
+    } else if (input$degree_toggle == "One Program") {
+      
+      shinyjs::hide("degree_plot_container1")
+      shinyjs::show("degree_plot_container2")
+    }
+  })  
+    
 # ============================================================================
 # SHOW / HIDE DEGREE BOXPLOTS (RIGHT LOWER CARD)
 # ============================================================================
@@ -2067,38 +2158,22 @@ observe({
       )
     }
     
-# ---------------- One Program ----------------
+    # ---------------- One Program ----------------
     req(input$degree_toggle == "One Program")
     req(input$degree_program_select)
     req(input$degree_program_select != "- not selected -")
     
-    df <- degree_exam_averages()
-    df <- df[df$degree_program == input$degree_program_select, ]
-    req(nrow(df) > 0)
+    df <- degree_program_grades()
+    req(nrow(df) > 1)
     
     program_mean <- mean(df$grade, na.rm = TRUE)
+    program_sd   <- sd(df$grade, na.rm = TRUE)
     
-# ------------------------------------------------------------
-# Add SD ONLY if all semesters are selected AND enough data
-# ------------------------------------------------------------
-    if (
-      is.null(input$degree_semester_select) ||
-      input$degree_semester_select == "- all semester -"
-    ) {
-      
-      program_sd <- sd(df$grade, na.rm = TRUE)
-      
-      return(
-        paste0(
-          round(program_mean, 2),
-          " ± ",
-          round(program_sd, 2)
-        )
-      )
-    }
-    
-# Semester-specific → mean only
-    round(program_mean, 2)
+    paste0(
+      round(program_mean, 2),
+      " ± ",
+      round(program_sd, 2)
+    )
 })
   
   
