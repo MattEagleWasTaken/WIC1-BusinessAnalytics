@@ -3,6 +3,8 @@ from Sidebar import MainWindow
 import sys
 from Data_Base_Connection import prepare_database
 
+"""run this code to open the GUI"""
+
 # Prepare the database before showing GUI
 prepare_database()
 

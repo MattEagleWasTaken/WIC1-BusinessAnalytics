@@ -1,0 +1,22 @@
+{
+    "_comment1": "This file stores lists for the dropdown menus in the GUI. It can be appended via the HomePage",
+    "study_programs": [
+        "Business Informatics (B.Sc.)",
+        "Computer Science (B.Sc.)",
+        "Business Administration (B.A.)",
+        "Data Science (M.Sc.)",
+        "Information Systems (M.Sc.)",
+        "Business Informatics (M. Sc.)"
+    ],
+    "semesters": [
+        "WiSe 23/24",
+        "SoSe 24",
+        "WiSe 24/25",
+        "SoSe 25",
+        "WiSe 25/26",
+        "SoSe 26",
+        "test",
+        "test2",
+        "leckere sose"
+    ]
+}

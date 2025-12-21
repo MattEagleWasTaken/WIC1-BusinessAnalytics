@@ -99,6 +99,7 @@ def create_tables(config):
             CREATE TABLE IF NOT EXISTS public.exam (
                 pnr VARCHAR(20) PRIMARY KEY,
                 title VARCHAR(100) NOT NULL,
+                exam_date DATE NOT NULL,
                 semester VARCHAR(20),
                 degree_program VARCHAR(100)
             );
@@ -118,7 +119,8 @@ def create_tables(config):
                     ON DELETE CASCADE,
                 CONSTRAINT grade_exam_fkey FOREIGN KEY (pnr)
                     REFERENCES public.exam(pnr)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+                CONSTRAINT grade_unique_student_exam UNIQUE (matriculation_number, pnr)
             );
         """)
 
