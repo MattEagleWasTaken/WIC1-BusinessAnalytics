@@ -985,7 +985,7 @@ selected_exam_grades <- reactive({
   
 
   # ============================================================================
-  # LEFT PLOT 2: Placeholder for One Exam Mode
+  # LEFT PLOT 2: for One Exam Mode
   # ============================================================================
   # Histogram of grade distribution for one selected exam
   output$exam_plot2 <- renderPlot({
@@ -1158,8 +1158,6 @@ selected_exam_grades <- reactive({
         panel.grid.minor   = element_blank()
       )
   })
-  
-  
   
 # ============================================================================
 # SHOW / HIDE LEFT CONTAINERS BASED ON RADIO BUTTON
@@ -1686,6 +1684,186 @@ output$degree_plot1 <- renderPlot({
 })
   
 # ============================================================================
+# Reactive: All individual grades for selected Degree Program
+# ============================================================================
+  degree_program_grades <- reactive({
+    
+    req(input$degree_toggle == "One Program")
+    req(input$degree_program_select)
+    req(input$degree_program_select != "- not selected -")
+    
+    df <- all_grades
+    
+    # Semester filter (degree tab)
+    if (!is.null(input$degree_semester_select) &&
+        input$degree_semester_select != "- all semester -") {
+      df <- df[df$semester == input$degree_semester_select, ]
+    }
+    
+    # Degree program filter
+    df <- df[df$degree_program == input$degree_program_select, ]
+    
+    req(nrow(df) > 0)
+    
+    df
+  })
+  
+# ============================================================================
+# LEFT PLOT 2 – Grade Distribution for One Degree Program
+# ============================================================================
+  output$degree_plot2 <- renderPlot({
+    
+    req(input$degree_toggle == "One Program")
+    
+    df <- degree_program_grades()
+    req(nrow(df) > 0)
+    
+# ------------------------------------------------------------
+# Official grading scale (HS Aalen – 0.3 steps)
+# ------------------------------------------------------------
+    grade_levels <- c(
+      1.0, 1.3, 1.7,
+      2.0, 2.3, 2.7,
+      3.0, 3.3, 3.7,
+      4.0,
+      "> 4.0"
+    )
+    
+# ------------------------------------------------------------
+# Color definition (global dashboard standard)
+# ------------------------------------------------------------
+    grade_colors <- c(
+      "Very Good (≤1.5)"        = "#3c8d40",
+      "Good (1.6–2.5)"          = "#88c999",
+      "Average (2.6–3.5)"       = "#f3b173",
+      "Below Average (3.6–6.0)" = "#e16b6b"
+    )
+    
+# ------------------------------------------------------------
+# Collapse failing grades (>4.0)
+# ------------------------------------------------------------
+    df$grade_plot <- ifelse(df$grade > 4.0, "> 4.0", as.character(df$grade))
+    
+    df$grade_factor <- factor(
+      df$grade_plot,
+      levels  = grade_levels,
+      ordered = TRUE
+    )
+    
+# ------------------------------------------------------------
+# Count students per grade (keep empty bins)
+# ------------------------------------------------------------
+    grade_counts <- as.data.frame(table(df$grade_factor))
+    names(grade_counts) <- c("grade", "count")
+    
+# ------------------------------------------------------------
+# Assign grade clusters
+# ------------------------------------------------------------
+    grade_counts$grade_num <- suppressWarnings(
+      as.numeric(as.character(grade_counts$grade))
+    )
+    
+    grade_counts$grade_cluster <- cut(
+      grade_counts$grade_num,
+      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
+      labels = names(grade_colors),
+      include.lowest = TRUE
+    )
+    
+    grade_counts$grade_cluster[
+      is.na(grade_counts$grade_cluster)
+    ] <- "Below Average (3.6–6.0)"
+    
+# ------------------------------------------------------------
+# Degree program average (mean of individual grades)
+# ------------------------------------------------------------
+    program_mean <- mean(df$grade, na.rm = TRUE)
+    n_students   <- nrow(df)
+    
+    mean_x <- as.numeric(
+      factor(
+        min(grade_levels[grade_levels >= program_mean]),
+        levels = grade_levels
+      )
+    )
+    
+# ------------------------------------------------------------
+# Plot
+# ------------------------------------------------------------
+    ggplot(grade_counts, aes(x = grade, y = count)) +
+      
+      geom_col(
+        aes(fill = grade_cluster),
+        color = "black",
+        width = 0.7
+      ) +
+      
+      scale_fill_manual(
+        name   = "Grade Cluster",
+        values = grade_colors
+      ) +
+      
+      geom_text(
+        aes(label = ifelse(count > 0, count, "")),
+        y = 0.5,
+        fontface = "bold",
+        size = 5,
+        vjust = 0
+      ) +
+      
+      geom_vline(
+        xintercept = mean_x,
+        color = "red",
+        linewidth = 1.2
+      ) +
+      
+      annotate(
+        "text",
+        x = mean_x,
+        y = 0.25,
+        label = paste0("Mean: ", round(program_mean, 2)),
+        color = "red",
+        fontface = "bold",
+        size = 4,
+        hjust = -0.1
+      ) +
+      
+      labs(
+        title = paste0(
+          "Grade Distribution – ",
+          input$degree_program_select
+        ),
+        subtitle = paste0(
+          if (
+            !is.null(input$degree_semester_select) &&
+            input$degree_semester_select != "- all semester -"
+          ) paste0("Semester: ", input$degree_semester_select," | ") else "",
+          "Number of grades: ", n_students
+        ),
+        x = "Grade",
+        y = "Number of Students"
+      ) +
+      
+      scale_y_continuous(
+        breaks = seq(0, max(grade_counts$count), by = 1),
+        expand = expansion(mult = c(0, 0.15))
+      ) +
+      
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title    = element_text(face = "bold", size = 18, hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5),
+        axis.title.x  = element_text(face = "bold", size = 14),
+        axis.title.y  = element_text(face = "bold", size = 14),
+        axis.text.x   = element_text(face = "bold", size = 12),
+        axis.text.y   = element_text(size = 12),
+        panel.grid.major.y = element_line(color = "grey70", linewidth = 0.8),
+        panel.grid.major.x = element_line(color = "grey85", linewidth = 0.6),
+        panel.grid.minor   = element_blank()
+      )
+})
+  
+# ============================================================================
 # SHOW / HIDE LEFT CONTAINERS – DEGREE TAB
 # ----------------------------------------------------------------------------
 # When "All Programs" is selected:
@@ -1719,23 +1897,23 @@ observe({
 # - Semester-aware via degree_exam_averages()
 # - In "One Program" mode, a red reference line is added
 # ============================================================================
-  output$degree_plot3 <- renderPlot({
+  output$degree_boxplot_all <- renderPlot({
     
 # ------------------------------------------------------------
 # Base data: exam averages per degree program (semester-aware)
 # ------------------------------------------------------------
     df <- degree_exam_averages()
-    req(nrow(df) > 1)   # Boxplot needs more than one value
+    req(nrow(df) > 1)
     
 # ------------------------------------------------------------
-# Overall statistics (All Programs)
+# Overall statistics
 # ------------------------------------------------------------
     overall_mean   <- mean(df$grade, na.rm = TRUE)
     overall_median <- median(df$grade, na.rm = TRUE)
     overall_sd     <- sd(df$grade, na.rm = TRUE)
     
 # ------------------------------------------------------------
-# Base boxplot
+# Boxplot
 # ------------------------------------------------------------
     p <- ggplot(df, aes(x = 1, y = grade)) +
       
@@ -1745,38 +1923,31 @@ observe({
         color = "black"
       ) +
       
-# ------------------------------------------------------------
-# Overall mean (blue reference line)
-# ------------------------------------------------------------
-    annotate(
-      "segment",
-      x = 0.75, xend = 1.25,
-      y = overall_mean, yend = overall_mean,
-      color = "blue",
-      linewidth = 1.2
-    ) +
+      annotate(
+        "segment",
+        x = 0.75, xend = 1.25,
+        y = overall_mean, yend = overall_mean,
+        color = "blue",
+        linewidth = 1.2
+      ) +
       
-# Mean label (left)
       annotate(
         "text",
         x = 0.72,
         y = overall_mean,
         label = paste0("Mean: ", round(overall_mean, 2)),
         hjust = 1,
-        vjust = 0.5,
         color = "blue",
         size = 4,
         fontface = "bold"
       ) +
       
-# Median label (right)
       annotate(
         "text",
         x = 1.28,
         y = overall_median,
         label = paste0("Median: ", round(overall_median, 2)),
         hjust = 0,
-        vjust = 0.5,
         size = 4,
         fontface = "bold"
       ) +
@@ -1785,7 +1956,7 @@ observe({
         title = "Distribution of Exam Average Grades\nAcross Degree Programs",
         subtitle = paste0(
           "Median: ", round(overall_median, 2),
-          "   |   SD: ", round(overall_sd, 2)
+          " | SD: ", round(overall_sd, 2)
         ),
         y = "Average Grade",
         x = NULL
@@ -1797,64 +1968,70 @@ observe({
       theme(
         plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
         plot.subtitle = element_text(size = 14, hjust = 0.5),
-        
         axis.text.x   = element_blank(),
         axis.ticks.x  = element_blank(),
         axis.text.y   = element_text(face = "bold", size = 12, color = "black"),
-        
-        # Consistent grid styling
-        panel.grid.major.y = element_line(
-          color = "grey70",
-          linewidth = 0.8
-        ),
-        panel.grid.major.x = element_line(
-          color = "grey85",
-          linewidth = 0.6
-        ),
-        panel.grid.minor = element_blank()
+        panel.grid.major.y = element_line(color = "grey70", linewidth = 0.8),
+        panel.grid.major.x = element_line(color = "grey85", linewidth = 0.6),
+        panel.grid.minor   = element_blank()
       )
     
 # ------------------------------------------------------------
-# One Program mode → add red reference line
-# ------------------------------------------------------------
-    if (input$degree_toggle == "One Program") {
-      
-      req(input$degree_program_select)
-      req(input$degree_program_select != "- not selected -")
-      
-      df_prog <- df[df$degree_program == input$degree_program_select, ]
-      req(nrow(df_prog) > 0)
-      
-      program_mean <- mean(df_prog$grade, na.rm = TRUE)
-      
-      p <- p +
-        annotate(
-          "segment",
-          x = 0.75, xend = 1.25,
-          y = program_mean, yend = program_mean,
-          color = "red",
-          linewidth = 1.2
-        ) +
-        annotate(
-          "text",
-          x = 1.265,
-          y = program_mean,
-          label = paste0("Program: ", round(program_mean, 2)),
-          hjust = 0,
-          vjust = 0.5,
-          color = "red",
-          size = 4,
-          fontface = "bold"
-        )
-    }
-    
-# ------------------------------------------------------------
-# Render plot
+# IMPORTANT: return plot explicitly
 # ------------------------------------------------------------
     p
+})
+  
+  
+# ============================================================================
+# DEGREE BOXPLOT – One Program (Placeholder)
+# ============================================================================
+  output$degree_boxplot_one <- renderPlot({
+    
+    req(input$degree_toggle == "One Program")
+    
+    ggplot() +
+      annotate(
+        "text",
+        x = 0.5,
+        y = 0.5,
+        label = "Degree Program Boxplot\n(Placeholder)",
+        size = 6,
+        fontface = "bold",
+        hjust = 0.5,
+        vjust = 0.5
+      ) +
+      theme_void() +
+      labs(
+        title = "Grade Distribution – Degree Program",
+        subtitle = "Detail view (to be implemented)"
+      ) +
+      theme(
+        plot.title    = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 14, hjust = 0.5)
+      )
+  })
+
+  
+# ============================================================================
+# SHOW / HIDE DEGREE BOXPLOTS (RIGHT LOWER CARD)
+# ============================================================================
+  observe({
+    
+    req(input$degree_toggle)
+    
+    if (input$degree_toggle == "All Programs") {
+      
+      shinyjs::show("degree_boxplot_all_container")
+      shinyjs::hide("degree_boxplot_one_container")
+      
+    } else if (input$degree_toggle == "One Program") {
+      
+      shinyjs::hide("degree_boxplot_all_container")
+      shinyjs::show("degree_boxplot_one_container")
+    }
   })
   
-
   
 # ============================================================================
 # Reactive: Statistics of degree exam averages (semester-aware)
@@ -1875,7 +2052,7 @@ observe({
 # ============================================================================
   output$degree_card1_value <- renderText({
     
-    # ---------------- All Programs ----------------
+# ---------------- All Programs ----------------
     if (input$degree_toggle == "All Programs") {
       
       stats <- degree_stats()
@@ -1890,7 +2067,7 @@ observe({
       )
     }
     
-    # ---------------- One Program ----------------
+# ---------------- One Program ----------------
     req(input$degree_toggle == "One Program")
     req(input$degree_program_select)
     req(input$degree_program_select != "- not selected -")
@@ -1899,8 +2076,31 @@ observe({
     df <- df[df$degree_program == input$degree_program_select, ]
     req(nrow(df) > 0)
     
-    round(mean(df$grade, na.rm = TRUE), 2)
-})  
+    program_mean <- mean(df$grade, na.rm = TRUE)
+    
+# ------------------------------------------------------------
+# Add SD ONLY if all semesters are selected AND enough data
+# ------------------------------------------------------------
+    if (
+      is.null(input$degree_semester_select) ||
+      input$degree_semester_select == "- all semester -"
+    ) {
+      
+      program_sd <- sd(df$grade, na.rm = TRUE)
+      
+      return(
+        paste0(
+          round(program_mean, 2),
+          " ± ",
+          round(program_sd, 2)
+        )
+      )
+    }
+    
+# Semester-specific → mean only
+    round(program_mean, 2)
+})
+  
   
 
 # ============================================================================

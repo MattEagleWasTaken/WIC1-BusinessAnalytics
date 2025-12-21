@@ -544,20 +544,38 @@ ui <- dashboardPage(
               # ---------------- Lower Card ----------------
               div(
                 id = "degree_card2",
-                      style = "
+                style = "
                 background-color: white;
                 border-radius: 15px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                 flex: 1;
                 padding: 15px;
                 ",
                 
-                # plot
-                plotOutput("degree_plot3", height = "100%", width = "100%")
+                # ================================================================
+                # BOXPLOT CONTAINER 1 (ALL PROGRAMS)
+                # ================================================================
+                div(
+                  id = "degree_boxplot_all_container",
+                  style = "
+                  width: 100%;
+                  height: 100%;
+                  ",
+                  plotOutput("degree_boxplot_all", height = "100%", width = "100%")
+                ),
+                
+                # ================================================================
+                # BOXPLOT CONTAINER 2 (ONE PROGRAM)
+                # ================================================================
+                div(
+                  id = "degree_boxplot_one_container",
+                  style = "
+                  width: 100%;
+                  height: 100%;
+                  display: none;
+                  ",
+                  plotOutput("degree_boxplot_one", height = "100%", width = "100%")
+                )
               )
               
             ) # end right container
