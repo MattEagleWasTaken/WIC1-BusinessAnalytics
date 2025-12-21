@@ -569,44 +569,36 @@ exams <- dbGetQuery(
   FROM exam
   "
   )
-  
-  # ---- Sort variants ---------------------------------------------------------
-  exams_sorted_pnr   <- exams[order(exams$pnr), ]
-  exams_sorted_title <- exams[order(exams$title), ]
-  exams_sorted_sem   <- exams[order(exams$semester), ]
-  
-  # ---- Dropdown choices ------------------------------------------------------
-  title_choices    <- c("- not selected -", exams_sorted_title$title)
-  pnr_choices      <- c("- not selected -", exams_sorted_pnr$pnr)
-  semester_choices <- c("- all semester -", unique(exams_sorted_sem$semester))
-  
-  
+
+# ---- Semester dropdown choices (GLOBAL) ------------------------------------
+semester_choices_exam <- c(
+    "- all semester -",
+    sort(unique(exams$semester))
+  )
+
 # ============================================================================
-# Semester Filter (All Exams)
+# Semester Filter (GLOBAL – used for All Exams & One Exam)
 # ============================================================================
-output$exam_semester_filter <- renderUI({
-    req(input$exam_toggle == "All Exams")
-    
-    div(
-      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
-      selectInput(
-        "exam_semester_select",
-        label    = tags$label("Semester:", style = "margin-top: 6px;"),
-        choices  = semester_choices,
-        selected = "- all semester -"
-      )
+# This dropdown is ALWAYS visible and fixed in position.
+  
+  output$exam_semester_filter <- renderUI({
+    selectInput(
+      "exam_semester_select",
+      label    = tags$label("Semester:", style = "margin-top: 25px;"),
+      choices  = semester_choices_exam,
+      selected = "- all semester -"
     )
   })
 
 # ============================================================================
-# Dynamic Input Row (for "One Exam")
-# Semester pre-filter logic included
+# Central Reactive: Exams filtered by semester
 # ============================================================================
+# Single source of truth for semester filtering
   
-# ---- Reactive: Exams filtered by semester ----------------------------------
-filtered_exams_one <- reactive({
+  filtered_exams <- reactive({
+    
     df <- exams
-    semester <- input$exam_semester_select_one
+    semester <- input$exam_semester_select
     
     if (!is.null(semester) && semester != "- all semester -") {
       df <- df[df$semester == semester, ]
@@ -615,24 +607,33 @@ filtered_exams_one <- reactive({
     df
   })
   
-# ---- Reactive: Dropdown choices --------------------------------------------
+# ============================================================================
+# Reactive: Dropdown choices (semester-aware)
+# ============================================================================
+  
   exam_title_choices_one <- reactive({
     c(
       "- not selected -",
-      sort(unique(filtered_exams_one()$title))
+      sort(unique(filtered_exams()$title))
     )
   })
   
   exam_pnr_choices_one <- reactive({
     c(
       "- not selected -",
-      sort(unique(filtered_exams_one()$pnr))
+      sort(unique(filtered_exams()$pnr))
     )
   })
   
+# ============================================================================
+# Dynamic Input Row (for "One Exam")
+# ============================================================================
+# NOTE:
+# - NO semester dropdown here anymore
+# - Semester is controlled ONLY by the global filter above
   
-# ---- UI --------------------------------------------------------------------
   output$one_exam_filters <- renderUI({
+    
     req(input$exam_toggle == "One Exam")
     
     title_selected <- !is.null(input$exam_title_select) &&
@@ -644,19 +645,14 @@ filtered_exams_one <- reactive({
     div(
       style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
       
-# ---------------- Semester ----------------------------------------------
-      selectInput(
-        "exam_semester_select_one",
-        label    = tags$label("Semester:", style = "margin-top: 6px;"),
-        choices  = semester_choices,
-        selected = input$exam_semester_select_one %||% "- all semester -"
-      ),
-      
-# ---------------- Exam Title --------------------------------------------
+# ---------------- Exam Title ----------------
       if (!pnr_selected) {
         selectInput(
           "exam_title_select",
-          label    = tags$label("Exam Title:", style = "margin-top: 6px;"),
+          label = tags$label(
+            "Exam Title:",
+            style = "margin-top: 6px;"
+          ),
           choices  = exam_title_choices_one(),
           selected = input$exam_title_select %||% "- not selected -"
         )
@@ -664,25 +660,30 @@ filtered_exams_one <- reactive({
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Exam Title:", style = "margin-top: 6px;"),
+          
+          tags$label(
+            "Exam Title:",
+            style = "margin-top: 6px;"
+          ),
+          
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
-            {
-              row <- filtered_exams_one()[
-                filtered_exams_one()$pnr == input$exam_pnr_select,
-              ]
-              row$title
-            }
+            style = "margin-top: 5px;",
+            filtered_exams()[
+              filtered_exams()$pnr == input$exam_pnr_select,
+            ]$title
           )
         )
       },
       
-# ---------------- Exam Number -------------------------------------------
+# ---------------- Exam Number ----------------
       if (!title_selected) {
         selectInput(
           "exam_pnr_select",
-          label    = tags$label("Exam Number:", style = "margin-top: 6px;"),
+          label = tags$label(
+            "Exam Number:",
+            style = "margin-top: 6px;"
+          ),
           choices  = exam_pnr_choices_one(),
           selected = input$exam_pnr_select %||% "- not selected -"
         )
@@ -690,45 +691,49 @@ filtered_exams_one <- reactive({
         div(
           class = "static-text-container",
           style = "margin-top: 0px;",
-          tags$label("Exam Number:", style = "margin-top: 6px;"),
+          
+          tags$label(
+            "Exam Number:",
+            style = "margin-top: 6px;"
+          ),
+          
           div(
             class = "static-text-input",
-            style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
-            {
-              row <- filtered_exams_one()[
-                filtered_exams_one()$title == input$exam_title_select,
-              ]
-              row$pnr
-            }
+            style = "margin-top: 5px;",
+            filtered_exams()[
+              filtered_exams()$title == input$exam_title_select,
+            ]$pnr
           )
         )
       },
       
-# ---------------- Reset Button ------------------------------------------
+# ---------------- Reset Button ----------------
       actionButton(
         "reset_exam_filters",
         "Reset Selection",
         class = "reset-btn",
-        style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
+        style = "margin-top:35px;"
       )
     )
-})
+  })
   
   
-# ---- Reset logic ------------------------------------------------------------
+# ============================================================================
+# Reset Logic (One Exam)
+# ============================================================================
+# Semester intentionally NOT reset
+  
   observeEvent(input$reset_exam_filters, {
     updateSelectInput(session, "exam_title_select", selected = "- not selected -")
     updateSelectInput(session, "exam_pnr_select",   selected = "- not selected -")
-    updateSelectInput(session, "exam_semester_select_one",
-                      selected = "- all semester -")
-})
+  })
   
   
 # ============================================================================
 # Show / Hide Exam Reset Button
 # ============================================================================
   
-observe({
+  observe({
     if (
       (!is.null(input$exam_title_select) &&
        input$exam_title_select != "- not selected -") ||
