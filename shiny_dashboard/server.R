@@ -47,7 +47,7 @@ server <- function(input, output, session) {
       input$matnr_select != "- not selected -"
     
     div(
-      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      style = "display: flex; align-items: flex-start; gap: 15px; margin-top: 20px;",
       
       # ---------------- Student Name ----------------
       if (!matr_selected) {
@@ -120,7 +120,7 @@ server <- function(input, output, session) {
       # ---------------- Reset Button ----------------
       actionButton(
         "reset_filters",
-        "Reset Selection",
+        "Reset",
         class = "reset-btn",
         style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )
@@ -639,7 +639,7 @@ output$one_exam_filters <- renderUI({
       input$exam_pnr_select != "- not selected -"
     
     div(
-      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      style = "display: flex; align-items: flex-start; gap: 15px; margin-top: 20px;",
       
 # ---------------- Exam Title ----------------
       if (!pnr_selected) {
@@ -706,7 +706,7 @@ output$one_exam_filters <- renderUI({
 # ---------------- Reset Button ----------------
       actionButton(
         "reset_exam_filters",
-        "Reset Selection",
+        "Reset",
         class = "reset-btn",
         style = "margin-top:35px;"
       )
@@ -1435,7 +1435,7 @@ output$exam_gpa_title <- renderUI({
   output$degree_semester_filter <- renderUI({
     
     div(
-      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      style = "display: flex; align-items: flex-start; gap: 15px; margin-top: 20px;",
       selectInput(
         "degree_semester_select",
         label    = tags$label("Semester:", style = "margin-top: 6px;"),
@@ -1481,7 +1481,7 @@ output$exam_gpa_title <- renderUI({
     req(input$degree_toggle == "One Program")
     
     div(
-      style = "display: flex; align-items: flex-start; gap: 20px; margin-top: 20px;",
+      style = "display: flex; align-items: flex-start; gap: 15px; margin-top: 20px;",
       
       # ---------------- Degree Program ---------------------------------------
       selectInput(
@@ -1494,7 +1494,7 @@ output$exam_gpa_title <- renderUI({
       # ---------------- Reset Button -----------------------------------------
       actionButton(
         "reset_degree_filters",
-        "Reset Selection",
+        "Reset",
         class = "reset-btn",
         style = "margin-top:35px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);"
       )

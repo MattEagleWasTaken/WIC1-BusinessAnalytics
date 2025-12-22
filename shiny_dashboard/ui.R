@@ -57,6 +57,7 @@ margin-bottom: 10px;
 .selectize-input {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   height: 40px !important;      /* fixed height for uniformity */
+  width: 300px !important;
   border-radius: 45px !important;  /* rounded corners */
   padding-left: 10px !important;   /* spacing between text and left border */
   display: flex !important;         
@@ -152,7 +153,7 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px;height:100px",
+                  style = "display: flex; align-items: center; gap: 15px;height:100px",
                   
                   # Toggle: All Students / One Student
                   div(
@@ -291,7 +292,7 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px; height:100px",
+                  style = "display: flex; align-items: center; gap: 15px; height:100px",
                   
                   # Radio Buttons
                   div(
@@ -431,7 +432,7 @@ ui <- dashboardPage(
           
           # Flex container for toggle + dropdowns + reset button
           div(
-            style = "display: flex; align-items: center; gap: 20px; height:100px",
+            style = "display: flex; align-items: center; gap: 15px; height:100px",
             
             # Toggle (e.g. All Degrees / One Degree)
             div(
