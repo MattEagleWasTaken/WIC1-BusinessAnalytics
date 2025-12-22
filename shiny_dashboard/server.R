@@ -1262,7 +1262,7 @@ observe({
       ) +
       
       labs(
-        title = "Distribution of Exam Average Grades",
+        title = "Distribution of all\nExam Average Grades",
         subtitle = paste0(
           "Median: ", round(stats$median, 2),
           "   |   SD: ", round(stats$sd, 2)

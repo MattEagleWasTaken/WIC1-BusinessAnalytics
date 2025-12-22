@@ -193,7 +193,7 @@ ui <- dashboardPage(
                     height: calc(100vh - 200px);      /* fixed height for scroll */
                     overflow-y: auto;   /* vertical scrollbar */
                     margin-left: 15px;
-                  ",
+                    ",
                     
                     # Plot inside this container 
                     plotOutput("grades_plot", height = "100%", width = "100%")
@@ -211,7 +211,7 @@ ui <- dashboardPage(
                     height: calc(100vh - 200px);      /* fixed height for scroll */
                     overflow-y: auto;   /* vertical scrollbar */
                     margin-left: 15px;
-                  ",
+                    ",
                     
                     # Plot inside this container 
                     plotOutput("pie_plot", height = "100%", width = "100%")
