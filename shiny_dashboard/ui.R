@@ -183,17 +183,17 @@ ui <- dashboardPage(
                   
                   # ==== BARPLOT CONTAINER ====
                   div(
-                    id = "bar_container",
+                    id = "student_plot_container1",
                     style = "
                     flex: 1;
-                    background-color: white;         /* white background */
-                    border-radius: 15px;             /* rounded corners */
-                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);  /* soft shadow */
-                    padding: 20px;                   /* inner spacing */
-                    height: calc(100vh - 200px);
-                    margin-left: 15px;               /* left margin */
-                    
-                    ",
+                    background-color: white;
+                    border-radius: 15px;
+                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+                    padding: 20px;
+                    height: calc(100vh - 200px);      /* fixed height for scroll */
+                    overflow-y: auto;   /* vertical scrollbar */
+                    margin-left: 15px;
+                  ",
                     
                     # Plot inside this container 
                     plotOutput("grades_plot", height = "100%", width = "100%")
@@ -201,17 +201,17 @@ ui <- dashboardPage(
                   
                   # ==== PIEPLOT CONTAINER ====
                   div(
-                    id = "pie_container",
+                    id = "student_plot_container2",
                     style = "
                     flex: 1;
-                    background-color: white;         /* white background */
-                    border-radius: 15px;             /* rounded corners */
-                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);  /* soft shadow */
-                    padding: 20px;                   /* inner spacing */
-                    height: calc(100vh - 200px);
-                    margin-left: 15px;               /* left margin */
-                    
-                    ",
+                    background-color: white;
+                    border-radius: 15px;
+                    box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+                    padding: 20px;
+                    height: calc(100vh - 200px);      /* fixed height for scroll */
+                    overflow-y: auto;   /* vertical scrollbar */
+                    margin-left: 15px;
+                  ",
                     
                     # Plot inside this container 
                     plotOutput("pie_plot", height = "100%", width = "100%")
@@ -224,10 +224,10 @@ ui <- dashboardPage(
                     style = "
                     width: 25%;
                     display: flex; 
-                    flex-direction: column;   /* stack cards vertically */
-                    gap: 20px;                /* spacing between cards */
-                    margin-right: 15px;       /* distance to screen edge */
-                    height: calc(100vh - 200px); /* full container height */
+                    flex-direction: column;   
+                    gap: 20px;                
+                    margin-right: 15px;       
+                    height: calc(100vh - 200px); 
                     ",
                     
                     # Upper Card (GPA)
@@ -302,7 +302,7 @@ ui <- dashboardPage(
                   ),
                   
                   # ------------------------------------------------------------
-                  # Semester (ALWAYS visible)
+                  # Semester
                   # ------------------------------------------------------------
                   uiOutput("exam_semester_filter"),
                   

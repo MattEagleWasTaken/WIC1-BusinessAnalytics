@@ -150,7 +150,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
   
-    # Set bar plot data to NULL → plot becomes empty
+    # Set bar plot data to NULL
     student_grades_for_plot(NULL)
     
     })
@@ -173,7 +173,7 @@ SELECT
 overall_average <- mean(all_student_averages$student_avg, na.rm = TRUE)  
 
 # SD of all Students
-overall_sd      <- sd(all_student_averages$student_avg, na.rm = TRUE) 
+overall_sd <- sd(all_student_averages$student_avg, na.rm = TRUE) 
   
     
 # ============================================================================
@@ -414,12 +414,14 @@ output$student_gpa <- renderText({
 # switch between pie plot all students, or bar plot one student 
 # ============================================================================  
   observe({
+    req(input$student_toggle)
+    
     if (input$student_toggle == "One Student") {
-      shinyjs::show("bar_container")
-      shinyjs::hide("pie_container")
+      shinyjs::show("student_plot_container1")
+      shinyjs::hide("student_plot_container2")
     } else {
-      shinyjs::hide("bar_container")
-      shinyjs::show("pie_container")
+      shinyjs::hide("student_plot_container1")
+      shinyjs::show("student_plot_container2")
     }
   })
   
@@ -857,11 +859,9 @@ selected_exam_grades <- reactive({
       df <- df[df$pnr == input$exam_pnr_select, ]
       
 # ------------------------------------------------------------
-# Case 2: Exam Title selected (fallback)
+# Case 2: Exam Title selected 
 # ------------------------------------------------------------
-# This case is only used if no PNR is selected.
-# It assumes that the combination of semester + title is sufficient.
-    } else if (!is.null(input$exam_title_select) &&
+  } else if (!is.null(input$exam_title_select) &&
                input$exam_title_select != "- not selected -") {
       
       df <- df[df$exam_title == input$exam_title_select, ]
@@ -1167,9 +1167,7 @@ selected_exam_grades <- reactive({
 # ============================================================================
 # SHOW / HIDE LEFT CONTAINERS BASED ON RADIO BUTTON
 # ============================================================================
-# When "All Exams" is selected, only left1 is visible.
-# When "One Exam" is selected, left2 is visible 
-  observe({
+observe({
     if (input$exam_toggle == "All Exams") {
       shinyjs::show("exam_plot_container1")
       shinyjs::hide("exam_plot_container2")
@@ -1375,10 +1373,6 @@ output$exam_gpa_value <- renderText({
 # ============================================================================
 # Dynamic title for the Exam GPA card
 # ============================================================================
-# The title adapts based on:
-# - Exam toggle (All Exams vs. One Exam)
-# - Semester filter selection
- 
 output$exam_gpa_title <- renderUI({
     
     title <- if (input$exam_toggle == "All Exams") {
