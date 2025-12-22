@@ -83,7 +83,8 @@ margin-bottom: 10px;
 }
 
 /* 7. Radio Buttons → align properly with inputs */
-.shiny-options-group {
+.radio-block {
+  width: 100px;
   margin-top: 5px;              /* same vertical offset as dropdowns for alignment */
 }
 
@@ -155,11 +156,12 @@ ui <- dashboardPage(
                   
                   # Toggle: All Students / One Student
                   div(
+                    class = "radio-block",
                     radioButtons(
                       "student_toggle",
                       "Select Student:",
                       choices = c("All Students", "One Student"),
-                      inline = TRUE
+                      inline = FALSE
                     )
                   ),
                   
@@ -293,11 +295,12 @@ ui <- dashboardPage(
                   
                   # Radio Buttons
                   div(
+                    class = "radio-block",
                     radioButtons(
                       "exam_toggle",
                       "Select Exam:",
                       choices = c("All Exams", "One Exam"),
-                      inline = TRUE
+                      inline = FALSE
                     )
                   ),
                   
@@ -432,11 +435,12 @@ ui <- dashboardPage(
             
             # Toggle (e.g. All Degrees / One Degree)
             div(
+              class = "radio-block",
               radioButtons(
                 "degree_toggle",
                 "Select Degree Program:",
                 choices = c("All Programs", "One Program"),
-                inline = TRUE
+                inline = FALSE
               )
             ),
             

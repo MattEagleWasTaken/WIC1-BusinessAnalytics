@@ -581,12 +581,10 @@ semester_choices_exam <- c(
 # ============================================================================
 # Semester Filter (GLOBAL – used for All Exams & One Exam)
 # ============================================================================
-# This dropdown is ALWAYS visible and fixed in position.
-  
-  output$exam_semester_filter <- renderUI({
+output$exam_semester_filter <- renderUI({
     selectInput(
       "exam_semester_select",
-      label    = tags$label("Semester:", style = "margin-top: 25px;"),
+      label    = tags$label("Semester:", style = "margin-top: 26px;"),
       choices  = semester_choices_exam,
       selected = "- all semester -"
     )
@@ -630,11 +628,7 @@ semester_choices_exam <- c(
 # ============================================================================
 # Dynamic Input Row (for "One Exam")
 # ============================================================================
-# NOTE:
-# - NO semester dropdown here anymore
-# - Semester is controlled ONLY by the global filter above
-  
-  output$one_exam_filters <- renderUI({
+output$one_exam_filters <- renderUI({
     
     req(input$exam_toggle == "One Exam")
     
