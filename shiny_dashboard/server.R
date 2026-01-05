@@ -1,3 +1,11 @@
+# Author: Marvin Fischer (Matriculation Number: 86186)
+#
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, server logic, data handling, and visualizations.
+
+
+# This server function contains the complete back-end logic of the Shiny dashboard.
 server <- function(input, output, session) {
   
   library(DBI)
@@ -524,7 +532,7 @@ if (input$student_toggle == "One Student") {
           # Label on the right of the box
           annotate(
             "text",
-            x = 1.265,
+            x = 1.27,
             y = student_mean,
             label = paste0("Student: ", round(student_mean, 2)),
             hjust = 0,
@@ -1255,7 +1263,7 @@ if (input$exam_toggle == "One Exam") {
           ) +
           annotate(
             "text",
-            x = 1.265,
+            x = 1.28,
             y = ex_avg,
             label = paste0("Exam: ", round(ex_avg, 2)),
             hjust = 0,
@@ -1823,7 +1831,7 @@ output$degree_boxplot_all <- renderPlot({
       ) +
       
       labs(
-        title = "Distribution of Exam Average Grades\nAcross Degree Programs",
+        title = "Distribution of Exam Average \nGrades Across Degree Programs",
         subtitle = paste0(
           "Median: ", round(overall_median, 2),
           " | SD: ", round(overall_sd, 2)
@@ -1922,10 +1930,10 @@ output$degree_boxplot_one <- renderPlot({
           is.null(input$degree_semester_select) ||
           input$degree_semester_select == "- all semester -"
         ) {
-          "Distribution of Grades – All Semesters"
+          "Distribution of Grades\n All Semesters"
         } else {
           paste0(
-            "Distribution of Grades – Semester ",
+            "Distribution of Grades\n Semester ",
             input$degree_semester_select
           )
         },
