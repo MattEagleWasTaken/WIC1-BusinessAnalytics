@@ -1,13 +1,20 @@
-# Loads the Shiny package (framework for building web apps in R)
+# Author: Marvin Fischer (Matriculation Number: 86186)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, server logic, data handling, and visualizations.
+
+
+# Loads the Shiny package 
 library(shiny)
-# Loads Shiny Dashboard package (provides dashboard layout components)
+# Loads Shiny Dashboard package 
 library(shinydashboard)   
 
-# Includes and executes the code from ui.R (defines the user interface)
+# Includes and executes the code from ui.R 
 source("ui.R")            
-# Includes and executes the code from server.R (defines server logic)
+# Includes and executes the code from server.R 
 source("server.R")        
 
-# Launches the Shiny application using the UI and server objects
+# Launches the Shiny application 
 shinyApp(ui, server)      
 
