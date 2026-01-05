@@ -1,3 +1,10 @@
+# Author: Marvin Fischer (Matriculation Number: 86186)
+#
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, server logic, data handling, and visualizations.
+
+
 # Load the Shiny package 
 library(shiny)
 
@@ -70,7 +77,7 @@ margin-bottom: 10px;
   border-radius: 10px !important;  
 }
 
-/* 6. Static text field Menue 
+/* 6. Static text field Menue */ 
 .static-text-input {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   height: 40px;                 
@@ -83,7 +90,7 @@ margin-bottom: 10px;
   background: white;            
 }
 
-/* 7. Radio Buttons
+/* 7. Radio Buttons */
 .radio-block {
   width: 100px;
   margin-top: 5px;              
@@ -103,7 +110,6 @@ margin-bottom: 10px;
   padding: 0 20px;              
   margin-top: 6px;              
 }
-
 
 "
 
@@ -189,13 +195,14 @@ ui <- dashboardPage(
                     id = "student_plot_container1",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);      
                     overflow-y: auto;   
                     margin-left: 15px;
+                    height: calc(100vh - 200px);
                     ",
                     
                     # Plot inside this container 
@@ -207,13 +214,14 @@ ui <- dashboardPage(
                     id = "student_plot_container2",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);      
                     overflow-y: auto;   
                     margin-left: 15px;
+                    height: calc(100vh - 200px);
                     ",
                     
                     # Plot inside this container 
@@ -230,7 +238,7 @@ ui <- dashboardPage(
                     flex-direction: column;   
                     gap: 20px;                
                     margin-right: 15px;       
-                    height: calc(100vh - 200px); 
+                    height: 100%; 
                     ",
                     
                     # Upper Card (GPA)
@@ -268,7 +276,8 @@ ui <- dashboardPage(
                       justify-content: center;
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-                      flex: 1;                 
+                      flex: 1;
+                      min-height:0;
                       padding: 15px;
                       ",
                       
@@ -369,7 +378,7 @@ ui <- dashboardPage(
                     flex-direction: column;
                     gap: 20px;
                     margin-right: 15px;
-                    height: calc(100vh - 200px);
+                    height: 100%;
                     ",
                     
                     # Upper Card 
@@ -409,6 +418,7 @@ ui <- dashboardPage(
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                       flex: 1;
+                      min-height: 0;
                       padding: 15px;
                       ",
                       plotOutput("exam_boxplot_avg", height = "100%", width = "100%")
@@ -511,7 +521,7 @@ ui <- dashboardPage(
               flex-direction: column;
               gap: 20px;
               margin-right: 15px;
-              height: calc(100vh - 200px);
+              height: 100%;
               ",
               
               # ---------------- Upper Card ----------------
@@ -549,6 +559,7 @@ ui <- dashboardPage(
                 border-radius: 15px;
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                 flex: 1;
+                min-height: 0;
                 padding: 15px;
                 ",
                 
