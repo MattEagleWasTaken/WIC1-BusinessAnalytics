@@ -311,7 +311,7 @@ ui <- dashboardPage(
                   uiOutput("exam_semester_filter"),
                   
                   # ------------------------------------------------------------
-                  # Exam filters (ONLY One Exam)
+                  # Exam filters (One Exam)
                   # ------------------------------------------------------------
                   uiOutput("one_exam_filters")
                 )
@@ -351,6 +351,7 @@ ui <- dashboardPage(
                     id = "exam_plot_container2",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
@@ -496,6 +497,7 @@ ui <- dashboardPage(
               id = "degree_plot_container2",
               style = "
               flex: 1;
+              min-width: 0;
               background-color: white;
               border-radius: 15px;
               box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
