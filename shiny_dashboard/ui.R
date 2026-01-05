@@ -1,13 +1,20 @@
-# Load the Shiny package (base framework for interactive web apps)
+# Author: Marvin Fischer (Matriculation Number: 86186)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, server logic, data handling, and visualizations.
+
+
+# Load the Shiny package 
 library(shiny)
 
-# Load Shiny Dashboard package (provides dashboard layout and components)
+# Load Shiny Dashboard package 
 library(shinydashboard)
 
 # Load shinyjs for dynamic show/hide of UI elements
 library(shinyjs)
 
-# ggplot2 → used for creating the grade visualization plot
+# ggplot2 visualization plots
 library(ggplot2)
 
 
@@ -40,12 +47,12 @@ margin-bottom: 10px;
   margin-top: 0 !important;
 }
 
-/* 1. Filter row → all filter blocks are placed side by side */
+/* 1. Filter row */
 .filter-row {
   background-color: white;
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
   display: flex;
-  align-items: center;     /* CENTER instead of FLEX-START */
+  align-items: center;     
   gap: 25px;
   height: 120px;
   margin-top: 0 !important;
@@ -53,55 +60,56 @@ margin-bottom: 10px;
   
 }
 
-/* 4. Dropdown Input Menue (Selectize) */
+/* 4. Dropdown Input Menue */
 .selectize-input {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-  height: 40px !important;      /* fixed height for uniformity */
-  border-radius: 45px !important;  /* rounded corners */
-  padding-left: 10px !important;   /* spacing between text and left border */
+  height: 40px !important;      
+  width: 300px !important;
+  border-radius: 45px !important;  
+  padding-left: 10px !important;   
   display: flex !important;         
-  align-items: center !important;   /* vertically center text inside input */
+  align-items: center !important;   
 }
 
-/* 5. Dropdown list (the menu that opens) */
+/* 5. Dropdown list */
 .selectize-dropdown {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-  border-radius: 10px !important;  /* rounded corners for dropdown menu */
+  border-radius: 10px !important;  
 }
 
-/* 6. Static text field Menue (read-only, same height as dropdown) */
+/* 6. Static text field Menue */ 
 .static-text-input {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-  height: 40px;                 /* same height as dropdown */
+  height: 40px;                 
   width: 300px;
-  border-radius: 45px;          /* rounded corners */
-  border: 1px solid #ccc;       /* border style */
-  padding: 0 10px;              /* left/right padding inside the field */
+  border-radius: 45px;          
+  border: 1px solid #ccc;       
+  padding: 0 10px;              
   display: flex;                
-  align-items: center;          /* vertical center text */
-  background: white;            /* white background */
+  align-items: center;          
+  background: white;            
 }
 
-/* 7. Radio Buttons → align properly with inputs */
-.shiny-options-group {
-  margin-top: 5px;              /* same vertical offset as dropdowns for alignment */
+/* 7. Radio Buttons */
+.radio-block {
+  width: 100px;
+  margin-top: 5px;              
 }
 
 /* 8. Reset Button */
 .reset-btn {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-  background-color: #4da3ff;    /* light blue button background */
-  color: white;                 /* text color */
-  border-radius: 45px;          /* rounded corners to match inputs */
-  height: 40px;                 /* same height as dropdowns */
+  background-color: #4da3ff;    
+  color: white;                 
+  border-radius: 45px;          
+  height: 40px;                 
   display: flex;
-  align-items: center;          /* vertical center text inside button */
-  justify-content: center;      /* horizontal center */
-  border: none;                 /* remove default border */
-  padding: 0 20px;              /* horizontal padding inside button */
-  margin-top: 6px;              /* align vertically with inputs */
+  align-items: center;          
+  justify-content: center;      
+  border: none;                 
+  padding: 0 20px;              
+  margin-top: 6px;              
 }
-
 
 "
 
@@ -151,66 +159,69 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px;height:100px",
+                  style = "display: flex; align-items: center; gap: 15px;height:100px",
                   
                   # Toggle: All Students / One Student
                   div(
+                    class = "radio-block",
                     radioButtons(
                       "student_toggle",
                       "Select Student:",
                       choices = c("All Students", "One Student"),
-                      inline = TRUE
+                      inline = FALSE
                     )
                   ),
                   
-                  # Dropdowns (rendered dynamically when toggle is 'One Student')
+                  # Dropdowns 
                   uiOutput("one_student_filters")
                 )
               ),
               
               #-----------------------------------------------------------------------------------
-              # GPA Card UI and Grade Plot (placed below the student filters)
+              # GPA Card UI and Grade Plot
               fluidRow(
                 div(
                   style = "
                   display: flex;
-                  align-items: flex-start;   /* top alignment */
+                  align-items: flex-start;   
                   gap: 30px;                 
                   width: 100%;
-                  height: calc(100vh - 200px);  /* full viewport minus Header/Filter height */
-                  margin-top: 15px;          /* spacing below filter row */
+                  height: calc(100vh - 200px);  
+                  margin-top: 15px;          
                   ",
                   
-                  # ==== BARPLOT CONTAINER ====
+                  # Barplot Container
                   div(
                     id = "student_plot_container1",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);      /* fixed height for scroll */
-                    overflow-y: auto;   /* vertical scrollbar */
+                    overflow-y: auto;   
                     margin-left: 15px;
+                    height: calc(100vh - 200px);
                     ",
                     
                     # Plot inside this container 
                     plotOutput("grades_plot", height = "100%", width = "100%")
                     ),
                   
-                  # ==== PIEPLOT CONTAINER ====
+                  # Pieplot Container
                   div(
                     id = "student_plot_container2",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);      /* fixed height for scroll */
-                    overflow-y: auto;   /* vertical scrollbar */
+                    overflow-y: auto;   
                     margin-left: 15px;
+                    height: calc(100vh - 200px);
                     ",
                     
                     # Plot inside this container 
@@ -218,7 +229,7 @@ ui <- dashboardPage(
                   ),
                     
                   
-                  # ==== RIGHT CONTAINER WITH STACKED CARDS ====
+                  # Right Container
                   div(
                     id = "right_container",
                     style = "
@@ -227,7 +238,7 @@ ui <- dashboardPage(
                     flex-direction: column;   
                     gap: 20px;                
                     margin-right: 15px;       
-                    height: calc(100vh - 200px); 
+                    height: 100%; 
                     ",
                     
                     # Upper Card (GPA)
@@ -236,7 +247,7 @@ ui <- dashboardPage(
                       style = "
                       background-color: white;
                       border-radius: 15px;
-                      height: 160px;           /* fixed height */
+                      height: 160px;           
                       display: flex;
                       flex-direction: column;
                       justify-content: center;
@@ -265,7 +276,8 @@ ui <- dashboardPage(
                       justify-content: center;
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
-                      flex: 1;                 /* take all remaining space */
+                      flex: 1;
+                      min-height:0;
                       padding: 15px;
                       ",
                       
@@ -289,26 +301,25 @@ ui <- dashboardPage(
                 
                 # Flex container for toggle + dropdowns + reset button
                 div(
-                  style = "display: flex; align-items: center; gap: 20px; height:100px",
+                  style = "display: flex; align-items: center; gap: 15px; height:100px",
                   
                   # Radio Buttons
                   div(
+                    class = "radio-block",
                     radioButtons(
                       "exam_toggle",
                       "Select Exam:",
                       choices = c("All Exams", "One Exam"),
-                      inline = TRUE
+                      inline = FALSE
                     )
                   ),
                   
                   # ------------------------------------------------------------
                   # Semester
-                  # ------------------------------------------------------------
                   uiOutput("exam_semester_filter"),
                   
                   # ------------------------------------------------------------
-                  # Exam filters (ONLY One Exam)
-                  # ------------------------------------------------------------
+                  # Exam filters (One Exam)
                   uiOutput("one_exam_filters")
                 )
               ) # end fluid row filter
@@ -319,14 +330,14 @@ ui <- dashboardPage(
                 div(
                   style = "
                   display: flex;
-                  align-items: flex-start;   /* top alignment */
+                  align-items: flex-start;   
                   gap: 30px;                 
                   width: 100%;
-                  height: calc(100vh - 200px);  /* full viewport minus Header/Filter height */
-                  margin-top: 15px;          /* spacing below filter row */
+                  height: calc(100vh - 200px);  
+                  margin-top: 15px;          
                   ",
                   
-                  # ==== LEFT PLOT CONTAINER 1 ====
+                  # Left Plot Container 1
                   div(
                     id = "exam_plot_container1",
                     style = "
@@ -335,18 +346,19 @@ ui <- dashboardPage(
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
                     padding: 20px;
-                    height: calc(100vh - 200px);      /* fixed height for scroll */
-                    overflow-y: auto;   /* vertical scrollbar */
+                    height: calc(100vh - 200px);      
+                    overflow-y: auto;   
                     margin-left: 15px;
                   ",
                     uiOutput("exam_plot1_ui")
                   ),
                   
-                  # ==== LEFT PLOT CONTAINER 2 ====
+                  # Left Plot Container 2
                   div(
                     id = "exam_plot_container2",
                     style = "
                     flex: 1;
+                    min-width: 0;
                     background-color: white;
                     border-radius: 15px;
                     box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
@@ -357,7 +369,7 @@ ui <- dashboardPage(
                     plotOutput("exam_plot2", height = "100%", width = "100%")
                   ),
                   
-                  # ==== RIGHT CONTAINER WITH STACKED CARDS ====
+                  # Right Container
                   div(
                     id = "exam_right_container",
                     style = "
@@ -366,7 +378,7 @@ ui <- dashboardPage(
                     flex-direction: column;
                     gap: 20px;
                     margin-right: 15px;
-                    height: calc(100vh - 200px);
+                    height: 100%;
                     ",
                     
                     # Upper Card 
@@ -406,6 +418,7 @@ ui <- dashboardPage(
                       align-items: center;
                       box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                       flex: 1;
+                      min-height: 0;
                       padding: 15px;
                       ",
                       plotOutput("exam_boxplot_avg", height = "100%", width = "100%")
@@ -422,21 +435,21 @@ ui <- dashboardPage(
         
         # ----------------------------------------------------------------------
         # Filter Row Degree Programs
-        # ----------------------------------------------------------------------
         fluidRow(
           class = "filter-row",
           
           # Flex container for toggle + dropdowns + reset button
           div(
-            style = "display: flex; align-items: center; gap: 20px; height:100px",
+            style = "display: flex; align-items: center; gap: 15px; height:100px",
             
             # Toggle (e.g. All Degrees / One Degree)
             div(
+              class = "radio-block",
               radioButtons(
                 "degree_toggle",
                 "Select Degree Program:",
                 choices = c("All Programs", "One Program"),
-                inline = TRUE
+                inline = FALSE
               )
             ),
             
@@ -452,7 +465,6 @@ ui <- dashboardPage(
         
         # ----------------------------------------------------------------------
         # Container for plots + right cards
-        # ----------------------------------------------------------------------
         fluidRow(
           div(
             style = "
@@ -464,9 +476,7 @@ ui <- dashboardPage(
             margin-top: 15px;
             ",
             
-            # ================================================================
-            # LEFT PLOT CONTAINER 1
-            # ================================================================
+            # Left Container 1
             div(
               id = "degree_plot_container1",
               style = "
@@ -484,13 +494,12 @@ ui <- dashboardPage(
               uiOutput("degree_plot1_ui")
             ),
             
-            # ================================================================
-            # LEFT PLOT CONTAINER 2
-            # ================================================================
+            # Left Container 2
             div(
               id = "degree_plot_container2",
               style = "
               flex: 1;
+              min-width: 0;
               background-color: white;
               border-radius: 15px;
               box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
@@ -503,9 +512,7 @@ ui <- dashboardPage(
               plotOutput("degree_plot2", height = "100%", width = "100%")
             ),
             
-            # ================================================================
-            # RIGHT CONTAINER WITH STACKED CARDS
-            # ================================================================
+            # Right Container
             div(
               id = "degree_right_container",
               style = "
@@ -514,7 +521,7 @@ ui <- dashboardPage(
               flex-direction: column;
               gap: 20px;
               margin-right: 15px;
-              height: calc(100vh - 200px);
+              height: 100%;
               ",
               
               # ---------------- Upper Card ----------------
@@ -552,12 +559,12 @@ ui <- dashboardPage(
                 border-radius: 15px;
                 box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
                 flex: 1;
+                min-height: 0;
                 padding: 15px;
                 ",
                 
-                # ================================================================
-                # BOXPLOT CONTAINER 1 (ALL PROGRAMS)
-                # ================================================================
+                
+                # Boxplot Container 1
                 div(
                   id = "degree_boxplot_all_container",
                   style = "
@@ -567,9 +574,7 @@ ui <- dashboardPage(
                   plotOutput("degree_boxplot_all", height = "100%", width = "100%")
                 ),
                 
-                # ================================================================
-                # BOXPLOT CONTAINER 2 (ONE PROGRAM)
-                # ================================================================
+                # Boxplot Container 2 
                 div(
                   id = "degree_boxplot_one_container",
                   style = "
