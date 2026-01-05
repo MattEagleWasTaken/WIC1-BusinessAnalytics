@@ -33,9 +33,9 @@ server <- function(input, output, session) {
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
   
   
-# ============================================================================
+#---------------------------------------------------------------------------------
 # Dynamic Input Row (for "One Student")
-# ============================================================================
+
   output$one_student_filters <- renderUI({
     
     req(input$student_toggle == "One Student")
@@ -128,9 +128,8 @@ server <- function(input, output, session) {
   })
   
  
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Show / Hide Reset Button
-# ============================================================================
   observe({
     if (
       (!is.null(input$name_select) && input$name_select != "- not selected -") ||
@@ -143,9 +142,8 @@ server <- function(input, output, session) {
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Reset all dropdowns
-# ============================================================================
   observeEvent(input$reset_filters, {
     updateSelectInput(session, "name_select", selected = "- not selected -")
     updateSelectInput(session, "matnr_select", selected = "- not selected -")
@@ -155,9 +153,8 @@ server <- function(input, output, session) {
     
     })
   
-# ============================================================================
+#  ---------------------------------------------------------------------------------
 # All Average Grades of all Students
-# ============================================================================
 all_student_averages <- dbGetQuery(
   con,
 "
@@ -176,9 +173,8 @@ overall_average <- mean(all_student_averages$student_avg, na.rm = TRUE)
 overall_sd <- sd(all_student_averages$student_avg, na.rm = TRUE) 
   
     
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # All Grades for selected student
-# ============================================================================
 # empty variable for student plot
 student_grades_for_plot <- reactiveVal(NULL)
   
@@ -255,9 +251,8 @@ output$student_gpa <- renderText({
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Grades horizontal bar plot
-# ============================================================================
   output$grades_plot <- renderPlot({
     df <- student_grades_for_plot()
     if (is.null(df) || nrow(df) == 0) return(NULL)
@@ -271,9 +266,9 @@ output$student_gpa <- renderText({
     # Order exams: best grade (lowest value) on top
     df$exam_title <- factor(df$exam_title, levels = rev(df$exam_title[order(df$grade)]))
     
-    # ------------------------------------------------------------
+    
     # Resolve student full name for dynamic title
-    # ------------------------------------------------------------
+    
     student_name <- NULL
     
     if (input$student_toggle == "One Student") {
@@ -325,9 +320,8 @@ output$student_gpa <- renderText({
       theme(
         plot.background  = element_rect(fill = "white", color = NA, linewidth = 0),
         panel.background = element_rect(fill = "white", color = "grey90", linewidth = 1),
-        # ------------------------------------------------------------
+        
         # Grid styling (consistent with One Exam histogram)
-        # ------------------------------------------------------------
         panel.grid.major.y = element_line(
           color = "grey70",
           linewidth = 0.8
@@ -345,10 +339,9 @@ output$student_gpa <- renderText({
       )
   })
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # PIE PLOT – Performance distribution of all students
-# ============================================================================
-  total_students <- nrow(all_student_averages)
+total_students <- nrow(all_student_averages)
   
   output$pie_plot <- renderPlot({
     
@@ -410,10 +403,9 @@ output$student_gpa <- renderText({
       )
   })
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # switch between pie plot all students, or bar plot one student 
-# ============================================================================  
-  observe({
+observe({
     req(input$student_toggle)
     
     if (input$student_toggle == "One Student") {
@@ -426,10 +418,9 @@ output$student_gpa <- renderText({
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # BOX PLOT – Distribution of all students' average grades
-# ============================================================================
-  output$boxplot_avg <- renderPlot({
+output$boxplot_avg <- renderPlot({
     
     df <- all_student_averages
     
@@ -505,7 +496,6 @@ output$student_gpa <- renderText({
         
         # ------------------------------------------------------------
         # Grid styling (same as bar plot / histogram)
-        # ------------------------------------------------------------
         panel.grid.major.y = element_line(
           color = "grey70",
           linewidth = 0.8
@@ -519,8 +509,7 @@ output$student_gpa <- renderText({
     
 # ----------------------------------------------------
 # Add student mean (red line) ONLY in One Student mode
-# ----------------------------------------------------
-    if (input$student_toggle == "One Student") {
+if (input$student_toggle == "One Student") {
       
       df_student <- student_grades_for_plot()
       
@@ -557,10 +546,8 @@ output$student_gpa <- renderText({
   })
   
  
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Load Exam Data (incl. semester) for the dropdowns
-# ============================================================================
-  
 exams <- dbGetQuery(
     con,
     "
@@ -572,15 +559,14 @@ exams <- dbGetQuery(
   "
   )
 
-# ---- Semester dropdown choices (GLOBAL) ------------------------------------
+# ---- Semester dropdown choices ------------------------------------
 semester_choices_exam <- c(
     "- all semester -",
     sort(unique(exams$semester))
   )
 
-# ============================================================================
-# Semester Filter (GLOBAL – used for All Exams & One Exam)
-# ============================================================================
+# ---------------------------------------------------------------------------------
+# Semester Filter 
 output$exam_semester_filter <- renderUI({
     selectInput(
       "exam_semester_select",
@@ -590,12 +576,9 @@ output$exam_semester_filter <- renderUI({
     )
   })
 
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Central Reactive: Exams filtered by semester
-# ============================================================================
-# Single source of truth for semester filtering
-  
-  filtered_exams <- reactive({
+filtered_exams <- reactive({
     
     df <- exams
     semester <- input$exam_semester_select
@@ -607,11 +590,9 @@ output$exam_semester_filter <- renderUI({
     df
   })
   
-# ============================================================================
-# Reactive: Dropdown choices (semester-aware)
-# ============================================================================
-  
-  exam_title_choices_one <- reactive({
+# ---------------------------------------------------------------------------------
+# Dropdown choices (semester-aware)
+exam_title_choices_one <- reactive({
     c(
       "- not selected -",
       sort(unique(filtered_exams()$title))
@@ -625,9 +606,9 @@ output$exam_semester_filter <- renderUI({
     )
   })
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Dynamic Input Row (for "One Exam")
-# ============================================================================
+
 output$one_exam_filters <- renderUI({
     
     req(input$exam_toggle == "One Exam")
@@ -714,9 +695,9 @@ output$one_exam_filters <- renderUI({
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Reset Logic (One Exam)
-# ============================================================================
+
 # Semester intentionally NOT reset
   
   observeEvent(input$reset_exam_filters, {
@@ -725,11 +706,9 @@ output$one_exam_filters <- renderUI({
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Show / Hide Exam Reset Button
-# ============================================================================
-  
-  observe({
+observe({
     if (
       (!is.null(input$exam_title_select) &&
        input$exam_title_select != "- not selected -") ||
@@ -743,12 +722,9 @@ output$one_exam_filters <- renderUI({
   })
   
 
-# ============================================================================  
+# ---------------------------------------------------------------------------------  
 # Load All Grades for All Exams 
-# ============================================================================
-# This query loads all grades for all exams and will be used for both the "All Exams" plot
-# and the "One Exam" filtering later. We do it outside of any reactive to avoid repeated DB hits.
-  all_grades <- dbGetQuery(con, "
+all_grades <- dbGetQuery(con, "
   SELECT
     g.grade,
     g.matriculation_number,
@@ -764,9 +740,9 @@ output$one_exam_filters <- renderUI({
   all_grades$exam_title <- factor(all_grades$exam_title, levels = unique(all_grades$exam_title))
   
  
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Reactive: active semester (shared by All Exams & One Exam)
-# ============================================================================
+
 active_exam_semester <- reactive({
     
     if (input$exam_toggle == "One Exam") {
@@ -779,10 +755,9 @@ active_exam_semester <- reactive({
 
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Reactive: Filter grades by semester (ONLY for All Exams mode)
-# ============================================================================
-  filtered_grades <- reactive({
+filtered_grades <- reactive({
     
     req(all_grades)
     
@@ -795,9 +770,9 @@ active_exam_semester <- reactive({
     }
 })
  
-# ============================================================================
-# Reactive: Average grade of the selected exam (PNR preferred, title fallback)
-# ============================================================================
+# ---------------------------------------------------------------------------------
+# Reactive: Average grade of the selected exam
+
   selected_exam_avg <- reactive({
     
     req(input$exam_toggle == "One Exam")
@@ -806,16 +781,16 @@ active_exam_semester <- reactive({
     req(nrow(df) > 0)
     
 # ------------------------------------------------------------
-# Case 1: PNR selected (preferred, unique)
-# ------------------------------------------------------------
+# Case 1: PNR selected 
+
     if (!is.null(input$exam_pnr_select) &&
         input$exam_pnr_select != "- not selected -") {
       
       df <- df[df$pnr == input$exam_pnr_select, ]
       
 # ------------------------------------------------------------
-# Case 2: Only exam title selected (fallback)
-# ------------------------------------------------------------
+# Case 2: Only exam title selected 
+
     } else if (!is.null(input$exam_title_select) &&
                input$exam_title_select != "- not selected -") {
       
@@ -830,9 +805,9 @@ active_exam_semester <- reactive({
     mean(df$grade, na.rm = TRUE)
 })
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # LEFT PLOT 2 – Reactive: All individual grades of the selected exam
-# ============================================================================
+
   
 selected_exam_grades <- reactive({
     
@@ -845,8 +820,7 @@ selected_exam_grades <- reactive({
     
 # ------------------------------------------------------------
 # Case 1: Exam Number (PNR) selected
-# ------------------------------------------------------------
-# The PNR uniquely identifies an exam and is therefore preferred
+
     if (!is.null(input$exam_pnr_select) &&
         input$exam_pnr_select != "- not selected -") {
       
@@ -854,7 +828,7 @@ selected_exam_grades <- reactive({
       
 # ------------------------------------------------------------
 # Case 2: Exam Title selected 
-# ------------------------------------------------------------
+
   } else if (!is.null(input$exam_title_select) &&
                input$exam_title_select != "- not selected -") {
       
@@ -862,7 +836,7 @@ selected_exam_grades <- reactive({
       
 # ------------------------------------------------------------
 # Case 3: No valid exam selection
-# ------------------------------------------------------------
+
     } else {
       return(NULL)
     }
@@ -875,9 +849,9 @@ selected_exam_grades <- reactive({
   })
   
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # LEFT PLOT 1: Scatter Plot of All Grades per Exam (All Exams Mode)
-# ============================================================================
+
   output$exam_plot1 <- renderPlot({
     
     req(input$exam_toggle == "All Exams")
@@ -887,13 +861,13 @@ selected_exam_grades <- reactive({
     
 # ------------------------------------------------------------
 # Create unique exam label for Y-axis (PNR + exam title)
-# ------------------------------------------------------------
+
     df$exam_label <- paste0(df$pnr, " – ", df$exam_title)
     df$exam_label <- factor(df$exam_label, levels = unique(df$exam_label))
     
 # ------------------------------------------------------------
 # Color definition for grade clusters
-# ------------------------------------------------------------
+
     grade_colors <- c(
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
@@ -903,7 +877,7 @@ selected_exam_grades <- reactive({
     
 # ------------------------------------------------------------
 # Assign grade clusters
-# ------------------------------------------------------------
+
     df$cluster <- cut(
       df$grade,
       breaks = c(0, 1.5, 2.5, 3.5, 4.1),
@@ -918,7 +892,7 @@ selected_exam_grades <- reactive({
     
 # ------------------------------------------------------------
 # Scatter plot
-# ------------------------------------------------------------
+
     ggplot(df, aes(y = exam_label, x = grade, color = cluster)) +
       
       # Grade threshold reference lines
@@ -957,9 +931,9 @@ selected_exam_grades <- reactive({
       )
   })
   
-# ============================================================================
+# ---------------------------------------------------------------------------------
 # Dynamic plotOutput height for exam_plot1
-# ============================================================================
+
   output$exam_plot1_ui <- renderUI({
     
     req(input$exam_toggle == "All Exams")
@@ -983,10 +957,8 @@ selected_exam_grades <- reactive({
   })
   
 
-  # ============================================================================
+  # ---------------------------------------------------------------------------------
   # LEFT PLOT 2: for One Exam Mode
-  # ============================================================================
-  # Histogram of grade distribution for one selected exam
   output$exam_plot2 <- renderPlot({
     
     # Only relevant in One Exam mode
@@ -998,8 +970,7 @@ selected_exam_grades <- reactive({
     req(nrow(df) > 0)
     
     # ------------------------------------------------------------
-    # Define official grading scale (HS Aalen – 0.3 steps)
-    # ------------------------------------------------------------
+    # Define official grading scale 
     grade_levels <- c(
       1.0, 1.3, 1.7,
       2.0, 2.3, 2.7,
@@ -1009,8 +980,8 @@ selected_exam_grades <- reactive({
     )
     
     # ------------------------------------------------------------
-    # Color definition (consistent with other plots)
-    # ------------------------------------------------------------
+    # Color definition 
+    
     grade_colors <- c(
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
@@ -1020,7 +991,7 @@ selected_exam_grades <- reactive({
     
     # ------------------------------------------------------------
     # Collect all failing grades (> 4.0) into one category
-    # ------------------------------------------------------------
+    
     df$grade_plot <- ifelse(
       df$grade > 4.0,
       "> 4.0",
@@ -1035,14 +1006,14 @@ selected_exam_grades <- reactive({
     )
     
     # ------------------------------------------------------------
-    # Count number of students per grade (keep empty grades)
-    # ------------------------------------------------------------
+    # Count number of students per grade 
+    
     grade_counts <- as.data.frame(table(df$grade_factor))
     names(grade_counts) <- c("grade", "count")
     
     # ------------------------------------------------------------
-    # Assign performance cluster per grade level (for coloring)
-    # ------------------------------------------------------------
+    # Assign performance cluster per grade level 
+    
     grade_counts$grade_num <- suppressWarnings(
       as.numeric(as.character(grade_counts$grade))
     )
@@ -1071,7 +1042,7 @@ selected_exam_grades <- reactive({
     
     # ------------------------------------------------------------
     # Exam average for reference line
-    # ------------------------------------------------------------
+    
     ex_avg <- selected_exam_avg()
     n_students <- nrow(df)
     exam_title <- unique(df$exam_title)
@@ -1085,7 +1056,7 @@ selected_exam_grades <- reactive({
     
     # ------------------------------------------------------------
     # Plot
-    # ------------------------------------------------------------
+    
     ggplot(grade_counts, aes(x = grade, y = count)) +
       
       geom_col(
@@ -1100,9 +1071,9 @@ selected_exam_grades <- reactive({
         drop   = TRUE
       ) +
       
-      # ------------------------------------------------------------
-    # Show count labels near the bottom of each bar
     # ------------------------------------------------------------
+    # Show count labels near the bottom of each bar
+    
     geom_text(
       aes(label = ifelse(count > 0, count, "")),
       y = 0.5,
@@ -1112,9 +1083,9 @@ selected_exam_grades <- reactive({
       vjust = 0
     ) +
       
-      # ------------------------------------------------------------
-    # Mean reference line + fixed-position label
     # ------------------------------------------------------------
+    # Mean reference line + fixed-position label
+    
     geom_vline(
       xintercept = mean_x,
       color = "red",
