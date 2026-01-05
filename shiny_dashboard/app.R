@@ -1,5 +1,5 @@
 # Author: Marvin Fischer (Matriculation Number: 86186)
-#
+
 # This application was fully developed by the author.
 # The author is responsible for the complete implementation,
 # including UI design, server logic, data handling, and visualizations.
