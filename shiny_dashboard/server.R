@@ -880,7 +880,8 @@ selected_exam_grades <- reactive({
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
       "Average (2.6–3.5)"= "#f3b173",
-      "Below Average (3.6–4.0)"   = "#e16b6b"
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
     
 # ------------------------------------------------------------
@@ -888,14 +889,16 @@ selected_exam_grades <- reactive({
 
     df$cluster <- cut(
       df$grade,
-      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–4.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
 # ------------------------------------------------------------
@@ -905,16 +908,19 @@ selected_exam_grades <- reactive({
       
       # Grade threshold reference lines
       geom_vline(
-        xintercept = c(1.5, 2.5, 3.5),
+        xintercept = c(1.5, 2.5, 3.5, 4.0),
         color = "black",
-        linewidth = 1
+        linewidth = 0.5
       ) +
       
       # Individual student grades
       geom_jitter(height = 0, size = 3, alpha = 1) +
       
       # Manual color scale
-      scale_color_manual(values = grade_colors) +
+      scale_color_manual(
+        values = grade_colors,
+        drop = FALSE
+      ) +
       
       # Labels
       labs(
@@ -979,10 +985,10 @@ selected_exam_grades <- reactive({
     # ------------------------------------------------------------
     # Define official grading scale 
     grade_levels <- c(
-      1.0, 1.3, 1.7,
-      2.0, 2.3, 2.7,
-      3.0, 3.3, 3.7,
-      4.0,
+      "1", "1.3", "1.7",
+      "2", "2.3", "2.7",
+      "3", "3.3", "3.7",
+      "4",
       "> 4.0"
     )
     
@@ -990,10 +996,11 @@ selected_exam_grades <- reactive({
     # Color definition 
     
     grade_colors <- c(
-      "Very Good (≤1.5)" = "#3c8d40",
-      "Good (1.6–2.5)"   = "#88c999",
-      "Average (2.6–3.5)"= "#f3b173",
-      "Below Average (3.6–6.0)"   = "#e16b6b"
+      "Very Good (≤1.5)"        = "#3c8d40",
+      "Good (1.6–2.5)"          = "#88c999",
+      "Average (2.6–3.5)"       = "#f3b173",
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
     
     # ------------------------------------------------------------
@@ -1027,20 +1034,19 @@ selected_exam_grades <- reactive({
     
     grade_counts$grade_cluster <- cut(
       grade_counts$grade_num,
-      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–6.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
-    # Assign failing grades (>4.0) explicitly to "Below Average"
-    grade_counts$grade_cluster[
-      is.na(grade_counts$grade_cluster)
-    ] <- "Below Average (3.6–6.0)"
+    grade_counts$grade_cluster[grade_counts$grade == "> 4.0"] <- "Failed (>4.0)"
     
     grade_counts$grade_cluster <- factor(
       grade_counts$grade_cluster,
@@ -1051,16 +1057,33 @@ selected_exam_grades <- reactive({
     # Exam average for reference line
     
     ex_avg <- selected_exam_avg()
+    req(is.finite(ex_avg))
+   
+     ### ===================== CHANGED START =====================
+    ### Robust mean position calculation (NO character comparison)
+    
+    numeric_levels <- c(
+      1.0, 1.3, 1.7,
+      2.0, 2.3, 2.7,
+      3.0, 3.3, 3.7,
+      4.0
+    )
+    
+    # Clamp mean to max plotted grade (4.0)
+    mean_grade <- min(ex_avg, 4.0)
+    
+    # Find next higher (or equal) grade level
+    mean_level <- min(numeric_levels[numeric_levels >= mean_grade])
+    
+    # Convert grade value to x-position in factor scale
+    mean_x <- which(grade_levels == as.character(mean_level))
+    
+    req(length(mean_x) == 1)
+    
+    ### ===================== CHANGED END =====================
+    
     n_students <- nrow(df)
     exam_title <- unique(df$exam_title)
-    
-    mean_x <- as.numeric(
-      factor(
-        min(grade_levels[grade_levels >= ex_avg]),
-        levels = grade_levels
-      )
-    )
-    if (!is.finite(mean_x)) return(NULL)
     
     # ------------------------------------------------------------
     # Plot
