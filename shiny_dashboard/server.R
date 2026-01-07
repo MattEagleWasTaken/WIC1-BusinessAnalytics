@@ -8,17 +8,17 @@
 # This server function contains the complete back-end logic of the Shiny dashboard.
 server <- function(input, output, session) {
   
-  library(DBI)
-  library(RPostgres)
-  library(jsonlite)
-  library(shinyjs)
-  library(ggplot2)
+library(DBI)
+library(RPostgres)
+library(jsonlite)
+library(shinyjs)
+library(ggplot2)
   
   
 # ---------------- Load DB Credentials ----------------
-  db_config <- fromJSON("../user_login_config.json")
+db_config <- fromJSON("../user_login_config.json")
   
-  con <- dbConnect(
+con <- dbConnect(
     RPostgres::Postgres(),
     dbname   = db_config$database,
     host     = db_config$host,
@@ -435,6 +435,7 @@ observe({
 output$boxplot_avg <- renderPlot({
     
     df <- all_student_averages
+    if (nrow(df) == 0) return(NULL)
     
     # Overall statistics
     overall_mean   <- overall_average
@@ -1052,6 +1053,7 @@ selected_exam_grades <- reactive({
         levels = grade_levels
       )
     )
+    if (!is.finite(mean_x)) return(NULL)
     
     # ------------------------------------------------------------
     # Plot
@@ -1708,6 +1710,7 @@ output$degree_plot2 <- renderPlot({
         levels = grade_levels
       )
     )
+    if (!is.finite(mean_x)) return(NULL)
     
 # ------------------------------------------------------------
 # Plot
