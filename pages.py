@@ -21,11 +21,16 @@ MIT MARVIN ABSTIMMEN:
 
 '''
 from database_worker import DatabaseWorker
-import os 
+from Data_Base_Connection import prepare_database
 import json
+import os 
+from PySide6.QtCore import Signal, QDate, Qt, QProcess, QUrl
 from PySide6.QtGui import QDoubleValidator, QIntValidator, QPixmap
 from PySide6.QtWidgets import QComboBox, QDateEdit, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout
-from PySide6.QtCore import Signal, QDate, Qt
+from PySide6.QtWebEngineWidgets import QWebEngineView
+import signal
+import subprocess
+import time
 
 
 def dropdown_options_path():
@@ -95,7 +100,7 @@ class BasePage(QWidget):
         
         # Separator (Design-Element)
         self.main_layout.addWidget(self.create_separator())
-        self.main_layout.addSpacing(20)
+        self.main_layout.addSpacing(10)
         
         # Content-Area (will be filled by subclasses)
         self.content_layout = QVBoxLayout()
@@ -500,6 +505,8 @@ class HomePage(BasePage):
             self.status_message.emit("Database configuration saved successfully!", 3000)
         except Exception as e:
             self.status_message.emit(f"Error saving config: {e}", 5000)
+
+        prepare_database()
 
     def test_connection(self):
         """Tests the database connection with current settings"""
@@ -1130,78 +1137,86 @@ class StatsPage(BasePage):
     
     def __init__(self):
         super().__init__("Statistics")
+        self.shiny_process = None
+        self.shiny_port = 8050
         self.setup_ui()
 
     def setup_ui(self):
-
-        form_layout = QFormLayout()
+        """ setup UI with start & stop buttons"""
+        btn_layout = QHBoxLayout()
+        self.start_btn = QPushButton("Start Dashboard")
+        self.start_btn.clicked.connect(self.start_shiny_app)
+        self.stop_btn = QPushButton("Stop Dashboard") 
+        self.stop_btn.clicked.connect(self.stop_shiny_app)
+        self.stop_btn.setEnabled(False)
         
-        name_layout = QHBoxLayout()
-        self.first_name_input = QLineEdit()
-        self.first_name_input.setPlaceholderText("Firstname")
-        self.last_name_input = QLineEdit()
-        self.last_name_input.setPlaceholderText("Lastname")
-        name_layout.addWidget(self.first_name_input)
-        name_layout.addWidget(self.last_name_input)
-
-        form_layout.addRow("Name:", name_layout)
-
-        self.birth_date_input = QDateEdit()
-        self.birth_date_input.setDisplayFormat("dd.MM.yyyy")
-        self.birth_date_input.setDate(QDate.currentDate())
-        self.birth_date_input.setCalendarPopup(True)
+        btn_layout.addWidget(self.start_btn)
+        btn_layout.addWidget(self.stop_btn)
+        self.content_layout.addLayout(btn_layout)
         
-        self.matriculation_no_input = QLineEdit()
-        matriculation_validator = QIntValidator(0, 999999999)
-        self.matriculation_no_input.setValidator(matriculation_validator)
-
-        form_layout.addRow("Date of Birth:", self.birth_date_input)
-        form_layout.addRow("Matriculation Number:", self.matriculation_no_input)
-
-
-
-        save_btn = QPushButton("Save")
-        save_btn.clicked.connect(self.save_data)
         
-        self.content_layout.addLayout(form_layout)
-        self.content_layout.addWidget(save_btn)
-        self.content_layout.addStretch()
+        self.web_view = QWebEngineView()
+        self.content_layout.addWidget(self.web_view,1)
+        
+
+
+    def start_shiny_app(self):
+        """Start the R Shiny Server in the background"""
+        if self.shiny_process is not None:
+            return 
+        shiny_script_path = os.path.join(self.base_path, "shiny_dashboard/app.R")
+
+        if not os.path.exists(shiny_script_path):
+            self.status_message.emit(f"Shiny app not found at: {shiny_script_path}", 5000)
+            return
+        try: 
+            self.shiny_process = subprocess.Popen(
+                ['Rscript', '-e', f'shiny::runApp("{shiny_script_path}", port={self.shiny_port}, launch.browser=FALSE)'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True
+            )
+
+            time.sleep(2)
+
+            self.web_view.setUrl(QUrl(f"http://localhost:{self.shiny_port}"))
+            self.stop_btn.setEnabled(True)
+            self.status_message.emit("Shiny Dashboard startet successfully!", 3000)
+
+        except Exception as e: 
+            self.status_message.emit(f"Error starting Shiny: {e}", 5000)
+
+    def stop_shiny_app(self):
+        """Stop the Shiny server and kill all child processes"""
+        if self.shiny_process:
+            try:
+
+                os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGTERM)
+                self.shiny_process.wait(timeout=3)
+            except ProcessLookupError:
+                pass 
+            except subprocess.TimeoutExpired:
+                # Force kill if SIGTERM didn't work
+                try:
+                    os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            finally:
+                self.shiny_process = None
+
+            self.web_view.setUrl(QUrl("about:blank"))
+            self.start_btn.setEnabled(True)
+            self.stop_btn.setEnabled(False)
+            self.status_message.emit("Shiny Dashboard stopped", 3000)
 
 
 
     def save_data(self):
-        if not self.first_name_input.text().strip():
-            self.status_message.emit("Please enter a firstname", 2000)
-            return
-        if not self.last_name_input.text().strip():
-            self.status_message.emit("Please enter a lastname", 2000)
-            return
-        if not self.matriculation_no_input.text().strip():
-            self.status_message.emit("Please enter a matriculation number", 2000)
-            return
-
-        self.data = {
-            'first_name': self.first_name_input.text(),
-            'last_name': self.last_name_input.text(),
-            'birth_date': self.birth_date_input.text(),
-            'matriculation_no': self.matriculation_no_input.text()
-        }
-        # Signal aussenden
-        self.data_changed.emit(self.data)
-        self.status_message.emit("Student Data saved succesfully!", 2000)
+        pass
     
     def get_data(self):
-        """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
-        return {
-            'first_name': self.first_name_input.text(),
-            'last_name': self.last_name_input.text(),
-            'birth_date': self.birth_date_input.text(),
-            'matriculation_no': self.matriculation_no_input.text()
-        }
+        pass
     
     def clear_form(self):
-        """Formular zurücksetzen nach erfolgreichem Speichern"""
-        self.first_name_input.clear()
-        self.last_name_input.clear()
-        self.birth_date_input.clear()
-        self.matriculation_no_input.clear()
+        pass

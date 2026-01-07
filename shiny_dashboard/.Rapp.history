@@ -1,0 +1,7 @@
+install.packages(c("shiny", "ggplot2", "DBI", "RPostgres"))
+source("/Users/matthiasfischer/Testprogramme/Business Analytics - Sys Dev -/Abgabe/WIC1-BusinessAnalytics/shiny_dashboard/app.R")
+install.packages("shinydashboard")
+source("/Users/matthiasfischer/Testprogramme/Business Analytics - Sys Dev -/Abgabe/WIC1-BusinessAnalytics/shiny_dashboard/app.R")
+install.packages("shinyjs")
+Rscript -e "shiny::runApp('app.R', port=8050)"
+source("/Users/matthiasfischer/Testprogramme/Business Analytics - Sys Dev -/Abgabe/WIC1-BusinessAnalytics/shiny_dashboard/app.R")
