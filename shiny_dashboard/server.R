@@ -351,6 +351,10 @@ total_students <- nrow(all_student_averages)
     
     df <- all_student_averages
     
+    if (nrow(df) == 0) {
+      return(NULL)
+    }
+    
     # Create grade clusters with ranges in labels
     df$cluster <- cut(
       df$student_avg,
@@ -367,6 +371,10 @@ total_students <- nrow(all_student_averages)
     # Count number of students per cluster
     df_clustered <- aggregate(matriculation_number ~ cluster, data = df, FUN = length)
     names(df_clustered)[2] <- "count"
+    
+    if (nrow(df) == 0) {
+      return(NULL)
+    }
     
     # Calculate percentages
     df_clustered$percent <- round(df_clustered$count / sum(df_clustered$count) * 100, 1)
