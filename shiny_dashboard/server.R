@@ -262,10 +262,13 @@ output$student_gpa <- renderText({
     if (is.null(df) || nrow(df) == 0) return(NULL)
     
     # Assign colors based on grade ranges (4 levels)
-    df$color <- with(df, ifelse(grade <= 1.5, "#3c8d40",   # dark green
-                                ifelse(grade <= 2.5, "#88c999",   # light green
-                                       ifelse(grade <= 3.5, "#f3b173",   # orange
-                                              "#e16b6b"))))            # red
+    df$color <- with(df,
+                     ifelse(grade <= 1.5, "#3c8d40",        # Very Good
+                     ifelse(grade <= 2.5, "#88c999",        # Good
+                     ifelse(grade <= 3.5, "#f3b173",        # Average
+                     ifelse(grade <= 4.0, "#e16b6b",        # Below Average
+                     "#8b0000"))))                          # Failed (>4.0)
+                     )                
     
     # Order exams: best grade (lowest value) on top
     df$exam_title <- factor(df$exam_title, levels = rev(df$exam_title[order(df$grade)]))
@@ -358,14 +361,16 @@ total_students <- nrow(all_student_averages)
     # Create grade clusters with ranges in labels
     df$cluster <- cut(
       df$student_avg,
-      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, 6.0),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–4.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
     # Count number of students per cluster
@@ -397,8 +402,10 @@ total_students <- nrow(all_student_averages)
           "Very Good (≤1.5)" = "#3c8d40",
           "Good (1.6–2.5)"   = "#88c999",
           "Average (2.6–3.5)"= "#f3b173",
-          "Below Average (3.6–4.0)"    = "#e16b6b"
-        )
+          "Below Average (3.6–4.0)"    = "#e16b6b",
+          "Failed (>4.0)"           = "#8b0000"
+        ),
+        drop = FALSE
       ) +
       labs(
         title = "Overall Performance Overview",
