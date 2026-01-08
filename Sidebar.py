@@ -286,3 +286,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_widget)
 
 
+    def closeEvent(self, event):
+        """ Stop shiny app when closing the main Window"""
+        self.stats_tab.stop_shiny_app()
+        event.accept
