@@ -1,7 +1,13 @@
+# Author: Matthias Fischer (Matriculation Number: 3013822)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, Page logic, data handling, and visualizations.
+
 ''' OFFENE TODOS IM FILE ABARBEITEN!!!
 
 ALLGEMEINE TODOS:
-[] Kommentare aufräumen + Docstring ergänzen
+[x] Kommentare aufräumen + Docstring ergänzen
 [x] Dropdown Menüs aus der DB
 [x] Dropdown Menüs aus Backend-Liste 
 [x] MotherClass einführen
@@ -10,12 +16,13 @@ ALLGEMEINE TODOS:
 [x] Worker implementieren 
 [x] Settings 
 [x] .emit zeiten anpassen 
-[] Alter bei Studenten prüfen
-[] Fehlermöglichkeiten prüfen 
-[] load_last_matriculation_number implementieren
+[x] Alter bei Studenten prüfen
+[x] Fehlermöglichkeiten prüfen 
+[x] load_last_matriculation_number implementieren (geht nur wenn wir ne nummer implementieren würden oder n Datum mit dazu)
 [] requirements.txt 
 [x] Form Layouts kicken
 [x] shiny in stats page implementieren
+[x] delete from json
 
 MIT MARVIN ABSTIMMEN:
 [x] wie wird die MatrikelNr. eingeführt/validiert?
@@ -94,6 +101,7 @@ class BasePage(QWidget):
         self.title = title
         self.setup_base_ui()
 
+    # === SHARED PAGE LOGIC SETUP METHODS ===
 
     def setup_base_ui(self):
         """Setup base ui similar for every page"""
@@ -113,6 +121,24 @@ class BasePage(QWidget):
         
         self.setLayout(self.main_layout)
     
+    def setup_ui(self):
+        """Has to be implemented by SubClass"""
+        raise NotImplementedError("Unterklassen müssen setup_ui() implementieren")
+    
+    def save_data(self):
+        """Has to be implemented by SubClass"""
+        raise NotImplementedError("Unterklassen müssen save_data() implementieren")
+    
+    def get_data(self):
+        """Has to be implemented by SubClass"""
+        raise NotImplementedError("Unterklassen müssen get_data() implementieren")
+    
+    def clear_form(self):
+        """Has to be implemented by SubClass"""
+        raise NotImplementedError("Unterklassen müssen clear_form() implementieren")
+
+    # === SHARED PAGE DESIGN SETUP METHODS ===
+
     def create_header(self, title):
         """Create Header with Title and Aalen-University Logo"""
         header_layout = QHBoxLayout()
@@ -138,10 +164,15 @@ class BasePage(QWidget):
         return header_layout
     
     def create_info_label(self, label_text):
+        """
+        Create foldable info label, which can be implemented on every page
+        Args:
+            label_text: (str) the text which should be displayed in the info label
+        """
+        # info label-setup
         self.info_btn = QPushButton("(i) Show help")
         self.info_btn.setStyleSheet("text-align: left; border: none; color: #0073B9;")
         self.info_btn.clicked.connect(self.toggle_info)
-
         self.info_label=QLabel(label_text)
         self.info_label.setWordWrap(True)
         self.info_label.setStyleSheet(
@@ -150,6 +181,7 @@ class BasePage(QWidget):
         )
         self.info_label.setVisible(False) 
         
+        # adding the info button to the layout 
         self.content_layout.addWidget(self.info_btn)
         self.content_layout.addWidget(self.info_label)
 
@@ -158,22 +190,6 @@ class BasePage(QWidget):
         is_visible = self.info_label.isVisible()
         self.info_label.setVisible(not is_visible)
         self.info_btn.setText("(i) Hide help" if not is_visible else "(i) Show help")
-
-    def setup_ui(self):
-        """Has to be implemented by SubClass"""
-        raise NotImplementedError("Unterklassen müssen setup_ui() implementieren")
-    
-    def save_data(self):
-        """Has to be implemented by SubClass"""
-        raise NotImplementedError("Unterklassen müssen save_data() implementieren")
-    
-    def get_data(self):
-        """Has to be implemented by SubClass"""
-        raise NotImplementedError("Unterklassen müssen get_data() implementieren")
-    
-    def clear_form(self):
-        """Has to be implemented by SubClass"""
-        raise NotImplementedError("Unterklassen müssen clear_form() implementieren")
 
     def create_separator(self):
         """Create separator as Design-Element for SubClasses"""
@@ -192,7 +208,7 @@ class BasePage(QWidget):
         section_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 10px;")
         return section_label
 
-    # === Shared Database Loading Methods ===
+    # === SHARED DATABASE LOADING METHODS  ===
 
     def load_students_into_dropdown(self, combobox: QComboBox, placeholder: str = "-- Select student --"):
         """
@@ -202,12 +218,12 @@ class BasePage(QWidget):
             combobox: The QComboBox to populate
             placeholder: Item default at [0]
         """
-
         query = """SELECT matriculation_number, first_name, last_name 
-                   FROM student ORDER BY last_name, first_name"""
+                   FROM student ORDER BY matriculation_number DESC"""
         
         student_worker = DatabaseWorker(query, fetch = True)
 
+        # save current params via lambda 
         student_worker.data_fetched.connect(
             lambda success, rows, error_msg, cb = combobox, ph = placeholder: self._on_students_loaded(success, rows, error_msg, cb, ph))
         
@@ -215,17 +231,15 @@ class BasePage(QWidget):
             self._active_workers = []
         self._active_workers.append(student_worker)
 
+        # cleanup threads after worker has finished 
         student_worker.operation_finished.connect(lambda: self._cleanup_worker(student_worker))
         student_worker.start()
-
-
-
 
     def _on_students_loaded(self, success, rows, error_msg, combobox, placeholder):
         """
         Callback when students are loaded by the worker
         Args:   
-            success: boolean if loading succeeded 
+            success: bool if loading succeeded 
             rows: list of data 
             error_msg: error msg to display as status_message
         """
@@ -233,9 +247,11 @@ class BasePage(QWidget):
             self.status_message.emit(f"Error loading students: {error_msg}", ERR_MSG_TIME)
             return
 
+        # add PLaceholder to the dropdown menu
         combobox.clear()
         combobox.addItem(placeholder, None)
 
+        # add every other item from the db to the dropdown menu
         for row in rows: 
             matriculation_number, first_name, last_name = row
             display_text = f"{last_name}, {first_name} ({matriculation_number})"
@@ -275,9 +291,11 @@ class BasePage(QWidget):
             self.status_message.emit(f"Error loading exams: {error_msg}", ERR_MSG_TIME)
             return
         
+        # add PLaceholder to the dropdown menu
         combobox.clear()
         combobox.addItem(placeholder, None)
 
+        # add every other item from the db to the dropdown menu
         for row in rows:
             pnr, title, semester, exam_date = row
             display_text = f"{pnr} - {title} ({exam_date} | {semester})"
@@ -327,8 +345,6 @@ class BasePage(QWidget):
         self.delete_worker.operation_finished.connect(self._on_delete_finished)
         self.delete_worker.start()
         
-        self.status_message.emit("Deleting...", 0) # das ist doch quatsch 
-
     def _on_delete_finished(self, success, message, rows_affected):
         """
         Callback when delete operation finishes
@@ -351,6 +367,7 @@ class HomePage(BasePage):
     """
     HomePage - containing database Settings and option to add new semesters and study programs
     """
+    # === STANDARD METHODS ===   
     def __init__(self):
         super().__init__("Home Page & Settings")
         self.setup_ui()
@@ -362,14 +379,12 @@ class HomePage(BasePage):
         self.content_layout.addWidget(creation_section_label)
 
         # Info-Box 
-
         label_info = "You should not have to change Host, Port and Database. "\
             "Your Username is either your PostgreSQL username or your login username of your device. "\
             "Your Password is either your PostgreSQL password or blank."
-
         self.create_info_label(label_info)
         
-        # Database settings
+        # DATABASE SETTINGS
         host_layout = QHBoxLayout()
         port_layout = QHBoxLayout()
         database_layout = QHBoxLayout()
@@ -377,6 +392,7 @@ class HomePage(BasePage):
         password_layout = QHBoxLayout()
         min_label_width = 210
 
+        # Host
         self.host_label = QLabel("Host:")
         self.host_label.setMinimumWidth(min_label_width)
         self.host_input = QLineEdit()
@@ -384,6 +400,7 @@ class HomePage(BasePage):
         host_layout.addWidget(self.host_label)
         host_layout.addWidget(self.host_input)
         
+        # Port
         self.port_label = QLabel("Port:")
         self.port_label.setMinimumWidth(min_label_width)
         self.port_input = QLineEdit()
@@ -393,6 +410,7 @@ class HomePage(BasePage):
         port_layout.addWidget(self.port_label)
         port_layout.addWidget(self.port_input)
 
+        # Database
         self.database_label = QLabel("Database:")
         self.database_label.setMinimumWidth(min_label_width)
         self.database_input = QLineEdit()
@@ -400,6 +418,7 @@ class HomePage(BasePage):
         database_layout.addWidget(self.database_label)
         database_layout.addWidget(self.database_input)
 
+        # Username
         self.username_label = QLabel("Username")
         self.username_label.setMinimumWidth(min_label_width)
         self.username_input = QLineEdit()
@@ -407,6 +426,7 @@ class HomePage(BasePage):
         username_layout.addWidget(self.username_label)
         username_layout.addWidget(self.username_input)
 
+        # Password
         self.password_label = QLabel("Password:")
         self.password_label.setMinimumWidth(min_label_width)
         self.password_input = QLineEdit()
@@ -415,6 +435,7 @@ class HomePage(BasePage):
         password_layout.addWidget(self.password_label)
         password_layout.addWidget(self.password_input)
 
+        # Layout
         self.content_layout.addLayout(host_layout)
         self.content_layout.addLayout(port_layout)
         self.content_layout.addLayout(database_layout)
@@ -438,12 +459,11 @@ class HomePage(BasePage):
 
 
         # === Dropdown Options Section ===
-        dropdown_section_label = self.create_section_label("Dropdown options")
+        # Label
+        dropdown_section_label = self.create_section_label("Add semesters & study programs to the dropdown lists")
         self.content_layout.addWidget(dropdown_section_label)
-
-        self.semester_layout = QHBoxLayout()
-        self.study_program_layout = QHBoxLayout()
         
+        # Add new Semester
         self.new_semester_label = QLabel("Add new semester:")
         self.new_semester_label.setMinimumWidth(min_label_width)
         self.new_semester_input = QLineEdit()
@@ -451,6 +471,7 @@ class HomePage(BasePage):
         self.add_semester_btn = QPushButton("Add")
         self.add_semester_btn.clicked.connect(self.add_semester_btn_clicked)
 
+        # Add new study programm
         self.new_study_program_label = QLabel("Add new study / degree program:")
         self.new_study_program_label.setMinimumWidth(min_label_width)
         self.new_study_program_input = QLineEdit()
@@ -458,22 +479,22 @@ class HomePage(BasePage):
         self.add_study_program_btn = QPushButton("Add")
         self.add_study_program_btn.clicked.connect(self.add_study_program_btn_clicked)
 
+        # Layout 
+        self.semester_layout = QHBoxLayout()
+        self.study_program_layout = QHBoxLayout()
         self.semester_layout.addWidget(self.new_semester_label)
         self.semester_layout.addWidget(self.new_semester_input)
         self.semester_layout.addWidget(self.add_semester_btn)
-
         self.study_program_layout.addWidget(self.new_study_program_label)
         self.study_program_layout.addWidget(self.new_study_program_input)
         self.study_program_layout.addWidget(self.add_study_program_btn)
-
         self.content_layout.addLayout(self.semester_layout)
         self.content_layout.addLayout(self.study_program_layout)
         self.content_layout.addStretch()
         
-
-
+    # === DATABASE CONNECTION === 
     def load_current_config(self):
-        """Loads current config values into the database-settings fields"""
+        """Loads current login config values into the database-settings fields"""
         success, config, error_msg = load_login_config()
         if success:
             self.host_input.setText(config.get("host", "localhost"))
@@ -516,6 +537,7 @@ class HomePage(BasePage):
         except Exception as e:
             self.status_message.emit(f"Error saving config: {e}", ERR_MSG_TIME)
 
+        # create db if it doesnt exist yet
         prepare_database()
 
     def test_connection(self):
@@ -541,10 +563,13 @@ class HomePage(BasePage):
         self.database_input.setText("db_exam_management")
         self.status_message.emit("Default values restored", MSG_TIME)
 
+    # === DROPDOWN JSON MENUS ===
     def add_semester_btn_clicked(self):
+        """  connection between append_dropdown_options and the add semester button"""
         key = "semesters"
         value = self.new_semester_input.text()
 
+        #error handling
         if not value:
             self.status_message.emit("Please enter a semester", MSG_TIME)
             return
@@ -555,9 +580,11 @@ class HomePage(BasePage):
             self.status_message.emit(f"Added {value} to Semesters", MSG_TIME)
 
     def add_study_program_btn_clicked(self):
+        """ connection between append_dropdown_options and the add study program button"""
         key = "study_programs"
         value = self.new_study_program_input.text()
 
+        #error handling
         if not value:
             self.status_message.emit("Please enter a study program", MSG_TIME)
             return
@@ -591,7 +618,6 @@ class HomePage(BasePage):
             'matriculation_no': self.matriculation_no_input.text()
         }
     
-
     def append_dropdown_options(self, key: str, value: str):
         """
         Append dropdown-options in dropdown_options.json
@@ -604,6 +630,7 @@ class HomePage(BasePage):
             True if successful, False otherwise
         """
         success, data, error_msg = load_dropdown_options()
+        # error handling
         if success: 
             if key not in data:
                 self.status_message.emit(f"Error: cannot append to list {key}", ERR_MSG_TIME)
@@ -631,7 +658,10 @@ class HomePage(BasePage):
                 return False
 
 class GradePage(BasePage):
-
+    """
+    GradePage -  Add grades for Students and exams or delete them
+    """
+    # === STANDARD METHODS === 
     def __init__(self):
         super().__init__("Grade Entry")
         self.setup_ui()
@@ -642,7 +672,7 @@ class GradePage(BasePage):
         super().showEvent(event)
         self.reload_dropdowns()
 
-    def reload_dropdowns(self): #
+    def reload_dropdowns(self): 
         """Load students and exams from the database into dropdown menu-lists"""
         self.load_students_into_dropdown(self.student_input)
         self.load_exams_into_dropdown(self.exam_input)
@@ -655,31 +685,32 @@ class GradePage(BasePage):
         self.content_layout.addWidget(creation_section_label)
         form_layout = QFormLayout()
         
+        # info label
         label_info = "To grade a student, please select a student, an exam and enter a grade. " \
         "Click Save to save it to the database. Every student can only have one grade for one exam. " \
         "Grades range from 1.0 to 6.0. If you want to delete a grade, please select student and exam " \
         "in the delete menu below and click delete. Refresh the page by clicking onto another page & return."
-
         self.create_info_label(label_info)
 
+        # input forms
         self.student_input = QComboBox()
         self.exam_input = QComboBox()
         self.grade_input = QLineEdit()
         self.grade_input.setPlaceholderText("e.g. 1.3")
         grade_validator = QDoubleValidator(1.0, 6.0, 1)
         self.grade_input.setValidator(grade_validator)
-        
-        form_layout.addRow("Student:", self.student_input)
-        form_layout.addRow("Exam", self.exam_input)
-        form_layout.addRow("Grade:", self.grade_input)
-        
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_data)
-        
+
+        # layout
+        form_layout.addRow("Student:", self.student_input)
+        form_layout.addRow("Exam", self.exam_input)
+        form_layout.addRow("Grade:", self.grade_input)     
         self.content_layout.addLayout(form_layout)
         self.content_layout.addWidget(save_btn)
     
-    # === Delete Section ===
+        # === Delete Section ===
+        # labels and input forms
         deletion_section_label = self.create_section_label("Delete grades for students")
         self.content_layout.addWidget(deletion_section_label)
         self.delete_grade_student_label = QLabel("Select student to delete their grade:")
@@ -689,6 +720,7 @@ class GradePage(BasePage):
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_grade)
 
+        #layout
         self.content_layout.addWidget(self.create_separator())
         self.content_layout.addWidget(self.delete_grade_student_label)
         self.content_layout.addWidget(self.delete_grade_student_input)
@@ -701,6 +733,7 @@ class GradePage(BasePage):
         """ delete grade for selected student and exam"""
         self.mat_no_del = self.delete_grade_student_input.currentData() # matriculation number of student to delete their grade
         self.exam_no_del = self.delete_grade_exam_input.currentData() #pnr of exam to delete grade 
+        # error handling
         if self.mat_no_del is None:
             self.status_message.emit("Please select a student to delete their grade", MSG_TIME)
             return
@@ -711,6 +744,13 @@ class GradePage(BasePage):
             self.delete_record("grade", "matriculation_number", self.mat_no_del, self.on_deleted, "pnr", self.exam_no_del)
 
     def on_deleted(self, success, message, rows_affected):
+        """
+        CAllback for delete_grade when worker finishes
+        Args:
+            success: bool if query succeeded
+            message: str message from worker/db    
+            rows_affected: int how many rows have been deleted/altered
+        """
         if success and rows_affected > 0:
             self.reload_dropdowns()
             self.status_message.emit(f"grade for student with mat. no. {self.mat_no_del} for exam with pnr {self.exam_no_del} deleted successfully", MSG_TIME)
@@ -721,7 +761,10 @@ class GradePage(BasePage):
         else:
             self.status_message.emit(f"{message}")
 
+    # === IMPLEMENTED BASE METHODS ===
     def save_data(self):
+        """ Check for errors and save data to the DB"""
+        # errorhandling
         if  self.student_input.currentIndex() == 0:
             self.status_message.emit("Please select a student", MSG_TIME)
             return
@@ -742,10 +785,12 @@ class GradePage(BasePage):
             float(self.grade_input.text().replace(',', '.'))
         )
 
+        #start threading
         self.db_worker = DatabaseWorker(query, params)
         self.db_worker.operation_finished.connect(self.on_save_finished)
         self.db_worker.start()
 
+        # emit data for Statusmsg / MainWindow
         self.data = {
             'student': self.student_input.currentText(),
             'exam': self.exam_input.currentText(),
@@ -755,6 +800,12 @@ class GradePage(BasePage):
         self.data_changed.emit(self.data)
     
     def on_save_finished(self, success, message):
+        """
+        Callback for save_data method
+        Args:  
+            success: bool success from the worker
+            message: str errormsg from the worker
+        """
         if success: 
             self.status_message.emit(message, MSG_TIME)
             self.data = self.get_data()
@@ -766,9 +817,6 @@ class GradePage(BasePage):
                 self.status_message.emit("This student already has a grade for this exam! Delete the grade first to update it!", MSG_TIME) 
             else:
                 self.status_message.emit(f"Error: {message}", ERR_MSG_TIME)          
-
-
-
 
     def get_data(self):
         """Return (unsaved) formulardata"""
@@ -785,16 +833,20 @@ class GradePage(BasePage):
         self.grade_input.clear()
 
 class StudentPage(BasePage):
-   
+    """
+    StudentPage -  Add students or delete them
+    """
+    # === STANDARD METHODS ===    
     def __init__(self):
         super().__init__("Student Entry")
         self.setup_ui()
         self.reload_student_dropdown()
 
     def showEvent(self, event):
-        """Gets called when switching to this tab/page"""
+        """refresh when switching to this tab/page"""
         super().showEvent(event)
         self.reload_student_dropdown()
+        self.load_last_matriculation_number()
 
     def reload_student_dropdown(self):
         """reload the delete dropdown-list from the db"""
@@ -806,12 +858,13 @@ class StudentPage(BasePage):
         self.content_layout.addWidget(creation_section_label)
         form_layout = QFormLayout()
         
+        # info label
         label_info = "To create a student, please enter a name, firstname birthdate and a matriculation number and click save. " \
-        "The matriculation number has to be unique, between 0 and 999999999. The age of the student has to be between 5 and 120 years. " \
+        "The matriculation number has to be unique, between 0 and 999999999. Trailing zeros will be added to your entered number. The age of the student has to be between 5 and 120 years. " \
         "If you want to delete a student, please select the student in the delete menu below and click delete. Refresh the page by clicking onto another page & return."
-
         self.create_info_label(label_info)
 
+        # name input forms
         name_layout = QHBoxLayout()
         self.first_name_input = QLineEdit()
         self.first_name_input.setPlaceholderText("Firstname")
@@ -820,42 +873,115 @@ class StudentPage(BasePage):
         name_layout.addWidget(self.first_name_input)
         name_layout.addWidget(self.last_name_input)
 
-        form_layout.addRow("Name:", name_layout)
 
+        # birth date input 
         self.birth_date_input = QDateEdit()
         self.birth_date_input.setDisplayFormat("dd.MM.yyyy")
         self.birth_date_input.setDate(QDate.currentDate())
         self.birth_date_input.setCalendarPopup(True)
         
+        # matriculation number input
+        self.last_matriculation_label = QLabel(" - ")
         self.matriculation_no_input = QLineEdit()
         matriculation_validator = QIntValidator(0, 999999999)
         self.matriculation_no_input.setValidator(matriculation_validator)
 
-        form_layout.addRow("Date of Birth:", self.birth_date_input)
-        #TODO: Berechnung alter & validator. -> berücksichtigung in infolabel
-        form_layout.addRow("Matriculation Number:", self.matriculation_no_input)
-
+        # save button
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save_data)
-        
+
+        # layout
+        form_layout.addRow("Name:", name_layout)
+        form_layout.addRow("Date of Birth:", self.birth_date_input)
+        form_layout.addRow("Last entered matriculation number: ", self.last_matriculation_label)
+        self.load_last_matriculation_number()
+        form_layout.addRow("Matriculation Number:", self.matriculation_no_input)      
         self.content_layout.addLayout(form_layout)
         self.content_layout.addWidget(save_btn)
 
 
         # === Delete Section ===
+        # inputs and labels
         deletion_section_label = self.create_section_label("Delete students")
         self.content_layout.addWidget(deletion_section_label)
-
         self.delete_student_label = QLabel("Select student to delete:")
         self.delete_student_input = QComboBox()
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_student)
 
+        # layout
         self.content_layout.addWidget(self.create_separator())
         self.content_layout.addWidget(self.delete_student_label)
         self.content_layout.addWidget(self.delete_student_input)
         self.content_layout.addWidget(self.delete_btn)
         self.content_layout.addStretch()
+
+    # === PAGE SPECIFIC METHODS === 
+    def calculate_age(self, birth_date: QDate) -> int:
+        """
+        Calculate age from birth date
+        
+        Args:
+            birth_date: QDate of birth
+        
+        Returns:
+            Age in years
+        """
+        today = QDate.currentDate()
+        age = today.year() - birth_date.year()
+
+        if (today.month(), today.year()) < (birth_date.month(), birth_date.year()):
+            age -=1
+        
+        return age
+    
+    def validate_age(self, birth_date: QDate):
+        """
+        Validate that age is between 5 and 120 years
+        
+        Args:
+            birth_date: QDate of birth
+        
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+
+        age = self.calculate_age(birth_date)
+
+        if age < 5:
+            return False, f"Student must be at least 5 years old (calculated age: {age})"
+        if age > 120:
+            return False, f"Student age cannot exceed 120 years (calculated age: {age})"
+        else:
+            return True, ""        
+
+    def load_last_matriculation_number(self):
+        """load the last entered matriculation number from the DB"""
+
+        query = "SELECT matriculation_number FROM student ORDER BY matriculation_number DESC LIMIT 1;"
+
+        self.worker = DatabaseWorker(query, None, True)
+        self.worker.data_fetched.connect(self._on_last_matriculation_loaded)
+        self.worker.start()
+
+    def _on_last_matriculation_loaded(self, success, list, error_msg):
+        """
+        Callback for when the worker finished
+        Args:
+            success: bool if query succeeded
+            list: list of tuples with data
+            error_msg: str message from worker/db
+        """
+        if success:
+            last_number = list[0][0]
+            last_number_int = int(last_number)
+            next_number = last_number_int+1
+            self.last_matriculation_label.setText(f"{last_number_int}")
+            self.matriculation_no_input.setPlaceholderText(f"e.g. {next_number}")
+        else:
+            self.last_matriculation_label.setText(" - ")
+            self.status_message.emit(f"error loading last matriculation number {error_msg}", ERR_MSG_TIME)
+        self._cleanup_worker(self.worker)
 
     def delete_student(self):
         """Delete selected student"""
@@ -869,22 +995,45 @@ class StudentPage(BasePage):
             self.delete_record("student", "matriculation_number", self.matriculation_number_del, self.on_deleted)
 
     def on_deleted(self, success, message, rows_affected):
+        """
+        CAllback for delete_student when worker finishes
+        Args:
+            success: bool if query succeeded
+            message: str message from worker/db    
+            rows_affected: int how many rows have been deleted/altered (not needed for delete student)
+        """
         if success:
             self.reload_student_dropdown()
+            self.load_last_matriculation_number()
             self.status_message.emit(f"student with mat. no {self.matriculation_number_del} deleted successfully", MSG_TIME)
         else:
             self.status_message.emit(f"{message}")
 
+    # === IMPLEMENTED BASE METHODS ===
     def save_data(self):
+        """Check for errors and save Data to the DB"""
+        # Error handling 
         if not self.first_name_input.text().strip():
             self.status_message.emit("Please enter a firstname", MSG_TIME)
             return
         if not self.last_name_input.text().strip():
             self.status_message.emit("Please enter a lastname", MSG_TIME)
             return
+        if not self.birth_date_input.text().strip():
+            self.status_message.emit("please enter a birthdate", MSG_TIME)
+            return
+        birth_date = self.birth_date_input.date()
+        is_valid, error_msg = self.validate_age(birth_date)
+        if not is_valid:
+            self.status_message.emit(error_msg, MSG_TIME)
+            return
         if not self.matriculation_no_input.text().strip():
             self.status_message.emit("Please enter a matriculation number", MSG_TIME)
             return
+        
+        
+        # trailing zeros for the DB
+        matriculation_no_formatted = self.matriculation_no_input.text().zfill(10)
 
         query = """
             INSERT INTO student (first_name, last_name, date_of_birth, matriculation_number)
@@ -894,29 +1043,33 @@ class StudentPage(BasePage):
             self.first_name_input.text(),
             self.last_name_input.text(),
             self.birth_date_input.date().toString("yyyy-MM-dd"),
-            self.matriculation_no_input.text()
+            matriculation_no_formatted
         )
         
-        # Worker-Thread starten
+        # start worker (threading)
         self.db_worker = DatabaseWorker(query, params)
         self.db_worker.operation_finished.connect(self.on_save_finished) 
         self.db_worker.start()
         
-        self.status_message.emit("Saving...", 0)# TODO: das ist doch quatsch
-    
     def on_save_finished(self, success, message):
+        """
+        Callback for save_data method
+        Args:  
+            success: bool success from the worker
+            message: str errormsg from the worker
+        """
         if success:
             self.status_message.emit(message, MSG_TIME)
             self.data = self.get_data()
             self.data_changed.emit(self.data)
             self.clear_form()
             self.reload_student_dropdown()
+            self.load_last_matriculation_number()
         else:
             self.status_message.emit(message, ERR_MSG_TIME)
         
-    
     def get_data(self):
-        """Gibt aktuelle Formulardaten zurück (auch ungespeicherte)"""
+        """return current data for status messages to the MainWindow"""
         return {
             'first_name': self.first_name_input.text(),
             'last_name': self.last_name_input.text(),
@@ -925,7 +1078,7 @@ class StudentPage(BasePage):
         }
     
     def clear_form(self):
-        """Formular zurücksetzen nach erfolgreichem Speichern"""
+        """clear form after saving"""
         self.first_name_input.clear()
         self.last_name_input.clear()
         self.birth_date_input.clear()
@@ -933,17 +1086,21 @@ class StudentPage(BasePage):
 
 
 class ExamPage(BasePage):
-
+    """
+    ExamPage -  Add exams or delete them
+    """
+    # === STANDARD METHODS === 
     def __init__(self):
         super().__init__("Exam Entry")
         self.setup_ui()
         self.reload_json_dropdowns()
 
     def showEvent(self, event):
-        """ gets called when switching to this tab/page"""
+        """ refresh when switching to this tab/page"""
         super().showEvent(event)
         self.reload_json_dropdowns()
         self.reload_exam_dropdown()
+        self.load_last_pnr()
 
     def reload_json_dropdowns(self):
         """reloads dropdown options from the JSON-file"""
@@ -953,10 +1110,12 @@ class ExamPage(BasePage):
             self.status_message.emit(f"Error: {error_msg}", ERR_MSG_TIME)
             return
 
+        # semester input
         self.semester_input.clear()
         self.semester_input.addItem("-- Select semester --")
         self.semester_input.addItems(options.get("semesters", []))
 
+        # study program input
         self.study_program_input.clear()
         self.study_program_input.addItem("--Select study program --")
         self.study_program_input.addItems(options.get("study_programs", []))
@@ -970,39 +1129,46 @@ class ExamPage(BasePage):
         creation_section_label = self.create_section_label("Create exam")
         self.content_layout.addWidget(creation_section_label)
         form_layout = QFormLayout()
-              
+        
+        # info label
         label_info = "To create an exam, please enter a PNr, a title, a date and select a semester and a study program " \
         "Click Save to save it to the database. Every student can only have one grade for one exam. " \
         "Grades range from 1.0 to 6.0. The date of an exam can be in the past as well as in the future! " \
         "If you want to delete a grade, please select student and exam in the delete menu below and click delete. " \
         "Refresh the page by clicking onto another page & return."
-
         self.create_info_label(label_info)  
         
+        #PNR
+        self.last_pnr_label = QLabel(" - ")
         self.pnr_input = QLineEdit()
         self.pnr_input.setPlaceholderText("Exam number")
 
+        # exam title
         self.exam_title_input = QLineEdit()
         self.exam_title_input.setPlaceholderText("Exam title")
 
+        # exam date
         self.exam_date_input = QDateEdit()
         self.exam_date_input.setDisplayFormat("dd.MM.yyyy")
+        self.exam_date_input.setDate(QDate.currentDate())
         self.exam_date_input.setCalendarPopup(True)
 
+        # semester and study program
         self.semester_input = QComboBox()
         self.study_program_input = QComboBox()
 
+        # save btn
+        save_btn = QPushButton("Save")
+        save_btn.clicked.connect(self.save_data)
 
+        #layout
+        form_layout.addRow("Last entered PNr:", self.last_pnr_label)
+        self.load_last_pnr()
         form_layout.addRow("PNr:", self.pnr_input)
         form_layout.addRow("Title:", self.exam_title_input)
         form_layout.addRow("Date:", self.exam_date_input)
         form_layout.addRow("Semester:", self.semester_input)
         form_layout.addRow("Study program:", self.study_program_input)
-        
-        
-        save_btn = QPushButton("Save")
-        save_btn.clicked.connect(self.save_data)
-
         self.content_layout.addLayout(form_layout)
         self.content_layout.addWidget(save_btn)
 
@@ -1010,16 +1176,47 @@ class ExamPage(BasePage):
         deletion_section_label = self.create_section_label("Delete exam")
         self.content_layout.addWidget(deletion_section_label)
 
+        # input
         self.delete_exam_label = QLabel("Select exam to delete:")
         self.delete_exam_input = QComboBox()
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_exam)
 
+        # layout
         self.content_layout.addWidget(self.create_separator())
         self.content_layout.addWidget(self.delete_exam_label)
         self.content_layout.addWidget(self.delete_exam_input)
         self.content_layout.addWidget(self.delete_btn)
         self.content_layout.addStretch()
+
+    # === PAGE SPECIFIC METHODS === 
+    def load_last_pnr(self):
+        """load last pnr from the DB"""
+
+        query = "SELECT pnr FROM exam ORDER BY pnr DESC LIMIT 1;"
+    
+        self.worker = DatabaseWorker(query, None, True)
+        self.worker.data_fetched.connect(self._on_last_pnr_loaded)
+        self.worker.start()
+
+    def _on_last_pnr_loaded(self, success, list, error_msg):
+        """
+        Callback for when the worker finished
+        Args:
+            success: bool if query succeeded
+            list: list of tuples with data
+            error_msg: str message from worker/db
+        """
+        if success:
+            last_number = list[0][0]
+            last_number_int = int(last_number)
+            next_number = last_number_int+1
+            self.last_pnr_label.setText(f"{last_number_int}")
+            self.pnr_input.setPlaceholderText(f"e.g. {next_number}")
+        else:
+            self.last_pnr_label.setText(" - ")
+            self.status_message.emit(f"error loading last pnr {error_msg}", ERR_MSG_TIME)
+        self._cleanup_worker(self.worker)
 
     def delete_exam(self):
         """ delete selected exam"""
@@ -1033,15 +1230,24 @@ class ExamPage(BasePage):
             self.delete_record("exam", "pnr", self.pnr_del, self.on_deleted)
 
     def on_deleted(self, success, message, rows_affected):
+        """
+        CAllback for delete_exam when worker finishes
+        Args:
+            success: bool if query succeeded
+            message: str message from worker/db    
+            rows_affected: int how many rows have been deleted/altered (not needed for delete exam)
+        """
         if success:
             self.reload_exam_dropdown()
+            self.load_last_pnr()
             self.status_message.emit(f"exam with pnr {self.pnr_del} deleted successfully", MSG_TIME)
         else:
             self.status_message.emit(f"{message}")
 
-
-
+    # === IMPLEMENTED BASE METHODS ===
     def save_data(self):
+        """Check for errors and save Data to the DB"""
+        # Error handliing       
         if not self.pnr_input.text().strip():
             self.status_message.emit("Please enter an exam number", MSG_TIME)
             return
@@ -1058,6 +1264,8 @@ class ExamPage(BasePage):
             self.status_message.emit("Please select a study program", MSG_TIME) 
             return
         
+        # trailing zeros to organize DB
+        pnr_formatted = self.pnr_input.text().zfill(10)
 
         query = """
             INSERT INTO exam (pnr, title, exam_date, semester, degree_program) 
@@ -1065,29 +1273,33 @@ class ExamPage(BasePage):
         """
 
         params = (
-            self.pnr_input.text(),
+            pnr_formatted,
             self.exam_title_input.text(),
             self.exam_date_input.date().toString("yyyy-MM-dd"),
             self.semester_input.currentText(),
             self.study_program_input.currentText()
         )
-        # Worker-Thread starten
+        # start Worker (Threading)
         self.db_worker = DatabaseWorker(query, params)
         self.db_worker.operation_finished.connect(self.on_save_finished)
         self.db_worker.start()
-        
-        self.status_message.emit("Saving...", 0)
-    
+            
     def on_save_finished(self, success, message):
+        """
+        Callback for save_data method
+        Args:  
+            success: bool success from the worker
+            message: str errormsg from the worker
+        """
         if success:
             self.status_message.emit(message, MSG_TIME)
             self.data = self.get_data()
             self.data_changed.emit(self.data)
             self.clear_form()
             self.reload_exam_dropdown()
+            self.load_last_pnr()
         else:
             self.status_message.emit(message, ERR_MSG_TIME)
-
 
     def get_data(self):
         """return (unsaved) formulardata"""
@@ -1097,13 +1309,7 @@ class ExamPage(BasePage):
             'exam_date': self.exam_date_input.date().toString("yyyy-MM-dd"),
             'semester': self.semester_input.currentText(),
             'study_program': self.study_program_input.currentText()
-        }
-    
-    def delete_data(self):
-        if not self.pnr_input.text().strip():
-            self.status_message.emit("Please enter an exam number (\"PNr\") to delete it", MSG_TIME) 
-            return
-        
+        }       
 
     def clear_form(self):
         """delete input after saving successfully"""
@@ -1115,7 +1321,10 @@ class ExamPage(BasePage):
 
 
 class StatsPage(BasePage):
-    
+    """
+    StatsPage -  View Statistics via Shiny Dashboard    
+    """
+    # === STANDARD METHODS ===     
     def __init__(self):
         super().__init__("Statistics")
         self.shiny_process = None
@@ -1125,29 +1334,32 @@ class StatsPage(BasePage):
     def setup_ui(self):
         """ setup UI with start & stop buttons"""
 
+        # info label
         label_info = "To start the dashboard, click 'start dashboard'. "\
         "You can resize the window, the dashboard should adapt. "\
         "You can visit <a href='http://localhost:8050'>http://localhost:8050</a> in your browser, to show the dashboard in there. "\
         "This will only work, if you've successfully started the dashboard via the 'start dashboard' button."
-
         self.create_info_label(label_info)
         self.info_label.setOpenExternalLinks(True)
 
-        btn_layout = QHBoxLayout()
+        # buttons
         self.start_btn = QPushButton("Start Dashboard")
         self.start_btn.clicked.connect(self.start_shiny_app)
         self.stop_btn = QPushButton("Stop Dashboard") 
         self.stop_btn.clicked.connect(self.stop_shiny_app)
         self.stop_btn.setEnabled(False)
-        
+
+        # layout
+        btn_layout = QHBoxLayout()        
         btn_layout.addWidget(self.start_btn)
         btn_layout.addWidget(self.stop_btn)
         self.content_layout.addLayout(btn_layout)
         
-        
+        # web view 
         self.web_view = QWebEngineView()
         self.content_layout.addWidget(self.web_view,1)
-        
+    
+    # === PAGE SPECIFIC METHODS === 
     def start_shiny_app(self):
         """Start the R Shiny Server in the background if it's not already running"""
         if self.shiny_process is not None:
@@ -1166,7 +1378,7 @@ class StatsPage(BasePage):
                 start_new_session=True
             )
 
-            time.sleep(2)
+            time.sleep(2) # wait for process to start
 
             self.web_view.setUrl(QUrl(f"http://localhost:{self.shiny_port}"))
             self.stop_btn.setEnabled(True)
@@ -1199,12 +1411,15 @@ class StatsPage(BasePage):
             self.status_message.emit("Shiny Dashboard stopped", MSG_TIME)
 
 
-
+    # === IMPLEMENTED BASE METHODS ===
     def save_data(self):
+        """not needed in StatsPage"""
         pass
     
     def get_data(self):
+        """not needed in StatsPage"""
         pass
     
     def clear_form(self):
+        """not needed in StatsPage"""
         pass

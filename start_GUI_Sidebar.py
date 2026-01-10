@@ -1,3 +1,8 @@
+# Author: Matthias Fischer (Matriculation Number: 3013822)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation
+
 from PySide6.QtWidgets import QApplication
 from Sidebar import MainWindow
 import sys

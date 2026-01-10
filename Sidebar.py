@@ -1,12 +1,8 @@
-"""
-ALLGEMEINE TODOS:
-[] Kommentare aufräumen
-[x] Signal/Slot Logik für data.changed überdenken
-[] ToDos im Code durchgehen 
-[x] HomeScreen als Default weiß 
-[] Evtl. StatsPage raus
-[x] Evtl. neuer Stretch/ look Sidebar
-"""
+# Author: Matthias Fischer (Matriculation Number: 3013822)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation,
+# including UI design, data handling, and visualizations. Images are AI Generated (except Aalen university Logo)
 
 import os
 from pages import ExamPage, GradePage, HomePage, StatsPage, StudentPage
@@ -35,8 +31,8 @@ class MainWindow(QMainWindow):
     def setup_window(self):
         """setup the frame of the main window"""
         self.setWindowTitle("ExaMS")
-        self.setMinimumSize(800, 700)  # min-size
-        self.resize(800, 700)         # Startsize
+        self.setMinimumSize(800, 700)  
+        self.resize(800, 700)         
         self.setStatusBar(QStatusBar(self))
         self.create_sidebar_buttons()
         self.setup_tabs()
@@ -87,12 +83,12 @@ class MainWindow(QMainWindow):
         self.stats_btn.clicked.connect(self.stats_btn_clicked)
 
     def update_button_icons(self):
-            """ update button icons if they are currently active/inactive"""
-            self.home_btn.setIcon(self.home_btn_icon_active if self.home_btn.isChecked() else self.home_btn_icon_normal)
-            self.grade_entry_btn.setIcon(self.grade_entry_btn_icon_active if self.grade_entry_btn.isChecked() else self.grade_entry_btn_icon_normal)
-            self.student_entry_btn.setIcon(self.student_entry_btn_icon_active if self.student_entry_btn.isChecked() else self.student_entry_btn_icon_normal)
-            self.exam_entry_btn.setIcon(self.exam_entry_btn_icon_active if self.exam_entry_btn.isChecked() else self.exam_entry_btn_icon_normal)
-            self.stats_btn.setIcon(self.stats_btn_icon_active if self.stats_btn.isChecked() else self.stats_btn_icon_normal)
+        """ update button icons if they are currently active/inactive"""
+        self.home_btn.setIcon(self.home_btn_icon_active if self.home_btn.isChecked() else self.home_btn_icon_normal)
+        self.grade_entry_btn.setIcon(self.grade_entry_btn_icon_active if self.grade_entry_btn.isChecked() else self.grade_entry_btn_icon_normal)
+        self.student_entry_btn.setIcon(self.student_entry_btn_icon_active if self.student_entry_btn.isChecked() else self.student_entry_btn_icon_normal)
+        self.exam_entry_btn.setIcon(self.exam_entry_btn_icon_active if self.exam_entry_btn.isChecked() else self.exam_entry_btn_icon_normal)
+        self.stats_btn.setIcon(self.stats_btn_icon_active if self.stats_btn.isChecked() else self.stats_btn_icon_normal)
 
     
     def setup_tabs(self):
@@ -168,7 +164,7 @@ class MainWindow(QMainWindow):
         self.update_icon_sizes()
 
     def update_icon_sizes(self):
-        """Calculate icon size based in button size"""
+        """Calculate icon size based on button size"""
         buttons = [
             self.home_btn, 
             self.grade_entry_btn, 
