@@ -1331,7 +1331,9 @@ class StatsPage(BasePage):
         self.shiny_process = None
         self.shiny_port = 8050
 
-        # Rscript path hart codiert
+        # ######################################################################################################
+        # Ändern
+        # Rscript path
         self.rscript_path = r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
 
         self.setup_ui()
