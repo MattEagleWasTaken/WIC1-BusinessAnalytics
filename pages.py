@@ -40,6 +40,7 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 import signal
 import subprocess
 import time
+import socket
 
 MSG_TIME = 3000
 
@@ -1329,22 +1330,32 @@ class StatsPage(BasePage):
         super().__init__("Statistics")
         self.shiny_process = None
         self.shiny_port = 8050
+
+        # Rscript path hart codiert
+        self.rscript_path = r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
+
         self.setup_ui()
 
     def setup_ui(self):
         """ setup UI with start & stop buttons"""
 
         # info label
-        label_info = "To start the dashboard, click 'start dashboard'. "\
-        "You can resize the window, the dashboard should adapt. "\
-        "You can visit <a href='http://localhost:8050'>http://localhost:8050</a> in your browser, to show the dashboard in there. "\
-        "This will only work, if you've successfully started the dashboard via the 'start dashboard' button."
+        label_info = (
+            "To start the dashboard, click 'Start Dashboard'. "
+            "The Shiny dashboard will open directly inside this application. "
+            "You can resize the window and the dashboard will adapt automatically. "
+            "Optionally, you may also open the dashboard in your web browser at "
+            f"<a href='http://127.0.0.1:{self.shiny_port}'>"
+            f"http://127.0.0.1:{self.shiny_port}</a> "
+            "after the dashboard has been started."
+        )
         self.create_info_label(label_info)
         self.info_label.setOpenExternalLinks(True)
 
         # buttons
         self.start_btn = QPushButton("Start Dashboard")
         self.start_btn.clicked.connect(self.start_shiny_app)
+
         self.stop_btn = QPushButton("Stop Dashboard") 
         self.stop_btn.clicked.connect(self.stop_shiny_app)
         self.stop_btn.setEnabled(False)
@@ -1363,53 +1374,100 @@ class StatsPage(BasePage):
     def start_shiny_app(self):
         """Start the R Shiny Server in the background if it's not already running"""
         if self.shiny_process is not None:
-            return 
-        shiny_script_path = os.path.join(self.base_path, "shiny_dashboard/app.R")
+            return
+
+        shiny_dir = os.path.join(self.base_path, "shiny_dashboard")
+        shiny_script_path = os.path.join(shiny_dir, "app.R")
 
         if not os.path.exists(shiny_script_path):
-            self.status_message.emit(f"Shiny app not found at: {shiny_script_path}", ERR_MSG_TIME)
+            self.status_message.emit(
+                f"Shiny app not found at: {shiny_script_path}", ERR_MSG_TIME
+            )
             return
-        try: 
+        try:
+            # pass port to R via environment variable
+            env = os.environ.copy()
+            env["SHINY_PORT"] = str(self.shiny_port)
+
+            # start Shiny via app.R
             self.shiny_process = subprocess.Popen(
-                ['Rscript', '-e', f'shiny::runApp("{shiny_script_path}", port={self.shiny_port}, launch.browser=FALSE)'],
+                [self.rscript_path, "app.R"],
+                cwd=shiny_dir,
+                env=env,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL,
                 start_new_session=True
             )
 
-            time.sleep(2) # wait for process to start
+            # wait until Shiny is reachable
+            self._wait_for_shiny(self.shiny_port)
 
-            self.web_view.setUrl(QUrl(f"http://localhost:{self.shiny_port}"))
+            # open dashboard inside the application
+            self.web_view.setUrl(
+                QUrl(f"http://127.0.0.1:{self.shiny_port}")
+            )
+
+            self.start_btn.setEnabled(False)
             self.stop_btn.setEnabled(True)
-            self.status_message.emit("Shiny Dashboard startet successfully!", MSG_TIME)
+            self.status_message.emit(
+                "Shiny Dashboard started successfully!", MSG_TIME
+            )
 
         except Exception as e: 
-            self.status_message.emit(f"Error starting Shiny: {e}", ERR_MSG_TIME)
+            self.status_message.emit(
+                f"Error starting Shiny: {e}", ERR_MSG_TIME
+            )
 
     def stop_shiny_app(self):
-        """Stop the Shiny server and kill all child processes"""
+        """Stop the Shiny server in a cross-platform safe way"""
         if self.shiny_process:
             try:
+                # --- Windows ---
+                if os.name == "nt":
+                    self.shiny_process.terminate()
+                    self.shiny_process.wait(timeout=3)
 
-                os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGTERM)
-                self.shiny_process.wait(timeout=3)
-            except ProcessLookupError:
-                pass 
+                # --- macOS / Linux ---
+                else:
+                    os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGTERM)
+                    self.shiny_process.wait(timeout=3)
+
             except subprocess.TimeoutExpired:
-                # Force kill if SIGTERM didn't work
+                # --- Force kill if graceful shutdown fails ---
                 try:
-                    os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGKILL)
-                except ProcessLookupError:
+                    if os.name == "nt":
+                        self.shiny_process.kill()
+                    else:
+                        os.killpg(os.getpgid(self.shiny_process.pid), signal.SIGKILL)
+                except Exception:
                     pass
+
+            except Exception:
+                pass
+
             finally:
                 self.shiny_process = None
 
-            self.web_view.setUrl(QUrl("about:blank"))
-            self.start_btn.setEnabled(True)
-            self.stop_btn.setEnabled(False)
-            self.status_message.emit("Shiny Dashboard stopped", MSG_TIME)
+        self.web_view.setUrl(QUrl("about:blank"))
+        self.start_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.status_message.emit("Shiny Dashboard stopped", MSG_TIME)
 
+    def _wait_for_shiny(self, port, timeout=10):
+        """Wait until the Shiny server is reachable"""
+        start = time.time()
+        while time.time() - start < timeout:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(("127.0.0.1", port)) == 0:
+                    return True
+            time.sleep(0.2)
+
+        # --- Timeout reached ---
+        self.status_message.emit(
+            "Shiny Dashboard did not start within the expected time.", ERR_MSG_TIME
+        )
+        return False
 
     # === IMPLEMENTED BASE METHODS ===
     def save_data(self):
