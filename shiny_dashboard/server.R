@@ -8,17 +8,17 @@
 # This server function contains the complete back-end logic of the Shiny dashboard.
 server <- function(input, output, session) {
   
-  library(DBI)
-  library(RPostgres)
-  library(jsonlite)
-  library(shinyjs)
-  library(ggplot2)
+library(DBI)
+library(RPostgres)
+library(jsonlite)
+library(shinyjs)
+library(ggplot2)
   
   
 # ---------------- Load DB Credentials ----------------
-  db_config <- fromJSON("../user_login_config.json")
+db_config <- fromJSON("../user_login_config.json")
   
-  con <- dbConnect(
+con <- dbConnect(
     RPostgres::Postgres(),
     dbname   = db_config$database,
     host     = db_config$host,
@@ -262,10 +262,13 @@ output$student_gpa <- renderText({
     if (is.null(df) || nrow(df) == 0) return(NULL)
     
     # Assign colors based on grade ranges (4 levels)
-    df$color <- with(df, ifelse(grade <= 1.5, "#3c8d40",   # dark green
-                                ifelse(grade <= 2.5, "#88c999",   # light green
-                                       ifelse(grade <= 3.5, "#f3b173",   # orange
-                                              "#e16b6b"))))            # red
+    df$color <- with(df,
+                     ifelse(grade <= 1.5, "#3c8d40",        # Very Good
+                     ifelse(grade <= 2.5, "#88c999",        # Good
+                     ifelse(grade <= 3.5, "#f3b173",        # Average
+                     ifelse(grade <= 4.0, "#e16b6b",        # Below Average
+                     "#8b0000"))))                          # Failed (>4.0)
+                     )                
     
     # Order exams: best grade (lowest value) on top
     df$exam_title <- factor(df$exam_title, levels = rev(df$exam_title[order(df$grade)]))
@@ -351,22 +354,32 @@ total_students <- nrow(all_student_averages)
     
     df <- all_student_averages
     
+    if (nrow(df) == 0) {
+      return(NULL)
+    }
+    
     # Create grade clusters with ranges in labels
     df$cluster <- cut(
       df$student_avg,
-      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, 6.0),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–4.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
     # Count number of students per cluster
     df_clustered <- aggregate(matriculation_number ~ cluster, data = df, FUN = length)
     names(df_clustered)[2] <- "count"
+    
+    if (nrow(df) == 0) {
+      return(NULL)
+    }
     
     # Calculate percentages
     df_clustered$percent <- round(df_clustered$count / sum(df_clustered$count) * 100, 1)
@@ -389,8 +402,10 @@ total_students <- nrow(all_student_averages)
           "Very Good (≤1.5)" = "#3c8d40",
           "Good (1.6–2.5)"   = "#88c999",
           "Average (2.6–3.5)"= "#f3b173",
-          "Below Average (3.6–4.0)"    = "#e16b6b"
-        )
+          "Below Average (3.6–4.0)"    = "#e16b6b",
+          "Failed (>4.0)"           = "#8b0000"
+        ),
+        drop = FALSE
       ) +
       labs(
         title = "Overall Performance Overview",
@@ -427,6 +442,7 @@ observe({
 output$boxplot_avg <- renderPlot({
     
     df <- all_student_averages
+    if (nrow(df) == 0) return(NULL)
     
     # Overall statistics
     overall_mean   <- overall_average
@@ -864,7 +880,8 @@ selected_exam_grades <- reactive({
       "Very Good (≤1.5)" = "#3c8d40",
       "Good (1.6–2.5)"   = "#88c999",
       "Average (2.6–3.5)"= "#f3b173",
-      "Below Average (3.6–4.0)"   = "#e16b6b"
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
     
 # ------------------------------------------------------------
@@ -872,14 +889,16 @@ selected_exam_grades <- reactive({
 
     df$cluster <- cut(
       df$grade,
-      breaks = c(0, 1.5, 2.5, 3.5, 4.1),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–4.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
 # ------------------------------------------------------------
@@ -889,16 +908,19 @@ selected_exam_grades <- reactive({
       
       # Grade threshold reference lines
       geom_vline(
-        xintercept = c(1.5, 2.5, 3.5),
+        xintercept = c(1.5, 2.5, 3.5, 4.0),
         color = "black",
-        linewidth = 1
+        linewidth = 0.5
       ) +
       
       # Individual student grades
       geom_jitter(height = 0, size = 3, alpha = 1) +
       
       # Manual color scale
-      scale_color_manual(values = grade_colors) +
+      scale_color_manual(
+        values = grade_colors,
+        drop = FALSE
+      ) +
       
       # Labels
       labs(
@@ -963,10 +985,10 @@ selected_exam_grades <- reactive({
     # ------------------------------------------------------------
     # Define official grading scale 
     grade_levels <- c(
-      1.0, 1.3, 1.7,
-      2.0, 2.3, 2.7,
-      3.0, 3.3, 3.7,
-      4.0,
+      "1", "1.3", "1.7",
+      "2", "2.3", "2.7",
+      "3", "3.3", "3.7",
+      "4",
       "> 4.0"
     )
     
@@ -974,10 +996,11 @@ selected_exam_grades <- reactive({
     # Color definition 
     
     grade_colors <- c(
-      "Very Good (≤1.5)" = "#3c8d40",
-      "Good (1.6–2.5)"   = "#88c999",
-      "Average (2.6–3.5)"= "#f3b173",
-      "Below Average (3.6–6.0)"   = "#e16b6b"
+      "Very Good (≤1.5)"        = "#3c8d40",
+      "Good (1.6–2.5)"          = "#88c999",
+      "Average (2.6–3.5)"       = "#f3b173",
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
     
     # ------------------------------------------------------------
@@ -1011,20 +1034,19 @@ selected_exam_grades <- reactive({
     
     grade_counts$grade_cluster <- cut(
       grade_counts$grade_num,
-      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
       labels = c(
         "Very Good (≤1.5)",
         "Good (1.6–2.5)",
         "Average (2.6–3.5)",
-        "Below Average (3.6–6.0)"
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
       ),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
-    # Assign failing grades (>4.0) explicitly to "Below Average"
-    grade_counts$grade_cluster[
-      is.na(grade_counts$grade_cluster)
-    ] <- "Below Average (3.6–6.0)"
+    grade_counts$grade_cluster[grade_counts$grade == "> 4.0"] <- "Failed (>4.0)"
     
     grade_counts$grade_cluster <- factor(
       grade_counts$grade_cluster,
@@ -1035,15 +1057,30 @@ selected_exam_grades <- reactive({
     # Exam average for reference line
     
     ex_avg <- selected_exam_avg()
+    req(is.finite(ex_avg))
+   
+    # mean position calculation
+    
+    numeric_levels <- c(
+      1.0, 1.3, 1.7,
+      2.0, 2.3, 2.7,
+      3.0, 3.3, 3.7,
+      4.0
+    )
+    
+    # Clamp mean to max plotted grade (4.0)
+    mean_grade <- min(ex_avg, 4.0)
+    
+    # Find next higher (or equal) grade level
+    mean_level <- min(numeric_levels[numeric_levels >= mean_grade])
+    
+    # Convert grade value to x-position in factor scale
+    mean_x <- which(grade_levels == as.character(mean_level))
+    
+    req(length(mean_x) == 1)
+    
     n_students <- nrow(df)
     exam_title <- unique(df$exam_title)
-    
-    mean_x <- as.numeric(
-      factor(
-        min(grade_levels[grade_levels >= ex_avg]),
-        levels = grade_levels
-      )
-    )
     
     # ------------------------------------------------------------
     # Plot
@@ -1506,26 +1543,34 @@ output$degree_plot1 <- renderPlot({
     req(nrow(df) > 0)
     
 # ------------------------------------------------------------
-# Assign grade clusters
-df$cluster <- cut(
-      df$grade,
-      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
-      labels = c(
-        "Very Good (≤1.5)",
-        "Good (1.6–2.5)",
-        "Average (2.6–3.5)",
-        "Below Average (3.6–6.0)"
-      ),
-      include.lowest = TRUE
-    )
-    
-# Consistent color mapping used across the dashboard
+# Consistent color mapping
     grade_colors <- c(
       "Very Good (≤1.5)"        = "#3c8d40",
       "Good (1.6–2.5)"          = "#88c999",
       "Average (2.6–3.5)"       = "#f3b173",
-      "Below Average (3.6–6.0)" = "#e16b6b"
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
+    
+# Assign grade clusters
+    df$cluster <- cut(
+      df$grade,
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
+      labels = c(
+        "Very Good (≤1.5)",
+        "Good (1.6–2.5)",
+        "Average (2.6–3.5)",
+        "Below Average (3.6–4.0)",
+        "Failed (>4.0)"
+      ),
+      include.lowest = TRUE,
+      right = TRUE
+    )
+    
+    # fix legend order
+    df$cluster <- factor(df$cluster, levels = names(grade_colors))
+    
+
     
 # ------------------------------------------------------------
 # Scatter plot
@@ -1537,9 +1582,9 @@ ggplot(df, aes(
       
 # Reference lines for grading thresholds
       geom_vline(
-        xintercept = c(1.5, 2.5, 3.5),
+        xintercept = c(1.5, 2.5, 3.5, 4.0),
         color = "black",
-        linewidth = 1
+        linewidth = 0.5
       ) +
       
 # One jittered point per exam average
@@ -1638,28 +1683,31 @@ output$degree_plot2 <- renderPlot({
     req(nrow(df) > 0)
     
 # ------------------------------------------------------------
-# grading scale
-
+# Grading scale
     grade_levels <- c(
-      1.0, 1.3, 1.7,
-      2.0, 2.3, 2.7,
-      3.0, 3.3, 3.7,
-      4.0,
+      "1", "1.3", "1.7",
+      "2", "2.3", "2.7",
+      "3", "3.3", "3.7",
+      "4",
       "> 4.0"
     )
     
 # ------------------------------------------------------------
 # Color definition
-    grade_colors <- c(
+grade_colors <- c(
       "Very Good (≤1.5)"        = "#3c8d40",
       "Good (1.6–2.5)"          = "#88c999",
       "Average (2.6–3.5)"       = "#f3b173",
-      "Below Average (3.6–6.0)" = "#e16b6b"
+      "Below Average (3.6–4.0)" = "#e16b6b",
+      "Failed (>4.0)"           = "#8b0000"
     )
     
 # ------------------------------------------------------------
 # Collapse failing grades (>4.0)
-    df$grade_plot <- ifelse(df$grade > 4.0, "> 4.0", as.character(df$grade))
+    df$grade_plot <- ifelse(
+      df$grade > 4.0,
+      "> 4.0",
+      as.character(df$grade))
     
     df$grade_factor <- factor(
       df$grade_plot,
@@ -1680,26 +1728,45 @@ output$degree_plot2 <- renderPlot({
     
     grade_counts$grade_cluster <- cut(
       grade_counts$grade_num,
-      breaks = c(0, 1.5, 2.5, 3.5, 6.0),
+      breaks = c(0, 1.5, 2.5, 3.5, 4.0, Inf),
       labels = names(grade_colors),
-      include.lowest = TRUE
+      include.lowest = TRUE,
+      right = TRUE
     )
     
+    # failed assignment
     grade_counts$grade_cluster[
-      is.na(grade_counts$grade_cluster)
-    ] <- "Below Average (3.6–6.0)"
+      grade_counts$grade == "> 4.0"
+    ] <- "Failed (>4.0)"
+    
+    grade_counts$grade_cluster <- factor(
+      grade_counts$grade_cluster,
+      levels = names(grade_colors)
+    )
     
 # ------------------------------------------------------------
 # Degree program average 
     program_mean <- mean(df$grade, na.rm = TRUE)
-    n_students   <- nrow(df)
+    req(is.finite(program_mean))
     
-    mean_x <- as.numeric(
-      factor(
-        min(grade_levels[grade_levels >= program_mean]),
-        levels = grade_levels
-      )
+    numeric_levels <- c(
+      1.0, 1.3, 1.7,
+      2.0, 2.3, 2.7,
+      3.0, 3.3, 3.7,
+      4.0
     )
+    
+    # Clamp mean to plotting range
+    mean_grade <- min(program_mean, 4.0)
+    
+    # Find next grade level
+    mean_level <- min(numeric_levels[numeric_levels >= mean_grade])
+    
+    # Convert to x-position
+    mean_x <- which(as.character(mean_level) == grade_levels)
+    req(length(mean_x) == 1)
+    
+    n_students <- nrow(df)
     
 # ------------------------------------------------------------
 # Plot
