@@ -17,7 +17,6 @@ source("server.R")
 
 # Launches the Shiny application 
 # Shiny start configuration
-# alter Code shinyApp(ui, server)
 port <- as.numeric(Sys.getenv("SHINY_PORT", unset = 3445))
 
 shiny::runApp(
