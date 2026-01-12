@@ -1,3 +1,8 @@
+# Author: Marvin Fischer (Matriculation Number: 86186)
+
+# This application was fully developed by the author.
+# The author is responsible for the complete implementation
+
 import json
 import psycopg2
 import psycopg2.extensions
