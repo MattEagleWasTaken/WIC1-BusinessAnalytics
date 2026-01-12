@@ -2,10 +2,10 @@
     "_comment1": "This file stores the login credentials for the local PostgreSQL database.",
     "_comment2": "Please enter your own username and password. Do not share them with others.",
     "username": "postgres",
-    "password": "4444",
+    "password": "",
     "_comment3": "These values usually do not need to be changed unless your local PostgreSQL setup differs.",
     "host": "localhost",
     "port": 5432,
     "database": "db_exam_management",
-    "rscript_path": "C:\\Program Files\\R\\R-4.5.2\\bin\\Rscript.exe"
+    "rscript_path": ""
 }
