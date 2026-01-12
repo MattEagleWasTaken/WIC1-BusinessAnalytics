@@ -4,31 +4,7 @@
 # The author is responsible for the complete implementation,
 # including UI design, Page logic, data handling, and visualizations.
 
-''' OFFENE TODOS IM FILE ABARBEITEN!!!
 
-ALLGEMEINE TODOS:
-[x] Kommentare aufräumen + Docstring ergänzen
-[x] Dropdown Menüs aus der DB
-[x] Dropdown Menüs aus Backend-Liste 
-[x] MotherClass einführen
-[x] load_students und load_exams in GradePage reimplementieren
-[x] delete_btn in allen Pages implementieren (zuerst StudentPage)
-[x] Worker implementieren 
-[x] Settings 
-[x] .emit zeiten anpassen 
-[x] Alter bei Studenten prüfen
-[x] Fehlermöglichkeiten prüfen 
-[x] load_last_matriculation_number implementieren (geht nur wenn wir ne nummer implementieren würden oder n Datum mit dazu)
-[] requirements.txt 
-[x] Form Layouts kicken
-[x] shiny in stats page implementieren
-[x] delete from json
-
-MIT MARVIN ABSTIMMEN:
-[x] wie wird die MatrikelNr. eingeführt/validiert?
-
-
-'''
 from database_worker import DatabaseWorker
 from Data_Base_Connection import prepare_database
 import json
@@ -210,6 +186,25 @@ class BasePage(QWidget):
         return section_label
 
     # === SHARED DATABASE LOADING METHODS  ===
+
+    def make_combobox_searchable(self, combobox: QComboBox):
+        """
+        Makes a ComboBox searchable with autocomplete
+        
+        Args:
+            combobox: The QComboBox to make searchable
+        """
+        from PySide6.QtWidgets import QCompleter
+        
+        combobox.setEditable(True)
+        combobox.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        
+        completer = QCompleter(combobox.model())
+        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+        combobox.setCompleter(completer)
+
 
     def load_students_into_dropdown(self, combobox: QComboBox, placeholder: str = "-- Select student --"):
         """
@@ -436,13 +431,25 @@ class HomePage(BasePage):
         password_layout.addWidget(self.password_label)
         password_layout.addWidget(self.password_input)
 
+        #R-Script-Path
+        r_path_section_label = self.create_section_label("R-Script Path")
+        self.r_path_label = QLabel("R-Script-Path:")
+        self.r_path_label.setMinimumWidth(min_label_width)
+        self.r_path_input = QLineEdit()
+        self.r_path_input.setPlaceholderText(r"e.g. C:\Program Files\R\R-4.5.2\bin\Rscript.exe")
+        self.r_script_layout = QHBoxLayout()
+        self.r_script_layout.addWidget(self.r_path_label)
+        self.r_script_layout.addWidget(self.r_path_input)
+        self.save_script_btn = QPushButton("Save script path")
+        self.save_script_btn.clicked.connect(self.save_script_path)
+
+
         # Layout
         self.content_layout.addLayout(host_layout)
         self.content_layout.addLayout(port_layout)
         self.content_layout.addLayout(database_layout)
         self.content_layout.addLayout(username_layout)
         self.content_layout.addLayout(password_layout)
-
 
         # DB-Config Buttons
         db_btn_layout = QHBoxLayout()
@@ -457,6 +464,9 @@ class HomePage(BasePage):
         db_btn_layout.addWidget(self.restore_default_btn)
         self.content_layout.addLayout(db_btn_layout)
         self.content_layout.addWidget(self.create_separator())
+        self.content_layout.addWidget(r_path_section_label)
+        self.content_layout.addLayout(self.r_script_layout)
+        self.content_layout.addWidget(self.save_script_btn)
 
 
         # === Dropdown Options Section ===
@@ -503,6 +513,7 @@ class HomePage(BasePage):
             self.database_input.setText(config.get("database", ""))
             self.username_input.setText(config.get("username", ""))
             self.password_input.setText(config.get("password", ""))
+            self.r_path_input.setText(config.get("rscript_path", ""))
         else:
             self.status_message.emit(f"Error loading config: {error_msg}", ERR_MSG_TIME)
 
@@ -563,6 +574,35 @@ class HomePage(BasePage):
         self.port_input.setText("5432")
         self.database_input.setText("db_exam_management")
         self.status_message.emit("Default values restored", MSG_TIME)
+
+    # === R SCRIPT PATH MENU === 
+    def save_script_path(self):
+        """Saves the R-Script path to the login config JSON file"""
+        script_path = self.r_path_input.text().strip()
+        
+        if not script_path:
+            self.status_message.emit("Please enter an R-Script path", MSG_TIME)
+            return
+        
+        # Load existing config
+        success, config, error_msg = load_login_config()
+        
+        if not success:
+            self.status_message.emit(f"Error loading config: {error_msg}", ERR_MSG_TIME)
+            return
+        
+        # Add/update rscript_path
+        config["rscript_path"] = script_path
+        
+        try:
+            with open(login_config_path(), 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=4, ensure_ascii=False)
+            self.status_message.emit("R-Script path saved successfully!", MSG_TIME)
+        except Exception as e:
+            self.status_message.emit(f"Error saving R-Script path: {e}", ERR_MSG_TIME)
+
+
+
 
     # === DROPDOWN JSON MENUS ===
     def add_semester_btn_clicked(self):
@@ -695,7 +735,9 @@ class GradePage(BasePage):
 
         # input forms
         self.student_input = QComboBox()
+        self.make_combobox_searchable(self.student_input)
         self.exam_input = QComboBox()
+        self.make_combobox_searchable(self.exam_input)
         self.grade_input = QLineEdit()
         self.grade_input.setPlaceholderText("e.g. 1.3")
         grade_validator = QDoubleValidator(1.0, 6.0, 1)
@@ -716,8 +758,10 @@ class GradePage(BasePage):
         self.content_layout.addWidget(deletion_section_label)
         self.delete_grade_student_label = QLabel("Select student to delete their grade:")
         self.delete_grade_student_input = QComboBox()
+        self.make_combobox_searchable(self.delete_grade_student_input)
         self.delete_grade_exam_label = QLabel("Select exam to delete the grade:")
         self.delete_grade_exam_input = QComboBox()
+        self.make_combobox_searchable(self.delete_grade_exam_input)
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_grade)
 
@@ -907,6 +951,7 @@ class StudentPage(BasePage):
         self.content_layout.addWidget(deletion_section_label)
         self.delete_student_label = QLabel("Select student to delete:")
         self.delete_student_input = QComboBox()
+        self.make_combobox_searchable(self.delete_student_input)
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_student)
 
@@ -973,16 +1018,19 @@ class StudentPage(BasePage):
             list: list of tuples with data
             error_msg: str message from worker/db
         """
-        if success:
-            last_number = list[0][0]
-            last_number_int = int(last_number)
-            next_number = last_number_int+1
-            self.last_matriculation_label.setText(f"{last_number_int}")
-            self.matriculation_no_input.setPlaceholderText(f"e.g. {next_number}")
-        else:
-            self.last_matriculation_label.setText(" - ")
-            self.status_message.emit(f"error loading last matriculation number {error_msg}", ERR_MSG_TIME)
-        self._cleanup_worker(self.worker)
+        try:
+            if success:
+                last_number = list[0][0]
+                last_number_int = int(last_number)
+                next_number = last_number_int+1
+                self.last_matriculation_label.setText(f"{last_number_int}")
+                self.matriculation_no_input.setText(f"{next_number}")
+            else:
+                self.last_matriculation_label.setText(" - ")
+                self.status_message.emit(f"error loading last matriculation number {error_msg}", ERR_MSG_TIME)
+            self._cleanup_worker(self.worker)
+        except:
+            return
 
     def delete_student(self):
         """Delete selected student"""
@@ -1156,7 +1204,9 @@ class ExamPage(BasePage):
 
         # semester and study program
         self.semester_input = QComboBox()
+        self.make_combobox_searchable(self.semester_input)
         self.study_program_input = QComboBox()
+        self.make_combobox_searchable(self.study_program_input)
 
         # save btn
         save_btn = QPushButton("Save")
@@ -1180,6 +1230,7 @@ class ExamPage(BasePage):
         # input
         self.delete_exam_label = QLabel("Select exam to delete:")
         self.delete_exam_input = QComboBox()
+        self.make_combobox_searchable(self.delete_exam_input)
         self.delete_btn = QPushButton("Delete")
         self.delete_btn.clicked.connect(self.delete_exam)
 
@@ -1208,16 +1259,19 @@ class ExamPage(BasePage):
             list: list of tuples with data
             error_msg: str message from worker/db
         """
-        if success:
-            last_number = list[0][0]
-            last_number_int = int(last_number)
-            next_number = last_number_int+1
-            self.last_pnr_label.setText(f"{last_number_int}")
-            self.pnr_input.setPlaceholderText(f"e.g. {next_number}")
-        else:
-            self.last_pnr_label.setText(" - ")
-            self.status_message.emit(f"error loading last pnr {error_msg}", ERR_MSG_TIME)
-        self._cleanup_worker(self.worker)
+        try:
+            if success:
+                last_number = list[0][0]
+                last_number_int = int(last_number)
+                next_number = last_number_int+1
+                self.last_pnr_label.setText(f"{last_number_int}")
+                self.pnr_input.setText(f"{next_number}")
+            else:
+                self.last_pnr_label.setText(" - ")
+                self.status_message.emit(f"error loading last pnr {error_msg}", ERR_MSG_TIME)
+            self._cleanup_worker(self.worker)
+        except:
+            return
 
     def delete_exam(self):
         """ delete selected exam"""
@@ -1334,7 +1388,7 @@ class StatsPage(BasePage):
         # ######################################################################################################
         # Ändern
         # Rscript path
-        self.rscript_path = r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
+        self.rscript_path = "/Library/Frameworks/R.framework/Versions/Current/Resources/Rscript" #r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
 
         self.setup_ui()
 

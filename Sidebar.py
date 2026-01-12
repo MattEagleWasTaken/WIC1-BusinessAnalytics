@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         """setup the frame of the main window"""
         self.setWindowTitle("ExaMS")
         self.setMinimumSize(800, 700)  
-        self.resize(800, 700)         
+        self.resize(800, 800)         
         self.setStatusBar(QStatusBar(self))
         self.create_sidebar_buttons()
         self.setup_tabs()
