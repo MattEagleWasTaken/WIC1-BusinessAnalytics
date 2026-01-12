@@ -22,14 +22,6 @@ library(ggplot2)
 customCSS <- "
 
 /* ------------------------ GENERAL LAYOUT ------------------------------------*/ 
-/* Logo position in the top header */ 
-.top-header-logo { 
-height: 40px; 
-position: absolute; 
-right: 10px; 
-top: 8px; 
-} 
-
 /* Tab header text */ 
 .tab-header { 
 text-align: center; 
@@ -118,11 +110,7 @@ ui <- dashboardPage(
   
   # ---------------- TOP HEADER -----------------------------------------------
   dashboardHeader(
-    title = "HS-Dashboard",
-    
-    # Logo placed in top right of header
-    tags$li(class = "dropdown",tags$img(src = "HS_Aalen_Icon.png", class = "top-header-logo")
-    )
+    title = "HS-Dashboard"
   ),
   
   # ---------------- SIDEBAR ---------------------------------------------------
