@@ -7,5 +7,5 @@
     "host": "localhost",
     "port": 5432,
     "database": "db_exam_management",
-    "rscript_path": ""
+    "rscript_path": "C:\\Program Files\\R\\R-4.5.2\\bin\\Rscript.exe"
 }
