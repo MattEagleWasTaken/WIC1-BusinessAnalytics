@@ -1385,10 +1385,12 @@ class StatsPage(BasePage):
         self.shiny_process = None
         self.shiny_port = 8050
 
-        # ######################################################################################################
-        # Ändern
         # Rscript path
-        self.rscript_path = "/Library/Frameworks/R.framework/Versions/Current/Resources/Rscript" #r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
+        success, config, msg = load_login_config()
+        if not success:
+            raise RuntimeError(msg)
+
+        self.rscript_path = config.get("rscript_path")
 
         self.setup_ui()
 
