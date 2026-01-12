@@ -10,9 +10,9 @@ Prerequisites:
 
 From the `BusinessAnalytics` directory:
 
-python -m venv venv
-source venv/bin/activate   # or Windows: venv\Scripts\activate
-pip install -r requirements.txt
+- python -m venv venv
+- source venv/bin/activate   # or Windows: venv\Scripts\activate
+- pip install -r requirements.txt
 
 
 
@@ -23,8 +23,8 @@ double-clicking 'shiny_dashboard.Rproj'.
 
 Then run the following commands in the R console:
 
-install.packages("renv")
-renv::restore()
+- install.packages("renv")
+- renv::restore()
 
 
 
@@ -32,7 +32,7 @@ renv::restore()
 
 From the BusinessAnalytics directory open:
 
-start_GUI_Sidebar.py
+- start_GUI_Sidebar.py
 
 
 You may need to configure your database login and specify your RScript path on the HomePage when starting the GUI for the first time.
