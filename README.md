@@ -35,4 +35,4 @@ From the BusinessAnalytics directory open:
 start_GUI_Sidebar.py
 
 
-You may need to configure your database login on the HomePage when starting the GUI for the first time.
+You may need to configure your database login and specify your RScript path on the HomePage when starting the GUI for the first time.

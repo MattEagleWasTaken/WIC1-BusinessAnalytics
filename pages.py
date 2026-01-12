@@ -377,7 +377,9 @@ class HomePage(BasePage):
         # Info-Box 
         label_info = "You should not have to change Host, Port and Database. "\
             "Your Username is either your PostgreSQL username or your login username of your device. "\
-            "Your Password is either your PostgreSQL password or blank."
+            "Your Password is either your PostgreSQL password or blank."\
+            "\nTo use the shiny Dashboard, specify your Rscript path and save it ('which Rscript' in your Terminal, if you're using a mac) "\
+            "\nHint: look at the status bar for success/error messages"
         self.create_info_label(label_info)
         
         # DATABASE SETTINGS
@@ -734,10 +736,13 @@ class GradePage(BasePage):
         self.create_info_label(label_info)
 
         # input forms
+        self.student_label = QLabel("Student:")
         self.student_input = QComboBox()
         self.make_combobox_searchable(self.student_input)
+        self.exam_label = QLabel("Exam:")
         self.exam_input = QComboBox()
         self.make_combobox_searchable(self.exam_input)
+        self.grad_label=QLabel("Grade:")
         self.grade_input = QLineEdit()
         self.grade_input.setPlaceholderText("e.g. 1.3")
         grade_validator = QDoubleValidator(1.0, 6.0, 1)
