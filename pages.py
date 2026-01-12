@@ -376,9 +376,9 @@ class HomePage(BasePage):
 
         # Info-Box 
         label_info = "You should not have to change Host, Port and Database. "\
-            "Your Username is either your PostgreSQL username or your login username of your device. "\
+            "Your Username is either your PostgreSQL username or your login username of your device."\
             "Your Password is either your PostgreSQL password or blank."\
-            "\nTo use the shiny Dashboard, specify your Rscript path and save it ('which Rscript' in your Terminal, if you're using a mac) "\
+            "\nTo use the shiny Dashboard, specify your Rscript path and save it ('which Rscript' in your Terminal, if you're using a mac)"\
             "\nHint: look at the status bar for success/error messages"
         self.create_info_label(label_info)
         
@@ -730,9 +730,10 @@ class GradePage(BasePage):
         
         # info label
         label_info = "To grade a student, please select a student, an exam and enter a grade. " \
-        "Click Save to save it to the database. Every student can only have one grade for one exam. " \
-        "Grades range from 1.0 to 6.0. If you want to delete a grade, please select student and exam " \
-        "in the delete menu below and click delete. Refresh the page by clicking onto another page & return."
+        "\nClick Save to save it to the database. Every student can only have one grade for one exam. " \
+        "\nGrades range from 1.0 to 6.0. If you want to delete a grade, please select student and exam " \
+        "in the delete menu below and click delete. Refresh the page by clicking onto another page & return."\
+        "\nIf the dropdown menus are too small, restart the GUI"
         self.create_info_label(label_info)
 
         # input forms
@@ -910,8 +911,8 @@ class StudentPage(BasePage):
         
         # info label
         label_info = "To create a student, please enter a name, firstname birthdate and a matriculation number and click save. " \
-        "The matriculation number has to be unique, between 0 and 999999999. Trailing zeros will be added to your entered number. The age of the student has to be between 5 and 120 years. " \
-        "If you want to delete a student, please select the student in the delete menu below and click delete. Refresh the page by clicking onto another page & return."
+        "\nThe matriculation number has to be unique, between 0 and 999999999. Trailing zeros will be added to your entered number. \nThe age of the student has to be between 5 and 120 years. " \
+        "\nIf you want to delete a student, please select the student in the delete menu below and click delete. \nRefresh the page by clicking onto another page & return."
         self.create_info_label(label_info)
 
         # name input forms
@@ -1186,9 +1187,9 @@ class ExamPage(BasePage):
         
         # info label
         label_info = "To create an exam, please enter a PNr, a title, a date and select a semester and a study program " \
-        "Click Save to save it to the database. Every student can only have one grade for one exam. " \
-        "Grades range from 1.0 to 6.0. The date of an exam can be in the past as well as in the future! " \
-        "If you want to delete a grade, please select student and exam in the delete menu below and click delete. " \
+        "\nClick Save to save it to the database. Every student can only have one grade for one exam. " \
+        "\nGrades range from 1.0 to 6.0. The date of an exam can be in the past as well as in the future! " \
+        "\nIf you want to delete a grade, please select student and exam in the delete menu below and click delete. " \
         "Refresh the page by clicking onto another page & return."
         self.create_info_label(label_info)  
         
@@ -1390,13 +1391,6 @@ class StatsPage(BasePage):
         self.shiny_process = None
         self.shiny_port = 8050
 
-        # Rscript path
-        success, config, msg = load_login_config()
-        if not success:
-            raise RuntimeError(msg)
-
-        self.rscript_path = config.get("rscript_path")
-
         self.setup_ui()
 
     def setup_ui(self):
@@ -1436,6 +1430,14 @@ class StatsPage(BasePage):
     # === PAGE SPECIFIC METHODS === 
     def start_shiny_app(self):
         """Start the R Shiny Server in the background if it's not already running"""
+
+        # Rscript path
+        success, config, msg = load_login_config()
+        if not success:
+            raise RuntimeError(msg)
+
+        self.rscript_path = config.get("rscript_path")
+
         if self.shiny_process is not None:
             return
 
