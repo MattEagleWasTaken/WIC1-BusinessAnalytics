@@ -6,3 +6,9 @@
 # Python
 __pycache__/
 *.pyc
+
+# R
+.RData
+.Rhistory
+*.RData
+*.Rhistory
