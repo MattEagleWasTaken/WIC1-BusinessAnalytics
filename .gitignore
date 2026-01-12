@@ -12,3 +12,5 @@ __pycache__/
 .Rhistory
 *.RData
 *.Rhistory
+renv/library/
+renv/staging/
