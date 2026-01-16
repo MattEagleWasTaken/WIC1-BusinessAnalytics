@@ -1143,7 +1143,7 @@ selected_exam_grades <- reactive({
         title = paste0("Grade Distribution – ", exam_title),
         subtitle = paste0(semester_label, "Number of student exam results: ", n_students),
         x = "Grade",
-        y = "Number of Students"
+        y = "Number of grades"
       ) +
       
       scale_y_continuous(
@@ -1829,7 +1829,7 @@ grade_colors <- c(
           "Number of student exam results: ", n_students
         ),
         x = "Grade",
-        y = "Number of Students"
+        y = "Number of grades"
       ) +
       
       scale_y_continuous(
