@@ -1084,6 +1084,14 @@ selected_exam_grades <- reactive({
     
     # ------------------------------------------------------------
     # Plot
+    # Resolve semester label for subtitle
+    semester_label <- ""
+    
+    if (!is.null(input$exam_semester_select) &&
+        input$exam_semester_select != "- all semester -") {
+      
+      semester_label <- paste0("Semester: ", input$exam_semester_select, " | ")
+    }
     
     ggplot(grade_counts, aes(x = grade, y = count)) +
       
@@ -1133,9 +1141,9 @@ selected_exam_grades <- reactive({
       
       labs(
         title = paste0("Grade Distribution – ", exam_title),
-        subtitle = paste0("Number of students: ", n_students),
+        subtitle = paste0(semester_label, "Number of student exam results: ", n_students),
         x = "Grade",
-        y = "Number of Students"
+        y = "Number of grades"
       ) +
       
       scale_y_continuous(
@@ -1818,10 +1826,10 @@ grade_colors <- c(
             !is.null(input$degree_semester_select) &&
             input$degree_semester_select != "- all semester -"
           ) paste0("Semester: ", input$degree_semester_select," | ") else "",
-          "Number of grades: ", n_students
+          "Number of student exam results: ", n_students
         ),
         x = "Grade",
-        y = "Number of Students"
+        y = "Number of grades"
       ) +
       
       scale_y_continuous(
