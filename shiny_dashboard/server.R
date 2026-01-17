@@ -34,8 +34,11 @@ con <- dbConnect(
   
   students_sorted_matr <- students[order(students$matriculation_number), ]
   students_sorted_name <- students[order(students$last_name, students$first_name), ]
-  students_sorted_name$full_name <- paste(students_sorted_name$first_name,
-                                          students_sorted_name$last_name)
+  students_sorted_name$full_name <- paste0(
+    students_sorted_name$first_name, " ",
+    students_sorted_name$last_name,
+    " (", students_sorted_name$matriculation_number, ")"
+  )
   
   name_choices <- c("- not selected -", students_sorted_name$full_name)
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
@@ -116,10 +119,7 @@ con <- dbConnect(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- students_sorted_name[
-                students_sorted_name$full_name == input$name_select,
-              ]
-              row$matriculation_number
+              sub(".*\\((.*)\\)$", "\\1", input$name_select)
             }
           )
         )
@@ -208,8 +208,7 @@ output$student_gpa <- renderText({
     if (!is.null(selected_matr) && selected_matr != "- not selected -") {
       matr <- selected_matr
     } else if (!is.null(selected_name) && selected_name != "- not selected -") {
-      row <- students_sorted_name[students_sorted_name$full_name == selected_name, ]
-      matr <- row$matriculation_number
+      matr <- sub(".*\\((.*)\\)$", "\\1", selected_name)
     } else {
       return("-")
     }
@@ -283,7 +282,7 @@ output$student_gpa <- renderText({
       if (!is.null(input$name_select) &&
           input$name_select != "- not selected -") {
         
-        student_name <- input$name_select
+        student_name <- sub(" \\(.*\\)$", "", input$name_select)
         
       } else if (!is.null(input$matnr_select) &&
                  input$matnr_select != "- not selected -") {
@@ -293,7 +292,7 @@ output$student_gpa <- renderText({
         ]
         
         if (nrow(row) == 1) {
-          student_name <- row$full_name
+          student_name <- paste(row$first_name, row$last_name)
         }
       }
     }
@@ -393,7 +392,7 @@ total_students <- nrow(all_student_averages)
       geom_text(
         aes(label = label),
         position = position_stack(vjust = 0.5),
-        size = 8,
+        size = 5,
         fontface = "bold"
       ) +
       coord_polar("y") +
@@ -578,6 +577,12 @@ exams <- dbGetQuery(
   "
   )
 
+# Create display label: Exam (Semester)
+  exams$display_exam <- paste0(
+    exams$title,
+    " (", exams$semester, ")"
+  )
+  
 # ---- Semester dropdown choices ------------------------------------
 semester_choices_exam <- c(
     "- all semester -",
@@ -614,7 +619,7 @@ filtered_exams <- reactive({
 exam_title_choices_one <- reactive({
     c(
       "- not selected -",
-      sort(unique(filtered_exams()$title))
+      unique(filtered_exams()$display_exam)
     )
   })
   
@@ -666,7 +671,7 @@ output$one_exam_filters <- renderUI({
             style = "margin-top: 5px;",
             filtered_exams()[
               filtered_exams()$pnr == input$exam_pnr_select,
-            ]$title
+            ]$display_exam
           )
         )
       },
@@ -696,8 +701,8 @@ output$one_exam_filters <- renderUI({
             class = "static-text-input",
             style = "margin-top: 5px;",
             filtered_exams()[
-              filtered_exams()$title == input$exam_title_select,
-            ]$pnr
+              filtered_exams()$display_exam == input$exam_title_select,
+            ]$pnr[1]
           )
         )
       },
@@ -783,18 +788,20 @@ observe({
     if (!is.null(input$exam_pnr_select) &&
         input$exam_pnr_select != "- not selected -") {
       
-      df <- df[df$pnr == input$exam_pnr_select, ]
+      pnr <- input$exam_pnr_select
       
     } else if (!is.null(input$exam_title_select) &&
                input$exam_title_select != "- not selected -") {
       
-      df <- df[df$exam_title == input$exam_title_select, ]
+      pnr <- filtered_exams()[
+        filtered_exams()$display_exam == input$exam_title_select,
+      ]$pnr[1]
       
     } else {
       return(NULL)
     }
     
-    req(nrow(df) > 0)
+    df <- df[df$pnr == pnr, ]
     mean(df$grade, na.rm = TRUE)
   })
   
@@ -809,19 +816,20 @@ observe({
     if (!is.null(input$exam_pnr_select) &&
         input$exam_pnr_select != "- not selected -") {
       
-      df <- df[df$pnr == input$exam_pnr_select, ]
+      pnr <- input$exam_pnr_select
       
     } else if (!is.null(input$exam_title_select) &&
                input$exam_title_select != "- not selected -") {
       
-      df <- df[df$exam_title == input$exam_title_select, ]
+      pnr <- filtered_exams()[
+        filtered_exams()$display_exam == input$exam_title_select,
+      ]$pnr[1]
       
     } else {
       return(NULL)
     }
     
-    req(nrow(df) > 0)
-    df
+    df[df$pnr == pnr, ]
   })
   
   # ---------------------------------------------------------------------------------
