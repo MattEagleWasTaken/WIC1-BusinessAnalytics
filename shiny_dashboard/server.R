@@ -292,7 +292,7 @@ output$student_gpa <- renderText({
         ]
         
         if (nrow(row) == 1) {
-          student_name <- row$full_name
+          student_name <- paste(row$first_name, row$last_name)
         }
       }
     }
@@ -392,7 +392,7 @@ total_students <- nrow(all_student_averages)
       geom_text(
         aes(label = label),
         position = position_stack(vjust = 0.5),
-        size = 8,
+        size = 5,
         fontface = "bold"
       ) +
       coord_polar("y") +
