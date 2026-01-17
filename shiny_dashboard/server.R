@@ -34,8 +34,11 @@ con <- dbConnect(
   
   students_sorted_matr <- students[order(students$matriculation_number), ]
   students_sorted_name <- students[order(students$last_name, students$first_name), ]
-  students_sorted_name$full_name <- paste(students_sorted_name$first_name,
-                                          students_sorted_name$last_name)
+  students_sorted_name$full_name <- paste0(
+    students_sorted_name$first_name, " ",
+    students_sorted_name$last_name,
+    " (", students_sorted_name$matriculation_number, ")"
+  )
   
   name_choices <- c("- not selected -", students_sorted_name$full_name)
   matr_choices <- c("- not selected -", students_sorted_matr$matriculation_number)
@@ -116,10 +119,7 @@ con <- dbConnect(
             class = "static-text-input",
             style = "margin-top: 5px; box-shadow: 0px 2px 6px rgba(0,0,0,0.2);",
             {
-              row <- students_sorted_name[
-                students_sorted_name$full_name == input$name_select,
-              ]
-              row$matriculation_number
+              sub(".*\\((.*)\\)$", "\\1", input$name_select)
             }
           )
         )
@@ -208,8 +208,7 @@ output$student_gpa <- renderText({
     if (!is.null(selected_matr) && selected_matr != "- not selected -") {
       matr <- selected_matr
     } else if (!is.null(selected_name) && selected_name != "- not selected -") {
-      row <- students_sorted_name[students_sorted_name$full_name == selected_name, ]
-      matr <- row$matriculation_number
+      matr <- sub(".*\\((.*)\\)$", "\\1", selected_name)
     } else {
       return("-")
     }
@@ -283,7 +282,7 @@ output$student_gpa <- renderText({
       if (!is.null(input$name_select) &&
           input$name_select != "- not selected -") {
         
-        student_name <- input$name_select
+        student_name <- sub(" \\(.*\\)$", "", input$name_select)
         
       } else if (!is.null(input$matnr_select) &&
                  input$matnr_select != "- not selected -") {
